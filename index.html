@@ -52,6 +52,9 @@
   <div class="edit-panel" id="editPanel"></div>
 
   <div class="app-toolbar" id="appToolbar"></div>
+  <div class="dashboard" id="dashboard"></div>
+  <div class="weekly-planner" id="weeklyPlanner"></div>
+  <div id="blocksContainer"></div>
   <div id="eventSidebar">
     <div id="riftCard"></div>
     <div id="artifactCard"></div>
@@ -59,9 +62,6 @@
     <div id="bossWedSatCard"></div>
     <div id="bossFriSunCard"></div>
   </div>
-  <div class="dashboard" id="dashboard"></div>
-  <div class="weekly-planner" id="weeklyPlanner"></div>
-  <div id="blocksContainer"></div>
   <div class="history-modal" id="historyModal" role="dialog" aria-modal="true" aria-label="Historique"><div class="modal-card" id="historyContent"></div></div>
   <div class="toast" id="toast"></div>
   <input type="file" id="importInput" accept="application/json" hidden />
@@ -1003,9 +1003,24 @@ function renderSyncPanel(){
       </div>`).join('')}
       <div style="font-size:10px;color:#544b68;font-style:italic;margin-top:4px;">Note ce code ailleurs si tu veux le garder — rien ne le sauvegarde en dehors de cet appareil.</div>
     </div>` : '';
+  const THEME_OPTIONS = [
+    { id: 'default', color: '#4fd1c5', label: 'Violet turquoise' },
+    { id: 'amber', color: '#e0bd5f', label: 'Or royal' },
+    { id: 'ice', color: '#4fc3e8', label: 'Cristal glacé' },
+  ];
+  const currentTheme = loadJSON('aion2-theme', 'default');
+  const themeBlockHtml = `
+    <div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.07);">
+      <div class="sync-title" style="margin-bottom:8px;">🎨 Thème</div>
+      <div style="display:flex;gap:8px;">
+        ${THEME_OPTIONS.map(t => `<button title="${t.label}" onclick="setTheme('${t.id}')"
+          style="width:26px;height:26px;border-radius:50%;background:${t.color};border:2px solid ${currentTheme===t.id?'#e8e3f0':'transparent'};cursor:pointer;padding:0;"></button>`).join('')}
+      </div>
+    </div>`;
   if (syncCode){
     el.innerHTML = `
       <div class="sync-card">
+        ${themeBlockHtml}
         <div class="sync-title">🔗 Synchronisation active</div>
         <div class="sync-code-display">${syncCode}</div>
         <div class="sync-status">${statusLabel}</div>
@@ -1016,6 +1031,7 @@ function renderSyncPanel(){
   } else {
     el.innerHTML = `
       <div class="sync-card">
+        ${themeBlockHtml}
         <div class="sync-title">🔗 Synchronisation</div>
         <div class="sync-hint">Crée un code pour synchroniser tes données entre appareils, ou rejoins un code existant.</div>
         <button class="rift-toggle-btn" onclick="createNewSyncCode()" style="width:100%;margin:8px 0;">+ Créer un nouveau code</button>
@@ -1585,27 +1601,13 @@ function render(){
   editBtn.onclick = toggleEditPanel;
   chipsEl.appendChild(editBtn);
 
-  const syncBtn = document.createElement('button');
-  syncBtn.className = 'edit-btn';
-  syncBtn.innerHTML = '🔗 Synchro';
-  syncBtn.title = 'Synchronisation multi-appareils';
-  syncBtn.style.marginLeft = 'auto';
-  syncBtn.onclick = toggleSyncPanel;
-  chipsEl.appendChild(syncBtn);
-
-  const THEME_OPTIONS = [
-    { id: 'default', color: '#4fd1c5', label: 'Violet turquoise' },
-    { id: 'amber', color: '#e0bd5f', label: 'Or royal' },
-    { id: 'ice', color: '#4fc3e8', label: 'Cristal glacé' },
-  ];
-  const currentTheme = loadJSON('aion2-theme', 'default');
-  THEME_OPTIONS.forEach(t => {
-    const dot = document.createElement('button');
-    dot.title = t.label;
-    dot.style.cssText = `width:22px;height:22px;border-radius:50%;background:${t.color};border:2px solid ${currentTheme===t.id?'#e8e3f0':'transparent'};cursor:pointer;padding:0;flex-shrink:0;`;
-    dot.onclick = () => setTheme(t.id);
-    chipsEl.appendChild(dot);
-  });
+  const settingsBtn = document.createElement('button');
+  settingsBtn.className = 'edit-btn';
+  settingsBtn.innerHTML = '⚙ Réglages';
+  settingsBtn.title = 'Synchronisation et thème';
+  settingsBtn.style.marginLeft = 'auto';
+  settingsBtn.onclick = toggleSyncPanel;
+  chipsEl.appendChild(settingsBtn);
 
   const editPanel = document.getElementById('editPanel');
   editPanel.classList.toggle('show', editingNames);
