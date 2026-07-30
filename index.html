@@ -321,13 +321,7 @@
   .tool-btn:hover,.tool-btn.active { color:#4fd1c5; border-color:#4fd1c5; background:rgba(79,209,197,.1); }
   .tool-btn.danger:hover { color:#e08a6a; border-color:#d4785a; background:rgba(212,120,90,.1); }
   .toolbar-spacer { flex:1; }
-  .toolbar-overflow { position:relative; }
-  .toolbar-overflow-menu { display:none; position:absolute; top:calc(100% + 6px); right:0; background:#1a1530; border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:8px; flex-direction:column; gap:6px; z-index:50; min-width:170px; box-shadow:0 10px 30px rgba(0,0,0,.5); }
-  .toolbar-overflow-menu.show { display:flex; }
-  .toolbar-overflow-menu .tool-btn { width:100%; text-align:left; flex:none; }
   .icon-menu { display:flex; flex-direction:column; gap:2px; }
-  .toolbar-overflow-menu.icon-menu { display:none; }
-  .toolbar-overflow-menu.icon-menu.show { display:flex; }
   .icon-menu-row { display:flex; align-items:center; gap:12px; width:100%; background:transparent; border:none; border-radius:10px; padding:9px 10px; cursor:pointer; text-align:left; font-size:13px; font-weight:600; color:#d8d3e0; }
   .icon-menu-row:hover { background:rgba(255,255,255,0.06); }
   .icon-menu-icon { width:26px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
@@ -1097,6 +1091,10 @@ function toggleSyncPanel(){
   syncPanelOpen = !syncPanelOpen;
   renderSyncPanel();
 }
+function closeSyncPanel(){
+  syncPanelOpen = false;
+  renderSyncPanel();
+}
 
 const PERSONAL_NOTES_KEY = 'aion2-personal-notes';
 let personalNotes = loadJSON(PERSONAL_NOTES_KEY, '');
@@ -1167,6 +1165,25 @@ function renderSyncPanel(){
       ${t.label}
       ${currentTheme===t.id ? '<span class="icon-menu-check">✓</span>' : ''}
     </button>`).join('');
+  const dataActionsHtml = `
+    <div class="icon-menu" style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.07);">
+      <button class="icon-menu-row" onclick="showHistory();closeSyncPanel()">
+        <span class="icon-menu-icon" style="background:rgba(124,159,212,.18);color:#7c9fd4;">🕐</span>
+        Historique
+      </button>
+      <button class="icon-menu-row" onclick="exportData();closeSyncPanel()">
+        <span class="icon-menu-icon" style="background:rgba(79,209,197,.18);color:#4fd1c5;">⬇</span>
+        Exporter JSON
+      </button>
+      <button class="icon-menu-row" onclick="document.getElementById('importInput').click();closeSyncPanel()">
+        <span class="icon-menu-icon" style="background:rgba(196,126,212,.18);color:#c47ed4;">⬆</span>
+        Importer
+      </button>
+      <button class="icon-menu-row danger" onclick="bulkSet('reset');closeSyncPanel()">
+        <span class="icon-menu-icon" style="background:rgba(212,120,90,.18);color:#e08a6a;">🗑</span>
+        Effacer${activeChar==='all'?'':' — '+getChar(activeChar).name}
+      </button>
+    </div>`;
   if (discordUser){
     const avatarUrl = discordUser.avatar
       ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png?size=64`
@@ -1189,6 +1206,7 @@ function renderSyncPanel(){
             Se déconnecter
           </button>
         </div>
+        ${dataActionsHtml}
       </div>`;
   } else {
     el.innerHTML = `
@@ -1200,6 +1218,7 @@ function renderSyncPanel(){
         <div class="icon-menu" style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.07);">
           ${themeRowsHtml}
         </div>
+        ${dataActionsHtml}
       </div>`;
   }
 }
@@ -1979,46 +1998,8 @@ function renderToolbar(){
   bar.innerHTML=`
     <button class="tool-btn ${appSettings.compact?'active':''}" onclick="toggleSetting('compact')">↕ Mode compact</button>
     <button class="tool-btn ${appSettings.hideCompleted?'active':''}" onclick="toggleSetting('hideCompleted')">✓ Masquer terminées</button>
-    <button class="tool-btn" onclick="bulkSet('complete')">Tout valider${activeChar==='all'?'':' — '+getChar(activeChar).name}</button>
-    <span class="toolbar-spacer"></span>
-    <div class="toolbar-overflow">
-      <button class="tool-btn" onclick="toggleToolbarOverflow()">⋯ Plus</button>
-      <div class="toolbar-overflow-menu icon-menu" id="toolbarOverflowMenu">
-        <button class="icon-menu-row" onclick="showHistory();closeToolbarOverflow()">
-          <span class="icon-menu-icon" style="background:rgba(124,159,212,.18);color:#7c9fd4;">🕐</span>
-          Historique
-        </button>
-        <button class="icon-menu-row" onclick="exportData();closeToolbarOverflow()">
-          <span class="icon-menu-icon" style="background:rgba(79,209,197,.18);color:#4fd1c5;">⬇</span>
-          Exporter JSON
-        </button>
-        <button class="icon-menu-row" onclick="document.getElementById('importInput').click();closeToolbarOverflow()">
-          <span class="icon-menu-icon" style="background:rgba(196,126,212,.18);color:#c47ed4;">⬆</span>
-          Importer
-        </button>
-        <button class="icon-menu-row danger" onclick="bulkSet('reset');closeToolbarOverflow()">
-          <span class="icon-menu-icon" style="background:rgba(212,120,90,.18);color:#e08a6a;">🗑</span>
-          Effacer${activeChar==='all'?'':' — '+getChar(activeChar).name}
-        </button>
-      </div>
-    </div>`;
+    <button class="tool-btn" onclick="bulkSet('complete')">Tout valider${activeChar==='all'?'':' — '+getChar(activeChar).name}</button>`;
 }
-let toolbarOverflowOpen=false;
-function toggleToolbarOverflow(){
-  toolbarOverflowOpen=!toolbarOverflowOpen;
-  const menu=document.getElementById('toolbarOverflowMenu');
-  if(menu) menu.classList.toggle('show', toolbarOverflowOpen);
-}
-function closeToolbarOverflow(){
-  toolbarOverflowOpen=false;
-  const menu=document.getElementById('toolbarOverflowMenu');
-  if(menu) menu.classList.remove('show');
-}
-document.addEventListener('click', (e) => {
-  if (toolbarOverflowOpen && !e.target.closest('.toolbar-overflow')){
-    closeToolbarOverflow();
-  }
-});
 function buildNowItems(blocks,checked,visibleChars){
   const items=[];
   blocks.forEach(b=>b.tasks.forEach(t=>{
