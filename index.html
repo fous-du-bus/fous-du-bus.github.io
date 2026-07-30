@@ -298,6 +298,10 @@
   .tool-btn:hover,.tool-btn.active { color:#4fd1c5; border-color:#4fd1c5; background:rgba(79,209,197,.1); }
   .tool-btn.danger:hover { color:#e08a6a; border-color:#d4785a; background:rgba(212,120,90,.1); }
   .toolbar-spacer { flex:1; }
+  .toolbar-overflow { position:relative; }
+  .toolbar-overflow-menu { display:none; position:absolute; top:calc(100% + 6px); right:0; background:#1a1530; border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:8px; flex-direction:column; gap:6px; z-index:50; min-width:170px; box-shadow:0 10px 30px rgba(0,0,0,.5); }
+  .toolbar-overflow-menu.show { display:flex; }
+  .toolbar-overflow-menu .tool-btn { width:100%; text-align:left; flex:none; }
   .dashboard { width:min(100%,1180px); margin:0 auto 20px; display:grid; grid-template-columns:1.35fr 1fr; gap:14px; }
   .rift-card { width:min(100%,1180px); margin:0 auto 20px; background: var(--theme-card-bg); border: var(--theme-border-w) solid var(--theme-card-border); border-radius: var(--theme-radius-card); padding: 18px 20px; }
   .sync-card { background: var(--theme-card-bg); border: var(--theme-border-w) solid var(--theme-card-border); border-radius: var(--theme-radius-inner); padding: 16px; margin-bottom: 20px; }
@@ -1814,12 +1818,30 @@ function renderToolbar(){
     <button class="tool-btn ${appSettings.compact?'active':''}" onclick="toggleSetting('compact')">↕ Mode compact</button>
     <button class="tool-btn ${appSettings.hideCompleted?'active':''}" onclick="toggleSetting('hideCompleted')">✓ Masquer terminées</button>
     <button class="tool-btn" onclick="bulkSet('complete')">Tout valider${activeChar==='all'?'':' — '+getChar(activeChar).name}</button>
-    <button class="tool-btn danger" onclick="bulkSet('reset')">Effacer${activeChar==='all'?'':' — '+getChar(activeChar).name}</button>
     <span class="toolbar-spacer"></span>
-    <button class="tool-btn" onclick="showHistory()">Historique</button>
-    <button class="tool-btn" onclick="exportData()">Exporter JSON</button>
-    <button class="tool-btn" onclick="document.getElementById('importInput').click()">Importer</button>`;
+    <div class="toolbar-overflow">
+      <button class="tool-btn" onclick="toggleToolbarOverflow()">⋯ Plus</button>
+      <div class="toolbar-overflow-menu" id="toolbarOverflowMenu">
+        <button class="tool-btn danger" onclick="bulkSet('reset')">Effacer${activeChar==='all'?'':' — '+getChar(activeChar).name}</button>
+        <button class="tool-btn" onclick="showHistory()">Historique</button>
+        <button class="tool-btn" onclick="exportData()">Exporter JSON</button>
+        <button class="tool-btn" onclick="document.getElementById('importInput').click()">Importer</button>
+      </div>
+    </div>`;
 }
+let toolbarOverflowOpen=false;
+function toggleToolbarOverflow(){
+  toolbarOverflowOpen=!toolbarOverflowOpen;
+  const menu=document.getElementById('toolbarOverflowMenu');
+  if(menu) menu.classList.toggle('show', toolbarOverflowOpen);
+}
+document.addEventListener('click', (e) => {
+  if (toolbarOverflowOpen && !e.target.closest('.toolbar-overflow')){
+    toolbarOverflowOpen=false;
+    const menu=document.getElementById('toolbarOverflowMenu');
+    if(menu) menu.classList.remove('show');
+  }
+});
 function buildNowItems(blocks,checked,visibleChars){
   const items=[];
   blocks.forEach(b=>b.tasks.forEach(t=>{
