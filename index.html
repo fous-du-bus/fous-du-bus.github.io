@@ -27,8 +27,8 @@
   <div id="headerRow"></div>
 
   <div class="tabs">
-    <button class="tab active" id="tabDaily" onclick="setView('daily')">Quotidien</button>
-    <button class="tab" id="tabWeekly" onclick="setView('weekly')">Hebdomadaire</button>
+    <button class="tab active" id="tabDaily" onclick="setView('daily')">Quotidien<span class="tab-badge" id="tabDailyBadge"></span></button>
+    <button class="tab" id="tabWeekly" onclick="setView('weekly')">Hebdomadaire<span class="tab-badge tab-badge-muted" id="tabWeeklyBadge"></span></button>
   </div>
 
   <div class="progress-box">
@@ -120,9 +120,12 @@
   .reset-label { font-size:10px; color:#8b8299; letter-spacing:.5px; }
   .reset-value { font-size:13px; font-weight:700; }
   .reset-sep { width:1px; height:24px; background:rgba(255,255,255,.08); }
-  .tab { flex: 1; padding: 10px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: transparent;
+  .tab { position: relative; flex: 1; padding: 10px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: transparent;
          color: #8b8299; font-size: 14px; font-weight: 700; cursor: pointer; font-family: Georgia, 'Times New Roman', serif; letter-spacing: 0.5px; }
   .tab.active { border-color: var(--theme-accent); background: var(--theme-card-bg); color: var(--theme-accent); }
+  .tab-badge { position: absolute; top: -9px; right: -6px; background: var(--theme-accent); color: #0f0d1a; font-size: 9px; font-weight: 800;
+               font-family: 'Courier New', monospace; padding: 3px 7px; border-radius: 10px; letter-spacing: 0; white-space: nowrap; }
+  .tab-badge-muted { background: #544b68; color: #e8e3f0; }
   .progress-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px 20px; margin-bottom: 20px; }
   .progress-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
   .progress-label { font-size: 13px; color: #8b8299; font-weight: 600; }
@@ -1997,25 +2000,24 @@ function nextResetAt(hour, targetDay){
     if (d > now && (targetDay === undefined || d.getDay() === targetDay)) return d;
   }
 }
+function formatResetBadge(ms){
+  const s = Math.max(0, Math.floor(ms/1000));
+  const d = Math.floor(s/86400), h = Math.floor((s%86400)/3600), m = Math.floor((s%3600)/60);
+  if (d > 0) return `${d}j${h}h`;
+  if (h > 0) return `${h}h${m}`;
+  return `${m}min`;
+}
 function renderResetBanner(){
   const el = document.getElementById('headerRow');
-  if (!el) return;
+  if (el){
+    const dateStr = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    el.innerHTML = `<div class="date">${dateStr}</div>`;
+  }
   const now = new Date();
-  const daily = formatResetCountdown(nextResetAt(5) - now);
-  const weekly = formatResetCountdown(nextResetAt(5, 3) - now);
-  const dateStr = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-  el.innerHTML = `
-    <div class="header-row">
-      <div class="reset-item">
-        <div class="reset-icon" style="background:rgba(79,209,197,.15);">🌙</div>
-        <div><div class="reset-label">RESET QUOTIDIEN</div><div class="reset-value" style="color:#4fd1c5;">dans ${daily}</div></div>
-      </div>
-      <div class="date" style="margin:0;">${dateStr}</div>
-      <div class="reset-item">
-        <div><div class="reset-label" style="text-align:right;">RESET HEBDO (MER. 5H)</div><div class="reset-value" style="color:#c47ed4;text-align:right;">dans ${weekly}</div></div>
-        <div class="reset-icon" style="background:rgba(196,126,212,.15);">🗓</div>
-      </div>
-    </div>`;
+  const dailyBadge = document.getElementById('tabDailyBadge');
+  const weeklyBadge = document.getElementById('tabWeeklyBadge');
+  if (dailyBadge) dailyBadge.textContent = formatResetBadge(nextResetAt(5) - now);
+  if (weeklyBadge) weeklyBadge.textContent = formatResetBadge(nextResetAt(5, 3) - now);
 }
 function masterTick(){refreshEnhancedTimers();updateRiftClock();renderAllEventCards();renderResetBanner();if(new Date().getSeconds()===0){renderWeeklyPlanner();renderRiftCard();}}
 
