@@ -1079,16 +1079,6 @@ function renderSyncPanel(){
   if (!syncPanelOpen){ el.innerHTML = ''; el.style.display = 'none'; return; }
   el.style.display = 'block';
   const statusLabel = { idle: '', syncing: 'Synchronisation...', synced: 'Synchronisé ✓', error: 'Erreur de synchro' }[cloudSyncStatus] || '';
-  const history = getSyncHistory().filter(h => h.code !== syncCode);
-  const historyHtml = history.length ? `
-    <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.07);">
-      <div style="font-size:10px;color:#544b68;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Codes utilisés sur cet appareil</div>
-      ${history.map(h => `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:12px;">
-        <span style="font-family:'Courier New',monospace;color:#8b8299;">${h.code}</span>
-        <span style="color:#544b68;font-size:10px;">${h.date}</span>
-      </div>`).join('')}
-      <div style="font-size:10px;color:#544b68;font-style:italic;margin-top:4px;">Note ce code ailleurs si tu veux le garder — rien ne le sauvegarde en dehors de cet appareil.</div>
-    </div>` : '';
   const THEME_OPTIONS = [
     { id: 'default', color: '#4fd1c5', label: 'Violet turquoise' },
     { id: 'amber', color: '#e0bd5f', label: 'Or royal' },
@@ -1119,30 +1109,13 @@ function renderSyncPanel(){
         <div class="sync-hint">Tes données sont liées à ton compte Discord — reconnecte-toi avec Discord sur n'importe quel appareil pour les retrouver, sans code à retenir.</div>
         <button class="rift-toggle-btn" onclick="logoutDiscord()" style="width:100%;margin-top:8px;">Se déconnecter</button>
       </div>`;
-  } else if (syncCode){
-    el.innerHTML = `
-      <div class="sync-card">
-        ${themeBlockHtml}
-        <div class="sync-title">🔗 Synchronisation active</div>
-        <div class="sync-code-display">${syncCode}</div>
-        <div class="sync-status">${statusLabel}</div>
-        <div class="sync-hint">Utilise ce code sur un autre appareil pour retrouver tes données ici. Note-le quelque part — il ne peut pas être récupéré s'il est perdu.</div>
-        <button class="rift-toggle-btn" onclick="leaveSyncCode()" style="width:100%;margin-top:8px;">Arrêter la synchro</button>
-        ${historyHtml}
-      </div>`;
   } else {
     el.innerHTML = `
       <div class="sync-card">
         ${themeBlockHtml}
         <div class="sync-title">🔗 Synchronisation</div>
-        <button class="rift-toggle-btn" onclick="loginWithDiscord()" style="width:100%;margin-bottom:10px;background:#5865F2;border-color:#5865F2;color:#fff;">💬 Se connecter avec Discord</button>
-        <div class="sync-hint" style="margin-bottom:10px;">Ou, sans Discord : crée un code manuel, ou rejoins un code existant.</div>
-        <button class="rift-toggle-btn" onclick="createNewSyncCode()" style="width:100%;margin-bottom:4px;">+ Créer un nouveau code</button>
-        <div style="display:flex;gap:6px;margin-top:4px;">
-          <input type="text" id="syncCodeInput" placeholder="Coller un code existant" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:6px 8px;color:#e8e3f0;font-size:12px;" />
-          <button class="rift-toggle-btn" onclick="joinSyncCode()">Rejoindre</button>
-        </div>
-        ${historyHtml}
+        <button class="rift-toggle-btn" onclick="loginWithDiscord()" style="width:100%;background:#5865F2;border-color:#5865F2;color:#fff;">💬 Se connecter avec Discord</button>
+        <div class="sync-hint" style="margin-top:8px;">Connecte-toi avec Discord pour retrouver tes données sur n'importe quel appareil.</div>
       </div>`;
   }
 }
