@@ -16,7 +16,6 @@
 <body>
 <canvas id="bgCanvas"></canvas>
 <div id="discordTopBtn"></div>
-<div id="notesFab"></div>
 <div id="notesPanel"></div>
 <section>
 <div class="wrap">
@@ -25,6 +24,7 @@
   <div style="display:flex; gap:8px; justify-content:center; margin:10px 0;">
     <a href="https://coubo.fr/" target="_blank" rel="noopener" style="text-decoration:none; padding:5px 14px; border:1px solid var(--theme-accent); border-radius:20px; font-size:12px; color:var(--theme-accent);">🌐 Site</a>
     <a href="https://discord.gg/BKyVEdTgP9" target="_blank" rel="noopener" style="text-decoration:none; padding:5px 14px; border:1px solid var(--theme-accent2); border-radius:20px; font-size:12px; color:var(--theme-accent2);">💬 Discord</a>
+    <button onclick="toggleNotesPanel()" style="text-decoration:none; padding:5px 14px; border:1px solid var(--theme-accent3); border-radius:20px; font-size:12px; color:var(--theme-accent3); background:transparent; cursor:pointer; font-family:inherit;">📝 Notes</button>
   </div>
   <div id="headerRow"></div>
 
@@ -108,10 +108,7 @@
   .discord-top-user img { width: 26px; height: 26px; border-radius: 50%; }
   .discord-top-user span { font-size: 12px; font-weight: 600; color: #e8e3f0; }
   @media (max-width: 480px) { .discord-top-user span { display: none; } }
-  #notesFab { position: fixed; bottom: 18px; right: 18px; z-index: 100; }
-  .notes-fab-btn { width: 46px; height: 46px; border-radius: 50%; background: var(--theme-accent3, #c47ed4); border: none; display: flex; align-items: center; justify-content: center; font-size: 19px; cursor: pointer; box-shadow: 0 6px 18px rgba(196,126,212,.5); }
-  .notes-fab-btn:hover { filter: brightness(1.1); }
-  #notesPanel { position: fixed; bottom: 74px; right: 18px; z-index: 100; width: min(320px, calc(100vw - 36px)); display: none; }
+  #notesPanel { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 100; width: min(340px, calc(100vw - 36px)); display: none; }
   #notesPanel.show { display: block; }
   .notes-card { background: #1a1530; border: 1px solid var(--theme-card-border, rgba(196,126,212,0.25)); border-radius: 14px; padding: 14px; box-shadow: 0 12px 34px rgba(0,0,0,.5); }
   .notes-card-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; font-weight: 700; color: #e8e3f0; }
@@ -1119,12 +1116,6 @@ function onNotesInput(value){
     const s = document.getElementById('notesSaveStatus');
     if (s) s.textContent = 'Enregistré ✓';
   }, 600);
-}
-
-function renderNotesFab(){
-  const el = document.getElementById('notesFab');
-  if (!el) return;
-  el.innerHTML = `<button class="notes-fab-btn" onclick="toggleNotesPanel()" title="Mes notes">📝</button>`;
 }
 
 function renderNotesPanel(){
@@ -2204,7 +2195,6 @@ document.querySelector('.tabs').setAttribute('role','tablist');
 applyTheme();
 handleDiscordRedirect();
 renderDiscordTopButton();
-renderNotesFab();
 initParticleBackground();
 if ('serviceWorker' in navigator){
   window.addEventListener('load', () => {
