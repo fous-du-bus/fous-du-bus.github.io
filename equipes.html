@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compositions d'équipes - Fous du bus</title>
+<link rel="apple-touch-icon" href="./icon-192.png">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: radial-gradient(ellipse at top, #1a1530 0%, #0f0d1a 55%, #0a0812 100%);
+    color: #e8e3f0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 24px 16px 60px;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  .back-link { display: inline-block; color: #8b8299; text-decoration: none; font-size: 13px; margin-bottom: 16px; }
+  .back-link:hover { color: #4fd1c5; }
+  h1 { font-family: Georgia, serif; font-size: clamp(22px, 5vw, 30px); text-align: center; margin: 0 0 4px;
+       background: linear-gradient(135deg, #4fd1c5, #7c9fd4 55%, #c47ed4); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .subtitle { text-align: center; color: #8b8299; font-size: 13px; margin-bottom: 24px; }
+  .add-team-btn { display: block; margin: 0 auto 24px; background: rgba(79,209,197,0.1); border: 1px solid #4fd1c5; color: #4fd1c5; border-radius: 12px; padding: 10px 20px; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .add-team-btn:hover { background: rgba(79,209,197,0.18); }
+  .team-card { background: rgba(196,126,212,0.06); border: 1px solid rgba(196,126,212,0.25); border-radius: 16px; padding: 18px 20px; margin-bottom: 18px; }
+  .team-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 8px; }
+  .team-name-input { background: transparent; border: none; color: #f0eaf5; font-family: Georgia, serif; font-size: 18px; font-weight: 700; flex: 1; padding: 4px 0; }
+  .team-name-input:focus { outline: none; border-bottom: 1px solid #4fd1c5; }
+  .delete-team-btn { background: transparent; border: 1px solid rgba(212,120,90,.4); color: #e08a6a; border-radius: 8px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
+  .delete-team-btn:hover { background: rgba(212,120,90,.1); }
+  .slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .slot { background: #1a1530; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px; min-height: 90px; display: flex; flex-direction: column; }
+  .slot-role { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #7c9fd4; font-weight: 700; margin-bottom: 6px; }
+  .slot-empty { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; color: #544b68; font-size: 12px; cursor: pointer; border-radius: 8px; padding: 6px; }
+  .slot-empty:hover { background: rgba(79,209,197,0.08); color: #4fd1c5; }
+  .slot-filled { flex: 1; display: flex; align-items: center; gap: 8px; }
+  .slot-filled img { width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; }
+  .slot-player-name { font-size: 13px; font-weight: 700; color: #e8e3f0; word-break: break-word; flex: 1; }
+  .slot-leave-btn { background: none; border: none; color: #544b68; font-size: 14px; cursor: pointer; padding: 2px; flex-shrink: 0; }
+  .slot-leave-btn:hover { color: #e08a6a; }
+  .claim-form { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .claim-form input { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 5px 7px; color: #e8e3f0; font-size: 12px; }
+  .class-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .class-picker img { width: 24px; height: 24px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; opacity: 0.6; }
+  .class-picker img.selected { border-color: #4fd1c5; opacity: 1; }
+  .claim-form-actions { display: flex; gap: 4px; }
+  .claim-form-actions button { flex: 1; border-radius: 6px; border: none; padding: 5px; font-size: 11px; font-weight: 700; cursor: pointer; }
+  .claim-btn-ok { background: #4fd1c5; color: #0f0d1a; }
+  .claim-btn-cancel { background: rgba(255,255,255,0.08); color: #8b8299; }
+  .empty-state { text-align: center; color: #544b68; font-size: 13px; margin-top: 40px; }
+  .status-line { text-align: center; font-size: 11px; color: #544b68; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="./index.html">← Retour au site</a>
+  <h1>Compositions d'équipes</h1>
+  <div class="subtitle">Inscris-toi dans un rôle libre — visible en temps réel pour tout le monde</div>
+  <button class="add-team-btn" onclick="addTeam()">+ Ajouter une équipe</button>
+  <div id="teamsContainer"></div>
+  <div class="status-line" id="statusLine"></div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCcfWoW_0IWkAopHrlXnKUiZJViss9FSpU",
+  authDomain: "routine-aion-2.firebaseapp.com",
+  projectId: "routine-aion-2",
+  storageBucket: "routine-aion-2.firebasestorage.app",
+  messagingSenderId: "400230415217",
+  appId: "1:400230415217:web:c75da7cea4b0305f4014d0"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const docRef = db.collection('teamComps').doc('main');
+
+const CLASS_OPTIONS = [{"id": "templar", "label": "Templar", "icon": "data:image/webp;base64,UklGRk4DAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSEUBAAABkLNtmyHZ2mttxra9m25m2/Zmtm0zPI5s2/bJbNvnVL1BT1XXRMQEELXuSTpEq8Zb3jpoQddu4BPFz+1hhlIMAjsPf2JQ/r21GGWuwqxmy/N/EGbfD3d4ieRC8y8K4Bs0b9QRGOXQHxB9bCQwwVH51FhgSs4zkWlJJjzva3J+pPMGIfmGHqdJ1hVdTgV+ytlGuIkUckd5dl8klfB0j8n54c4jPQCOb6ICd9f+AxcNBNz/APeNinm7zeYA1BFB3RsAC87T8JPisPFL4EeQCCljwMt1wCrD1gd4uY0B23WEbO8DeEIR+Qct5/GNAn8iiHg2A+hnTNz43fj7NwWwWU+F/iko2a9/v6D8FkzUhn9WCPYQ1TqlVOighTqis54J3HUiMk238J76E7lGW5iGpz5EtukGxR1/Il+//Qv2OxJt6sTUmhOVAFZQOCDiAQAAEAoAnQEqIAAgAD5tMJNGJCMhoTAYCACADYlmAJ0yhH4i0SFWj9RoFcBKgkID05czvz77An8i/svWS9E39blvjLeoqM/OBHDcjls1H/tOUsxUKVkImnr9XQAA/vnCXOL/H+15B42afAdH1w7YzvNEIXuo12H7Mv/877feLw8y/EkaMkvK8fvU2yzfquaN8a3RVsRMWSPzCCM0fvX4uZ5iflLxwABGPrQImmQfH/riwzc7/f8jmhcj0SUl0HaysmDtY7AZ0WEXSQ71v+KF5WdUcX0jRvGU27gkxTPkXltHK9qB6VLgQhXkXfOZ8JbPt7jRplMmcq8/vsfQREmw6/LDTAJusu0rmbxG4eSFwKHyAvznfi3PMBXxy+rFeBQPHpN3wBJHcClXG0nqK1ivrb/iTRuOp/9LYEc3CH62kIXx5+sSA9TrV6XPz06Yz/MkeVwO5NZm+a8ZGhzfcr/n9E5Ysvr//CU/9NXPorMg1J+wVb3PWfCuePH6RBAG+qHjDJFSwzx2mWC4dclqv8Sm6tKDLe5SciQh9idDYAlnj7RQTz+0OoXhKlJFMiKDNi7Z2m8Q0Bg2vZvP5U0o+Oa4vG9KISW8c1LNAAgmGqXe2bifwsHOwwA9vr2zYSuvcb+tWzAAAAA="}, {"id": "gladiator", "label": "Gladiator", "icon": "data:image/webp;base64,UklGRkYEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSAQCAAABkG3btiFJJyLbtm1br9WPtm3btm3btm3bttNGZKxGZFbmH0TEBEhii1WR+Cqb9yrxKeZwVY5PZ13vEZ9NsCUmyWunFFEG5pOtsEOyTUkqkqJ5iigybb2WUcR0boRRp+9pRNKe2JY2gjLjV34RSfPugLofDimzrDlFJOuHFapR/t87RUQ6hM+YjsAJdTHDFRHZ4qlo1JD1IklaOFiX9BxcSToRd89kIqtpZ1Rb3yopdgRg+hYf+A8O19HOpJcNtDbKZ79pyvATQi4MXUGw5lAv+8oYqfucxfJ9wIl/swVsG938wl6qgP1qciNpyJu3mHcwKI8N3IXaaXvf8/U+3SViNjM/mDXDnLmSDtRI+WVVb37iLBCppCX83VW4gzehFkD9yq7hWX+8D7tqRlDar13P+wvzPN/2/7fnUXDFucccmjhOMep7/GKIQ5vDRBneMhPtzompRo2e6jAr2RIdvOADViQfCLzqaCTpV+scT5ruvI4GGlzJatoIe3NI5JR30Q5WyPoKw9fZym7S+JxDom0RBufM/KPNYBmbb5Qd9F4SdaoFPzGHp5o2wzZ1TOAbjuXpoxPJNPQbnn69oU8XNz9G5ZYYFjrB6x7Q9TZni0lsM5zzT4Ihv29nllgneJfDIk8jiXkehxcCrlKxS9Y3BNrAFLETta3D2TepxHXjHkXiW6CSJBZWUDggHAIAADALAJ0BKiAAIAA+ZSqSRaQioZgGAEAGRLEAWIZVeEDeZqwB0GfoL13yAFcC6H/8BqFP1a9VvMs7j+4T/Fv6x/yfVu9e/ogfrkmTOrwgkWUbStVCEU2Q1GFVqA2H32F5+OQAAP7+zWu1G5nGrbzNRD0LlkLBKt8Yfos3tpGRgYvEv9y/agIPJ25Fu6/lUazr0wafJNrAfNil76XesHv0EURiP+KN3fiQX2jnM8tu3XeCaQuRG5T5oVfsPb7F/KrrqcLMsVIJIQoWAyiFxHE9QT7Lo/ATX6LqNfaQR5CB9xPyQR5+o7cuNiUnaVxFIxLscp7gsEq2oVBR30FfA8i3WYFZN1uOLiGkH+9jQfHuomLC2zSpz0Ohw3l2ZlkTX2fTuqHYGktzknLQDiXM5zXSmD/diLNZ9HTtNK2DyP2VZgZg3TxPyalhgnZvxOu/8PGqdJTCQNVNH/gdi7QkMvwQkRXE0FvlPg8U8Xiygy7VY0jZRedRq1yLXSs5M64iJ4qHkHpj+K1C7r8fT/W9NsbUB59PuRzIu1E+qxr/9TmEq30MJR64C+YUGyeOcehWGT/KPA721iO30Wsmz7tUwrtRtjWxT7h06vwMzMAxf+n4AfFvip4NESi983wAep0lh009dhX9v9crAXOY17EIE/K+dVGqklpIkyDnPnBm13LFvS4aAXtjV3or7hMtgDFm2T3Y9eNBqkLujQyAyAAAAA=="}, {"id": "assassin", "label": "Assassin", "icon": "data:image/webp;base64,UklGRggEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSNABAAABkCvbtmlbY+vy2bZt2zYj25ltv8i2bdu2bb9jnzWCrdp/EBETALv5qsDhufudWvVCtiW36zM7u1nhH6E2ZlKDFo3SAeqlGOuZJOwnX2Y1SfkY85UEUj+RR1KNBsRIrlYMpBFkrDqgLflFsVoF5CKFv5NkuG1uFZB6+Rl9XwkAcu9hdIKCTF9fkP7/5Of3eSEPCPJ9k0QYpu4XkZ2FEu+RF0vl2B3nv2x5NgT5thTM0x8mL5f6wlfZgeTT9FY/Tl7NC6sF/pGuOE9KY5piC4WLdFWBxWb50/f4TZJrS77+2GABSbq6pM/dQTGSl7u/Pgzr1r0l3y3RRR5+/X880QipS0M0vDHm699uR3VkdFN6mCutbxswfOKph4ZPe2uwKI14bcSQn8a/ZyRamuo2sejfls4KUPo7Rehd3CjsYbidBJujRewvTb1/uE+B3YyPadldGrZTL1l7ncmWNC6ui94/G9GJZZKdch6SdDVT5MrPSDLY0Ia8hfTeEDyWPd20CO//J69p1or6xYXaqdfJ9y/I3/mKHxPhatZGhGalANVcJBkbCCQO88+w1r6fDECaojuqAZB69rJmmvYa+b0onKzii/SFsxvfqA4tPASHq7S0BVZQOCASAgAA8AoAnQEqIAAgAD5tKJFFpCIhmAwGAEAGxLGATplB5FFgVIB8nxfGiCnOf4z/r+TL6H/5/93+AL9Tv+F2B/R3/WAtzCsm6PdQTvz4zqByudpDaKieocrwbT8D5qtSSpQAAP7781fYHzYtB4Y8Cl6bN0qMis7cEa6AbyAD94nMYw9Pcbuv7IMq/HFFT/a8w1lNnQlZgcI3pr4r+3BaSzoo3HaGIu8TfXsvAubAzA/kkF+Yf17D+h7NMAs04Rx9EQzvWvasrjyHdMthuCHrb+St+5No+K+zZxRBNnGU+mGm7/zKy9idH5VD0BoMGiEWtKkkhdfG5jb0yxVmAcq7ILefP/4fUOa/+P5EZTE3swh81uhJ5IhaUebivuoMgCyzdYu/J7REXBP1QzNil6Tyeb2faSV0EWEcP4cpN55ZOhsvfiYwlIBH9Tf7P/BJhWJ2UO48oWwP7q2Rawc70AfAtJehx65KFNredJ8zYtIBWtgV7nwt1xhypln/6uerNw5aQUiso9+FXWvRtKMLRA+RgO1FHxO2S6/o6exXytNign4PXuBy6RIqTRorZrCVUVBXAcGJTJUd47xVFbvHFcFEy8/r5Lu7/6I2K/xQBonnH+Grtx/Lh2AlPgoW06gxm7jxA+o2Am2iret7okf+U8bgfAChtPMNmPHF0o2b7qNcmkW2O3t5YkaGKlLTFgqeWRHcUg27IAA="}, {"id": "ranger", "label": "Ranger", "icon": "data:image/webp;base64,UklGRgIEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSP4BAAABkG3btulK66hs27Zt27Zt27Zt27Zt23WNEycHez5EO38QERNAwYoKhbjHuVShSfDOqBgKiTLFYTIJIq8cx1O0ZTgtjhnCq5TW8DCgFny6UeCT9i76/AMw5Y+9nsBBbvqRWSt28uBUrgNQl2QKKscRHVC/Rxuw//8J4GNdIbDa/+FtWACPC96OSUoAct1Y+Hy21MC5fboXzKUZBD+j3QCgxQP2eOMe4LLB+096P60AaCcrZer5FwBz7yyefUQYgA2yn2Ju4G0CpVqyshYAK+ViOWgbgLHktzFgDKL8lofVLgHxjZc7J1LJMOCg5Es5DfxISUIf9qmaysbtw9XkRPMAZxlf/TQ8LE9EGVXMOqW1taEHEeVZDlxL6JUnSsOrvERStj8RL2PY9/9m/SRE8izYMVYgSn4eLkfY1z6prkZq8Q7AiMC/L40r7Hf/ZrBXpUT7TOhry/x2tlp6MSz+JWB7zG7s6f6QTaypAt8KFf35Y0EFmbq+s7QWtnsmRpmLvkZkynrDsjgz5R7yIqyHkDgReSffb+1f9IvOoDk6FHj6s5FARKQkkch/0h32GcUeALbepb68y0c8xZHuVTV07GgV/SgD8RWH2a/b2HnroRTEW2ymAbiQlPi3AoBLEj9hn5ealV+y715mZ34J+w+MY2uGVeVHROO+p6bQJspIwQJWUDgg3gEAAPAJAJ0BKiAAIAA+bS6URyQiIiEoCqiADYlAGd9EAR599A5+NUG9EeiGpHf7P9u8x30j7AX6tdW70KFpzs/atSx5dXynWJHqnMhMw47WTtGV2Bjpk4+eGAAA/v+dcevkCFI/4IM/q7jtsTVTWiUfXPsBrysn+Zvob3Tx/qjuHX340jYOkjc/ibx8815MPzZg2PAZbtWgLTqg0HUMsqAuXHdDvtELlqju/sUBvf0m0aQ9tB3Sj9O03XjnrPOujz5nzRZwAdjCQgEPSNNB5e4PqqLJbs9tBHu9zQLThgF/Jqz1HHJ7M8zKYEVLPEKWt3toJ34fyN6tneBhKAr5+YWJ2mOf469W38HOblJdbTaH7SG0+KxX9KwH3ZN+FH8FyMyqy6QHznuSZvvx1F8t/4pbZHe6WREEHFmUqO0kmrwRSkYFlNGB+UnsiN/AtIoGVEQqS34m3QsxEspN7zoV0nl/jVYZlceM1hJ/ToNSO/Lo47yd1rIG7F6PPLiEIw1np/8Xnnw8f+i0GvsESGZN2h0Qx2hlwQ1nSbHyZUzyyCnYLhma9emsF+48Swj5N01/znb6yhLzPI2NAamt5z7vI/mXsZ3XWqxrN8t5p8x6hKfn5MfP/FtqTqFDNXWIcALKYAA="}, {"id": "sorcerer", "label": "Sorcerer", "icon": "data:image/webp;base64,UklGRnoEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSC4CAAABkHXbmiHJ+iOqxrZt27Zt27Zt2zbebNtWcdTunlYh2RH3oVIdERNAzGavRFK5/wOaOhkeiQ1Shc4H3ueyKP/QkLkpeJXbon6O9ISQCgGssVlj2yFUJ7T4R0AYlsaS2gG8aXPmLwAIr9YVpuayPsd/BfoxUzObsh8A5x6mESaBP2+dwZhtloIPg5ZD83Pz2xzq85yG+im++IRWf4FgOMCmp5ssAAuMFA2D44SzJxDoWegFcJHQCTL+5NGzXQTny/edga9bvmJ5niGqKrEdAB+hVyheuuoosIphBV3vLFrOB1dlUiQGp6nOKDxu/+8DkFx0toA3I48D8Wf6bERkJi16DEuL3FEAV30RUGdPAfBnWFsmVdBK84H1blKuhxdy58o31dFZXkDcXrpNjSA6a6V3cYeaNLfKHXwtXnxv1nWI79z0DY8Q0F8r7UseA/Cn9W7hY4n0q1Piu60IAskGyjugGT3+D8LuMnXpbQbNxWk0tolgEgD4DgkA7r8EAFUBc+QPyXaFQQgLQfAtEO9BaGIMeHgrQoh9C4wKMpJg1FWUkMJ+FuJzOWMZtAW3M0IjuIyQNBXPvkxW+fb0afKt1fpWOa19dAr3ea/3zU1C0+TpnahMs5OMm/9x+C7WJLS7nx/Ll4ESg92S5fV5aJqO/7EjF829KsBv5CLGaYcwRJ2aJaqx/NLBMC7tyUBMFz8UBMBlAOxNVxuxkJZb+8GncsFzoXtaYnWaQj03F89CjANWUDggJgIAANAKAJ0BKiAAIAA+bS6SRiQioaEwGAgAgA2JQBOl9hKA3jE0oTGP7vUgfLm1BTDfFl88/7r+zfAH+o//D4En9mVtztPVMzqDhjqrewaR66xyLbfuGKzGcae6iOxZ5qwAAP7/0cztBmprrzd7rs7x/qsm/wD3ua/+6T0k4jeGqNf0K/W4IFZQd8w+QOE967/tZt/3z9/Dr/cg/+343GRlyJI/XdG67+VwyCpeQH+XOmL9MYjkARxRZiG/lbfNzT894P/iV7+wdV7/wnEjl4eP501RKiqMKzVljqG+q6K2ghnMw8mC/d8hB+tUlSzAYexpH42FoI6/xAgayO9oLi7bLgl2Q9naj+T1JeRU8Whw5Y72/fqk56Dhe3Wa0eQXgFL6Kkd8xne1IGAS/D8KZQrvDwt04joLA9x+gG456F+8WXL2daWHMxfUPZvSOErhs29k+6oPbazD/0VAf1xu5+Qm1CrzZMyydux7MhKbE3GwrMBlusBqxd3E5/RQbEKd1ARbVbaSVvR8oY68uL7/P/x6DSFMCcoNbbJ/uhDe5WW70/gxED2bom5AO+IqZBG/OfmYp5euyDOqxjpWi+l3mSUQHhpUHVOPNTSBuHda7RbkZqyOAGkvJ4JbSUWX6tv9U1fANM6EYFNPTyXhbsL/rcL1kelFrDjDkDW+uxzFLm+U9zyqJC1uyK2Hl2hB25KCznfQjajeB3J5wMzIDvDhOGzasClxU4bgAAA="}, {"id": "spiritmaster", "label": "Spiritmaster", "icon": "data:image/webp;base64,UklGRpwDAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSKMBAAABkHRrmyHJ4qPHtm1jZ8+sbdvYzpm1Z2nbtm3bbdsoZkbEs0hVRcQECK8j54kon3xbKTo1k0pbR2ewEZwbjcrtD8C9XjUi1WDNuxCAil3fPBIxo35oHHXKjCqeKq0rxbXaXtVDzNQwZKbaZcdq5MbK7oYUoz4l4pj3TBKe5Cam5l14nqH/mxb1Rxbc1fxr6GLSMU3qe/691Ba+pql/31E7JjtUvpkMT2T2CzCkMuBrAq8Vvt+17BpllVOWgAJKSs1cQJGTiy+7q13/wjxME9BpAAUGoAyUHGc3WklslWHROC+yqXfcCNoRtPiV05s+lrGGkshCS76lUAI+H6DnWypfB3QFIQX5ReE0IECFBP7Vs4gBPiDPV3gXxw8JRgFgzhK2lXYC+Utj0+8rm7uFFWtTgKfV7US7/CC8HRRbbBPKrph7XoM5RjgvN4FXCyuwNTZcAvT+GBfVzwCUJdoVFwF8bCDcNvmC59guwn2rZ9qd/tRFeK29vdyNua+hiGDnnUnSogqOjhCRjak3YrXUW8c0iRGRrxlX0kpE9/C7mCiNGi+8AgBWUDgg0gEAALAJAJ0BKiAAIAA+bSqTRqQiIaEwGAgAgA2JYgCdLzkkGFBwAEe+evY9TRBTHfFN9O+wN5Onrk/Yz2AFqzsM8Wz25m2CmS+S5yp5MoAiOoRkj4lV1IpAAP7/ubU5sxLp9QRHSrFE+jdZbqPANE0sPTPICdSIew6g/L6H6qfrnjuGNRyt3Xcrbu4W6nTMVJk5HgfYTzw+7+GfRw9nafnycDJjPJhUtrII3H1/bOXUs6QbdzQqbkRl5xuDOfCgIDhjzyquldMu4MWV9cfq/prMMcbIv+ZskS31zN7jVj9JohzaYdLxAYvz9S5dpZfUqARqUpYZI9B1If79Ii9+JfT/5uw84zwqxHxSQ8HR+YCtNt5fMl7GhPzhWRx592H/lIcciuomHx5nwDo36acrQb9ac9FixqpB96DZVygCqZHtzYVJ27hrNjrDPmgTMMHb6d/7NM3ON3eAKTUUS23PdsfOYZ3zcn/yWsn1rx+VdXXxPhoryVgbaBt4t7CcAd3zDeUSxKXA1R6OFk2l849mJKaC40vgRYi3lJ9AFIgVuPi/25LFYJb5MkyfY2vEkWbLjQvzgX1S5BnEPCwFa89daHxk6+RNbd7Ugyku5L+RmFn2qNgAAAA="}, {"id": "cleric", "label": "Cleric", "icon": "data:image/webp;base64,UklGRoYEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSB4CAAABkCzJtmlbc+veZ9u2bdu27ZZt22jZtm2/d23bd++zcbRG4/gPImICyFO/cuTjXq857/ECEc3JLEPEiZ40q0FUZ9Obz1PESik4y1W78vvUdH/iuhRyViX+LLVPAmAZU/gLm1noFQDb1ULF4444m6/06BQDx8B+R00jNgFmAzhb71BGGSc7YBhgOgAwO2xw1MFMdq2GkxFmALawxBAD+g8WDsSnBKcDwBvJibAg0QAyK1TLhf1c+lvgVtElAHKfVSWXvXWw01xnAB8zE4HfUs0o4JVArtcBv4vTNvYEW6NSrbmZ1WmagdyyrriPyO5CxaP+zUAkWMh02yoSdgIzndWb0DaWzSNabg/IsWYp7wL8byeXozIR2DtyZCGiVmnQzEnFqWM+9JdKlD0ogB/Brom0DHmM3ZZoGwDcpgK3kTW+l3LV/jZAGJKpjaDmBmBNKklLwMx4zm+y2Wb691DWZFwPqCEzxNdtJNs0I7oolT1xcAdMPZ7BmnB3gHI8/WpAbR2wTL6I/JUPZ5HjGiBqpQ7IU5VL8ueks7lAwGkL5Krk/DoAKwNShisXGYOjlQFqAxfDLXD6p5/pBdz9XNQFt8hwYv0At4MqkWt+ZoaDh+/qk9vtn+e4x77vKUwe8o0j3LGdLsiR5xVu2lzEzZDIq+KgjwyAfKIceb1Stt2Myxx5v2RKznGcIR8Kj5jFOtMX1C4Ll0Sf0GGtPvm2xR7OE1ZQOCBCAgAAsAoAnQEqIAAgAD5pKJFFpCKhmAYAQAaEoAnTNktmfPh+ND868z3TWMrtWuFj6RGZP5z/7fuB/qt1h/RL/ZUdqepgWrBm09QOV5hdpB9ME7NVm0zSYI3Dac01blx8AAD+8rGds35TX0zF5pBc7yFzS8ma67y/mC/n55vgjddEW8RZ/Fau8N749FxPZpa8BsMyDNGyxIsV5GVtRZ31D3/R6etmbviS3NqfjVvIXm9w4GCoX/91qlf6/4frTCMuv530uIQEw9XNJ1kf4yMaYBLPp8oTzq88xZIzKEv3vhn9aNgUs/g56M6PUfwyYNE0l467FOGj5yrcid2SHcfM7c6fS1urH52bckAO//4xCAmiELeQ8DXNwDdaYHADAIrni5D2/AKImeozbAt/IqLA+mLiK/HzJUYkZh4aF4pVo8y2Jyi8N2QTeoDnkbANFIf4Lh/pRb7n2oO+SZvyNFaWXkAOeKwyKvUSUtRYJSrHUGqByew72d/+/Jpm/uKYpXM8VjKbmCeaqrn/8DlS0WrGZH8brfKE02Q8jGdhRLxWEP0T22dBL9PFtmpn/7YbWMvRwuZ5xJCNuck2dPAVYp7XYg40be1ChuwGO3+hdOj9uL0nh/xTaSPoXXjV47vNJNxjleL0wO2drMnS6SSZ/T/8vJVa8f07+311XFaTSsPIlSrU/biOClFvvUIVE8uSOX4oMWGWhSn6jqaQN1vdZy8KOntgcvBDbFAE5+fgCezOten7xGCirS9oW6aMS130KVD+XvflAAA="}, {"id": "chanter", "label": "Chanter", "icon": "data:image/webp;base64,UklGRuwDAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSJsBAAABkCvbtmlb6+g+27bt9zLbtjIzs21bkW3btm1762j3YK+tP4iICRBu05QOCH8H/irqT9H3HMroR+g4MNKPunHgfSYvco+ZUE0IMQtrByEiHaeMiDjq+guliwiekAwQ4TXJxOtsjoJtQel17b/k/cmxcf6WFs77A+OSyD/vAbo7y/wY2P7Z5uZtYGfISWAjwLtjnySP9v8HYp2cdE9Y1M0NNOBHnbtxgJ/l7bK+w7ry95IYoN19cd3C3pDNIKw/6z81kR4fFbf8LWCz3HK12ifzexKI/+NIkx8AA2XBi8CvMmtZX/AWMLvsJXr3s8yUpXkFXFqsYBhJIKbHeT/xI7BIlva1ASZuTTAXyyJPkSd2mMDPoybS2DyZOKpE4fzYBB8sisbnwU8gzlRZYCMK/Lv5AvvrjxIQY4KscQyv74Qk6bsfNiRv534GHq3RJOrK5sI23PCyhRiAmQAwNpYOCKehFtdxnFhfMyDc1v7i6HQq4WFb04FWSHgZrrzCkCijiguPg+3+QfJ2qYDwPu9dNqUWvvb9mVf4W3BwyA0AVlA4ICoCAABwDACdASogACAAPm0skkakIiGhMBgIAIANiWYArDKEdF+7RIDbV3ZzHgVT57NjsfIA9BniBiy/+P9qvss+b/+Z7gX8k/qX+v6+H7Hexh+uy2539Yr5EhmOfD4xJkd970eOu5Y4dleKZ71I3gAA/v9wdVPLbFgei8VYNpXJZ0BOagFMDEAz583LJ4WqC/e8j5f+1Epn3LX3bO77ePEx1s4SxdTGxPvFGOd8Z55W2C2B+DUuokljH3WqPyrHCvyy/9P37b2ON0Bf2MR8xe+JlTvldOtvjDyq1B32wpgE8sr3SBamWEHNPK0+GPxxLiZFY7PypN/E/kmrUrWHm5wr9WRzo3M7/zcf/14NWCJo8jaX5j8TG1mUtryX8ncDYrJUws1t4ZSx5iNYmqha5+qtmVUvs39vZsEjBEwMY5tb6bU16ry40NXiag44HcRBRR8xPGSfSi4mjHA18LQxX9b8bnfMeCCSF2dthG9S4MKPc5uXy6YFhupzeFo1VR6HtwPBbb33XzYXmxqX5zBwARUP4WldgNl/ubC3WvGD/yhyzS2EU+e9h0M3o2JgMv3xeFphlIVY/FtWz5foICskqh2naZllZeKq2bog37iqprCfH+igrNJd1R0T0TANCzaIdXEigqI4+D8vzdPMek3l1GBQBmtEPvGk6l808s0vBx8GE1McLS294D75n82IEOYGbCBZCxcvemQc2REKzp6ATSHNcKlxhCrHGt1KH26AAA=="}];
+const ROLES = ['Tank', 'DPS', 'DPS', 'Flex', 'Heal'];
+
+let teamsData = [];
+let openClaimSlot = null;
+let pendingClassId = null;
+
+function makeId(){ return Math.random().toString(36).slice(2, 9); }
+
+function emptyTeam(){
+  return { id: makeId(), name: 'Groupe ' + (teamsData.length + 1), slots: ROLES.map(r => ({ role: r, name: '', classId: '' })) };
+}
+
+function addTeam(){
+  teamsData.push(emptyTeam());
+  saveTeams();
+}
+
+function deleteTeam(teamId){
+  if (!confirm('Supprimer ce groupe ?')) return;
+  teamsData = teamsData.filter(t => t.id !== teamId);
+  saveTeams();
+}
+
+function renameTeam(teamId, value){
+  const t = teamsData.find(t => t.id === teamId);
+  if (t) t.name = value;
+  saveTeams();
+}
+
+function openClaim(teamId, slotIndex){
+  openClaimSlot = teamId + ':' + slotIndex;
+  pendingClassId = null;
+  render();
+}
+
+function cancelClaim(){
+  openClaimSlot = null;
+  render();
+}
+
+function pickClass(classId, imgEl){
+  pendingClassId = classId;
+  if (imgEl){
+    imgEl.parentElement.querySelectorAll('img').forEach(img => img.classList.remove('selected'));
+    imgEl.classList.add('selected');
+  }
+}
+
+function confirmClaim(teamId, slotIndex){
+  const input = document.getElementById('claimNameInput');
+  const name = input ? input.value.trim() : '';
+  if (!name){ alert('Entre un pseudo.'); return; }
+  if (!pendingClassId){ alert('Choisis une classe.'); return; }
+  const t = teamsData.find(t => t.id === teamId);
+  if (t) t.slots[slotIndex] = { role: t.slots[slotIndex].role, name, classId: pendingClassId };
+  openClaimSlot = null;
+  pendingClassId = null;
+  saveTeams();
+}
+
+function leaveSlot(teamId, slotIndex){
+  const t = teamsData.find(t => t.id === teamId);
+  if (t) t.slots[slotIndex] = { role: t.slots[slotIndex].role, name: '', classId: '' };
+  saveTeams();
+}
+
+function saveTeams(){
+  document.getElementById('statusLine').textContent = 'Enregistrement...';
+  docRef.set({ teams: teamsData }).then(() => {
+    document.getElementById('statusLine').textContent = '';
+  }).catch(err => {
+    console.error(err);
+    document.getElementById('statusLine').textContent = 'Erreur de synchronisation';
+  });
+}
+
+function render(){
+  const container = document.getElementById('teamsContainer');
+  if (!teamsData.length){
+    container.innerHTML = '<div class="empty-state">Aucune équipe pour le moment — clique sur "+ Ajouter une équipe" pour commencer.</div>';
+    return;
+  }
+  container.innerHTML = teamsData.map(team => {
+    const slotsHtml = team.slots.map((slot, i) => {
+      const key = team.id + ':' + i;
+      if (openClaimSlot === key){
+        const classPickerHtml = CLASS_OPTIONS.map(c =>
+          `<img src="${c.icon}" title="${c.label}" class="${pendingClassId===c.id?'selected':''}" onclick="pickClass('${c.id}', this)" />`
+        ).join('');
+        return `<div class="slot">
+          <div class="slot-role">${slot.role}</div>
+          <div class="claim-form">
+            <input id="claimNameInput" type="text" placeholder="Pseudo" maxlength="20" />
+            <div class="class-picker">${classPickerHtml}</div>
+            <div class="claim-form-actions">
+              <button class="claim-btn-ok" onclick="confirmClaim('${team.id}', ${i})">OK</button>
+              <button class="claim-btn-cancel" onclick="cancelClaim()">Annuler</button>
+            </div>
+          </div>
+        </div>`;
+      }
+      if (slot.name){
+        const cls = CLASS_OPTIONS.find(c => c.id === slot.classId);
+        return `<div class="slot">
+          <div class="slot-role">${slot.role}</div>
+          <div class="slot-filled">
+            ${cls ? `<img src="${cls.icon}" alt="" title="${cls.label}" />` : ''}
+            <span class="slot-player-name">${slot.name.replace(/</g,'&lt;')}</span>
+            <button class="slot-leave-btn" onclick="leaveSlot('${team.id}', ${i})" title="Se retirer">✕</button>
+          </div>
+        </div>`;
+      }
+      return `<div class="slot">
+        <div class="slot-role">${slot.role}</div>
+        <div class="slot-empty" onclick="openClaim('${team.id}', ${i})">Libre —<br>clique pour t'inscrire</div>
+      </div>`;
+    }).join('');
+    return `<div class="team-card">
+      <div class="team-head">
+        <input class="team-name-input" value="${team.name.replace(/"/g,'&quot;')}" onchange="renameTeam('${team.id}', this.value)" />
+        <button class="delete-team-btn" onclick="deleteTeam('${team.id}')">Supprimer</button>
+      </div>
+      <div class="slots">${slotsHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+let firstLoad = true;
+docRef.onSnapshot(snap => {
+  if (snap.exists && snap.data().teams){
+    teamsData = snap.data().teams;
+  } else if (firstLoad){
+    teamsData = [];
+  }
+  firstLoad = false;
+  render();
+}, err => {
+  console.error('Firestore error', err);
+  document.getElementById('statusLine').textContent = 'Erreur de connexion';
+});
+</script>
+</body>
+</html>
