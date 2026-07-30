@@ -328,6 +328,12 @@
   .toolbar-overflow-menu { display:none; position:absolute; top:calc(100% + 6px); right:0; background:#1a1530; border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:8px; flex-direction:column; gap:6px; z-index:50; min-width:170px; box-shadow:0 10px 30px rgba(0,0,0,.5); }
   .toolbar-overflow-menu.show { display:flex; }
   .toolbar-overflow-menu .tool-btn { width:100%; text-align:left; flex:none; }
+  .icon-menu { display:flex; flex-direction:column; gap:2px; }
+  .icon-menu-row { display:flex; align-items:center; gap:12px; width:100%; background:transparent; border:none; border-radius:10px; padding:9px 10px; cursor:pointer; text-align:left; font-size:13px; font-weight:600; color:#d8d3e0; }
+  .icon-menu-row:hover { background:rgba(255,255,255,0.06); }
+  .icon-menu-icon { width:26px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+  .icon-menu-row.danger { color:#e08a6a; }
+  .icon-menu-check { margin-left:auto; font-size:12px; color:var(--theme-accent,#4fd1c5); }
   .dashboard { width:min(100%,1180px); margin:0 auto 20px; display:grid; grid-template-columns:1.35fr 1fr; gap:14px; }
   .rift-card { width:min(100%,1180px); margin:0 auto 20px; background: var(--theme-card-bg); border: var(--theme-border-w) solid var(--theme-card-border); border-radius: var(--theme-radius-card); padding: 18px 20px; }
   .sync-card { background: var(--theme-card-bg); border: var(--theme-border-w) solid var(--theme-card-border); border-radius: var(--theme-radius-inner); padding: 16px; margin-bottom: 20px; }
@@ -1160,37 +1166,47 @@ function renderSyncPanel(){
     { id: 'ice', color: '#4fc3e8', label: 'Cristal glacé' },
   ];
   const currentTheme = loadJSON('aion2-theme', 'default');
-  const themeBlockHtml = `
-    <div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.07);">
-      <div class="sync-title" style="margin-bottom:8px;">🎨 Thème</div>
-      <div style="display:flex;gap:8px;">
-        ${THEME_OPTIONS.map(t => `<button title="${t.label}" onclick="setTheme('${t.id}')"
-          style="width:26px;height:26px;border-radius:50%;background:${t.color};border:2px solid ${currentTheme===t.id?'#e8e3f0':'transparent'};cursor:pointer;padding:0;"></button>`).join('')}
-      </div>
-    </div>`;
+  const themeRowsHtml = THEME_OPTIONS.map(t => `
+    <button class="icon-menu-row" onclick="setTheme('${t.id}')">
+      <span class="icon-menu-icon" style="background:${t.color}30;">
+        <span style="width:14px;height:14px;border-radius:50%;background:${t.color};display:block;"></span>
+      </span>
+      ${t.label}
+      ${currentTheme===t.id ? '<span class="icon-menu-check">✓</span>' : ''}
+    </button>`).join('');
   if (discordUser){
     const avatarUrl = discordUser.avatar
       ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png?size=64`
       : `https://cdn.discordapp.com/embed/avatars/0.png`;
     el.innerHTML = `
       <div class="sync-card">
-        ${themeBlockHtml}
-        <div class="sync-title">🔗 Connecté avec Discord</div>
-        <div style="display:flex;align-items:center;gap:10px;background:rgba(0,0,0,0.25);border-radius:10px;padding:8px 12px;margin-bottom:6px;">
-          <img src="${avatarUrl}" alt="" style="width:32px;height:32px;border-radius:50%;" />
-          <span style="font-size:13px;font-weight:700;color:#e8e3f0;">${discordUser.username}</span>
+        <div class="icon-menu-row" style="cursor:default;">
+          <span class="icon-menu-icon" style="background:transparent;padding:0;"><img src="${avatarUrl}" alt="" style="width:26px;height:26px;border-radius:50%;" /></span>
+          <div>
+            <div style="font-weight:700;color:#e8e3f0;">${discordUser.username}</div>
+            <div style="font-size:10px;color:#8b8299;">${statusLabel || 'Connecté avec Discord'}</div>
+          </div>
         </div>
-        <div class="sync-status">${statusLabel}</div>
-        <div class="sync-hint">Tes données sont liées à ton compte Discord — reconnecte-toi avec Discord sur n'importe quel appareil pour les retrouver, sans code à retenir.</div>
-        <button class="rift-toggle-btn" onclick="logoutDiscord()" style="width:100%;margin-top:8px;">Se déconnecter</button>
+        <div class="icon-menu" style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.07);">
+          ${themeRowsHtml}
+        </div>
+        <div class="icon-menu" style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.07);">
+          <button class="icon-menu-row danger" onclick="logoutDiscord()">
+            <span class="icon-menu-icon" style="background:rgba(212,120,90,.18);color:#e08a6a;">⏻</span>
+            Se déconnecter
+          </button>
+        </div>
       </div>`;
   } else {
     el.innerHTML = `
       <div class="sync-card">
-        ${themeBlockHtml}
-        <div class="sync-title">🔗 Synchronisation</div>
-        <button class="rift-toggle-btn" onclick="loginWithDiscord()" style="width:100%;background:#5865F2;border-color:#5865F2;color:#fff;">💬 Se connecter avec Discord</button>
-        <div class="sync-hint" style="margin-top:8px;">Connecte-toi avec Discord pour retrouver tes données sur n'importe quel appareil.</div>
+        <button class="icon-menu-row" onclick="loginWithDiscord()">
+          <span class="icon-menu-icon" style="background:#5865F230;color:#5865F2;">💬</span>
+          Se connecter avec Discord
+        </button>
+        <div class="icon-menu" style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.07);">
+          ${themeRowsHtml}
+        </div>
       </div>`;
   }
 }
@@ -1974,11 +1990,23 @@ function renderToolbar(){
     <span class="toolbar-spacer"></span>
     <div class="toolbar-overflow">
       <button class="tool-btn" onclick="toggleToolbarOverflow()">⋯ Plus</button>
-      <div class="toolbar-overflow-menu" id="toolbarOverflowMenu">
-        <button class="tool-btn danger" onclick="bulkSet('reset')">Effacer${activeChar==='all'?'':' — '+getChar(activeChar).name}</button>
-        <button class="tool-btn" onclick="showHistory()">Historique</button>
-        <button class="tool-btn" onclick="exportData()">Exporter JSON</button>
-        <button class="tool-btn" onclick="document.getElementById('importInput').click()">Importer</button>
+      <div class="toolbar-overflow-menu icon-menu" id="toolbarOverflowMenu">
+        <button class="icon-menu-row" onclick="showHistory()">
+          <span class="icon-menu-icon" style="background:rgba(124,159,212,.18);color:#7c9fd4;">🕐</span>
+          Historique
+        </button>
+        <button class="icon-menu-row" onclick="exportData()">
+          <span class="icon-menu-icon" style="background:rgba(79,209,197,.18);color:#4fd1c5;">⬇</span>
+          Exporter JSON
+        </button>
+        <button class="icon-menu-row" onclick="document.getElementById('importInput').click()">
+          <span class="icon-menu-icon" style="background:rgba(196,126,212,.18);color:#c47ed4;">⬆</span>
+          Importer
+        </button>
+        <button class="icon-menu-row danger" onclick="bulkSet('reset')">
+          <span class="icon-menu-icon" style="background:rgba(212,120,90,.18);color:#e08a6a;">🗑</span>
+          Effacer${activeChar==='all'?'':' — '+getChar(activeChar).name}
+        </button>
       </div>
     </div>`;
 }
