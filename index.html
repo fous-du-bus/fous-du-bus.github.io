@@ -1982,19 +1982,19 @@ function renderToolbar(){
     <div class="toolbar-overflow">
       <button class="tool-btn" onclick="toggleToolbarOverflow()">⋯ Plus</button>
       <div class="toolbar-overflow-menu icon-menu" id="toolbarOverflowMenu">
-        <button class="icon-menu-row" onclick="showHistory()">
+        <button class="icon-menu-row" onclick="showHistory();closeToolbarOverflow()">
           <span class="icon-menu-icon" style="background:rgba(124,159,212,.18);color:#7c9fd4;">🕐</span>
           Historique
         </button>
-        <button class="icon-menu-row" onclick="exportData()">
+        <button class="icon-menu-row" onclick="exportData();closeToolbarOverflow()">
           <span class="icon-menu-icon" style="background:rgba(79,209,197,.18);color:#4fd1c5;">⬇</span>
           Exporter JSON
         </button>
-        <button class="icon-menu-row" onclick="document.getElementById('importInput').click()">
+        <button class="icon-menu-row" onclick="document.getElementById('importInput').click();closeToolbarOverflow()">
           <span class="icon-menu-icon" style="background:rgba(196,126,212,.18);color:#c47ed4;">⬆</span>
           Importer
         </button>
-        <button class="icon-menu-row danger" onclick="bulkSet('reset')">
+        <button class="icon-menu-row danger" onclick="bulkSet('reset');closeToolbarOverflow()">
           <span class="icon-menu-icon" style="background:rgba(212,120,90,.18);color:#e08a6a;">🗑</span>
           Effacer${activeChar==='all'?'':' — '+getChar(activeChar).name}
         </button>
@@ -2007,11 +2007,14 @@ function toggleToolbarOverflow(){
   const menu=document.getElementById('toolbarOverflowMenu');
   if(menu) menu.classList.toggle('show', toolbarOverflowOpen);
 }
+function closeToolbarOverflow(){
+  toolbarOverflowOpen=false;
+  const menu=document.getElementById('toolbarOverflowMenu');
+  if(menu) menu.classList.remove('show');
+}
 document.addEventListener('click', (e) => {
   if (toolbarOverflowOpen && !e.target.closest('.toolbar-overflow')){
-    toolbarOverflowOpen=false;
-    const menu=document.getElementById('toolbarOverflowMenu');
-    if(menu) menu.classList.remove('show');
+    closeToolbarOverflow();
   }
 });
 function buildNowItems(blocks,checked,visibleChars){
