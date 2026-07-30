@@ -911,6 +911,64 @@ let syncCode = localStorage.getItem(SYNC_CODE_KEY) || null;
 let cloudPushTimer = null;
 let cloudSyncStatus = 'idle';
 
+const DISCORD_CLIENT_ID = '1532248812771606691';
+const DISCORD_USER_KEY = 'aion2-discord-user';
+let discordUser = loadJSON(DISCORD_USER_KEY, null);
+
+function getRedirectUri(){
+  return location.origin + location.pathname;
+}
+
+function loginWithDiscord(){
+  const redirect = encodeURIComponent(getRedirectUri());
+  location.href = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${redirect}&response_type=token&scope=identify`;
+}
+
+function logoutDiscord(){
+  if (!confirm("Te déconnecter de Discord ? Tes données restent sur cet appareil mais ne seront plus synchronisées via ce compte.")) return;
+  discordUser = null;
+  localStorage.removeItem(DISCORD_USER_KEY);
+  syncCode = null;
+  localStorage.removeItem(SYNC_CODE_KEY);
+  renderSyncPanel();
+}
+
+function handleDiscordRedirect(){
+  const hash = location.hash;
+  if (!hash || !hash.includes('access_token')) return;
+  const params = new URLSearchParams(hash.slice(1));
+  const token = params.get('access_token');
+  if (!token) return;
+  history.replaceState(null, '', getRedirectUri());
+  cloudSyncStatus = 'syncing';
+  fetch('https://discord.com/api/users/@me', { headers: { Authorization: `Bearer ${token}` } })
+    .then(r => r.json())
+    .then(user => {
+      discordUser = { id: user.id, username: user.username, avatar: user.avatar };
+      saveJSON(DISCORD_USER_KEY, discordUser);
+      const code = 'discord-' + user.id;
+      syncCode = code;
+      localStorage.setItem(SYNC_CODE_KEY, code);
+      addToSyncHistory(code);
+      if (!fbDb) { renderSyncPanel(); return; }
+      fbDb.collection('syncCodes').doc(code).get().then(snap => {
+        if (snap.exists && snap.data().data){
+          const remote = snap.data().data;
+          for (let i = localStorage.length - 1; i >= 0; i--){
+            const k = localStorage.key(i);
+            if (k && k.startsWith('aion2-') && k !== SYNC_CODE_KEY && k !== SYNC_HISTORY_KEY && k !== DISCORD_USER_KEY) localStorage.removeItem(k);
+          }
+          Object.entries(remote).forEach(([k, v]) => { if (k !== SYNC_HISTORY_KEY) localStorage.setItem(k, v); });
+          location.reload();
+        } else {
+          pushToCloud();
+          renderSyncPanel();
+        }
+      });
+    })
+    .catch(err => { console.error('Discord auth error', err); cloudSyncStatus = 'error'; renderSyncPanel(); });
+}
+
 function collectLocalAionData(){
   const data = {};
   for (let i = 0; i < localStorage.length; i++){
@@ -1045,7 +1103,23 @@ function renderSyncPanel(){
           style="width:26px;height:26px;border-radius:50%;background:${t.color};border:2px solid ${currentTheme===t.id?'#e8e3f0':'transparent'};cursor:pointer;padding:0;"></button>`).join('')}
       </div>
     </div>`;
-  if (syncCode){
+  if (discordUser){
+    const avatarUrl = discordUser.avatar
+      ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png?size=64`
+      : `https://cdn.discordapp.com/embed/avatars/0.png`;
+    el.innerHTML = `
+      <div class="sync-card">
+        ${themeBlockHtml}
+        <div class="sync-title">🔗 Connecté avec Discord</div>
+        <div style="display:flex;align-items:center;gap:10px;background:rgba(0,0,0,0.25);border-radius:10px;padding:8px 12px;margin-bottom:6px;">
+          <img src="${avatarUrl}" alt="" style="width:32px;height:32px;border-radius:50%;" />
+          <span style="font-size:13px;font-weight:700;color:#e8e3f0;">${discordUser.username}</span>
+        </div>
+        <div class="sync-status">${statusLabel}</div>
+        <div class="sync-hint">Tes données sont liées à ton compte Discord — reconnecte-toi avec Discord sur n'importe quel appareil pour les retrouver, sans code à retenir.</div>
+        <button class="rift-toggle-btn" onclick="logoutDiscord()" style="width:100%;margin-top:8px;">Se déconnecter</button>
+      </div>`;
+  } else if (syncCode){
     el.innerHTML = `
       <div class="sync-card">
         ${themeBlockHtml}
@@ -1061,8 +1135,9 @@ function renderSyncPanel(){
       <div class="sync-card">
         ${themeBlockHtml}
         <div class="sync-title">🔗 Synchronisation</div>
-        <div class="sync-hint">Crée un code pour synchroniser tes données entre appareils, ou rejoins un code existant.</div>
-        <button class="rift-toggle-btn" onclick="createNewSyncCode()" style="width:100%;margin:8px 0;">+ Créer un nouveau code</button>
+        <button class="rift-toggle-btn" onclick="loginWithDiscord()" style="width:100%;margin-bottom:10px;background:#5865F2;border-color:#5865F2;color:#fff;">💬 Se connecter avec Discord</button>
+        <div class="sync-hint" style="margin-bottom:10px;">Ou, sans Discord : crée un code manuel, ou rejoins un code existant.</div>
+        <button class="rift-toggle-btn" onclick="createNewSyncCode()" style="width:100%;margin-bottom:4px;">+ Créer un nouveau code</button>
         <div style="display:flex;gap:6px;margin-top:4px;">
           <input type="text" id="syncCodeInput" placeholder="Coller un code existant" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:6px 8px;color:#e8e3f0;font-size:12px;" />
           <button class="rift-toggle-btn" onclick="joinSyncCode()">Rejoindre</button>
@@ -2051,6 +2126,7 @@ document.getElementById('year').textContent = new Date().getFullYear();
 document.getElementById('tabDaily').setAttribute('role','tab'); document.getElementById('tabWeekly').setAttribute('role','tab');
 document.querySelector('.tabs').setAttribute('role','tablist');
 applyTheme();
+handleDiscordRedirect();
 initParticleBackground();
 if ('serviceWorker' in navigator){
   window.addEventListener('load', () => {
