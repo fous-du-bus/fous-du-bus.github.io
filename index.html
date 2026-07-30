@@ -29,8 +29,8 @@
   <div id="headerRow"></div>
 
   <div class="tabs">
-    <button class="tab active" id="tabDaily" onclick="setView('daily')">Quotidien<span class="tab-badge" id="tabDailyBadge"></span></button>
-    <button class="tab" id="tabWeekly" onclick="setView('weekly')">Hebdomadaire<span class="tab-badge tab-badge-muted" id="tabWeeklyBadge"></span></button>
+    <button class="tab active" id="tabDaily" onclick="setView('daily')"><span class="tab-icon" style="color:#4fa8e8;">☀️</span>Quotidien<span class="tab-badge" id="tabDailyBadge"></span></button>
+    <button class="tab" id="tabWeekly" onclick="setView('weekly')"><span class="tab-icon" style="color:#5fc98d;">🗓️</span>Hebdomadaire<span class="tab-badge tab-badge-muted" id="tabWeeklyBadge"></span></button>
   </div>
 
   <div class="progress-box">
@@ -141,6 +141,7 @@
   .tab { position: relative; flex: 1; padding: 10px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: transparent;
          color: #8b8299; font-size: 14px; font-weight: 700; cursor: pointer; font-family: Georgia, 'Times New Roman', serif; letter-spacing: 0.5px; }
   .tab.active { border-color: var(--theme-accent); background: var(--theme-card-bg); color: var(--theme-accent); }
+  .tab-icon { margin-right: 6px; font-size: 14px; vertical-align: -1px; }
   .tab-badge { position: absolute; top: -9px; right: -6px; background: var(--theme-accent); color: #0f0d1a; font-size: 9px; font-weight: 800;
                font-family: 'Courier New', monospace; padding: 3px 7px; border-radius: 10px; letter-spacing: 0; white-space: nowrap; }
   .tab-badge-muted { background: #544b68; color: #e8e3f0; }
