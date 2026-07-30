@@ -69,7 +69,9 @@
   <button class="reset-btn" id="resetBtn" onclick="doReset()">↺ Réinitialiser <span id="resetLabel">la journée</span></button>
 
   <div class="footer-note">Le quotidien se réinitialise chaque jour, l'hebdo chaque semaine · pense aux caps avant le reset</div>
-  <div class="footer-copy">© <span id="year"></span> Routines les fous du bus · Aegrim · <a href="./remerciements.html" style="color:#544b68;">Remerciements</a></div>
+  <div class="footer-copy">© <span id="year"></span> Routines les fous du bus · Aegrim · <a href="./remerciements.html" style="color:#544b68;">Remerciements</a> ·
+    <span id="onlineIndicator" style="display:inline-flex;align-items:center;gap:4px;"></span>
+  </div>
 </div>
 </section>
 <style>
@@ -197,6 +199,8 @@
                background: transparent; color: #8b8299; font-size: 13px; font-weight: 600; cursor: pointer; }
   .footer-note { text-align: center; font-size: 12px; color: #544b68; margin-top: 20px; }
   .footer-copy { text-align: center; font-size: 11px; color: #3a3450; margin-top: 24px; }
+  .online-dot { width:6px; height:6px; border-radius:50%; background:#5fc98d; box-shadow:0 0 5px #5fc98d; animation: pulseDot 1.6s ease-in-out infinite; }
+  @keyframes pulseDot { 0%,100% { opacity:1; } 50% { opacity:.35; } }
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-thumb { background: #322a49; border-radius: 3px; }
 
@@ -880,6 +884,28 @@ const firebaseConfig = {
 };
 let fbDb = null;
 try { firebase.initializeApp(firebaseConfig); fbDb = firebase.firestore(); } catch(e){ console.error('Firebase init error', e); }
+
+const PRESENCE_WINDOW_MS = 3 * 60000;
+let presenceId = sessionStorage.getItem('aion2-presence-id');
+if (!presenceId){
+  presenceId = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  sessionStorage.setItem('aion2-presence-id', presenceId);
+}
+
+function sendHeartbeat(){
+  if (!fbDb) return;
+  fbDb.collection('presence').doc(presenceId).set({ lastSeen: Date.now() }).catch(() => {});
+}
+
+function updateOnlineCount(){
+  const el = document.getElementById('onlineIndicator');
+  if (!el || !fbDb) return;
+  fbDb.collection('presence').where('lastSeen', '>', Date.now() - PRESENCE_WINDOW_MS).get()
+    .then(snap => {
+      el.innerHTML = `<span class="online-dot"></span><span style="color:#5fc98d;font-weight:700;">${snap.size}</span> en ligne`;
+    })
+    .catch(() => {});
+}
 
 const SYNC_CODE_KEY = 'aion2-sync-code';
 let syncCode = localStorage.getItem(SYNC_CODE_KEY) || null;
@@ -2034,6 +2060,10 @@ if ('serviceWorker' in navigator){
 }
 render();
 renderResetBanner();
+sendHeartbeat();
+updateOnlineCount();
+setInterval(sendHeartbeat, 60000);
+setInterval(updateOnlineCount, 45000);
 enhancedTimerHandle=setInterval(masterTick,1000);
 restoreRiftReminders();
 restoreGenericReminders();
