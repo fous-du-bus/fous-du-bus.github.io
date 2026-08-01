@@ -98,6 +98,13 @@
     --theme-radius-card: 10px; --theme-radius-inner: 10px; --theme-border-w: 1px;
     --theme-eyebrow: #7ba3b8; --theme-highlight: #8a7ad4;
   }
+  body[data-theme="fire"] {
+    --theme-bg1: #160f0a; --theme-bg2: #100b07; --theme-bg3: #0a0705;
+    --theme-accent: #ffd464; --theme-accent2: #e67d2b; --theme-accent3: #d9580a;
+    --theme-card-bg: rgba(230,125,43,0.08); --theme-card-border: #3a1f0f;
+    --theme-radius-card: 10px; --theme-radius-inner: 10px; --theme-border-w: 1px;
+    --theme-eyebrow: #c9a06a; --theme-highlight: #ff5a1f;
+  }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; padding: 0; }
   #bgCanvas { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }
@@ -1156,6 +1163,7 @@ function renderSyncPanel(){
     { id: 'default', color: '#4fd1c5', label: 'Violet turquoise' },
     { id: 'amber', color: '#e0bd5f', label: 'Or royal' },
     { id: 'ice', color: '#4fc3e8', label: 'Cristal glacé' },
+    { id: 'fire', color: '#ffd464', label: 'LFDB Fire' },
   ];
   const currentTheme = loadJSON('aion2-theme', 'default');
   const themeRowsHtml = THEME_OPTIONS.map(t => `
