@@ -83,20 +83,6 @@
     --theme-radius-card: 16px; --theme-radius-inner: 12px; --theme-border-w: 1px;
     --theme-eyebrow: #7c9fd4; --theme-highlight: #c47ed4;
   }
-  body[data-theme="amber"] {
-    --theme-bg1: #1c1810; --theme-bg2: #120f08; --theme-bg3: #0c0a06;
-    --theme-accent: #e0bd5f; --theme-accent2: #b89a4a; --theme-accent3: #e6e1d2;
-    --theme-card-bg: rgba(224,189,95,0.06); --theme-card-border: #4a3c1f;
-    --theme-radius-card: 12px; --theme-radius-inner: 12px; --theme-border-w: 1px;
-    --theme-eyebrow: #c9ad6a; --theme-highlight: #c9524a;
-  }
-  body[data-theme="ice"] {
-    --theme-bg1: #0f1c26; --theme-bg2: #0a1218; --theme-bg3: #070d11;
-    --theme-accent: #4fc3e8; --theme-accent2: #5a8cc4; --theme-accent3: #4fc3e8;
-    --theme-card-bg: rgba(79,195,232,0.05); --theme-card-border: #1e3442;
-    --theme-radius-card: 10px; --theme-radius-inner: 10px; --theme-border-w: 1px;
-    --theme-eyebrow: #7ba3b8; --theme-highlight: #8a7ad4;
-  }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; padding: 0; }
   #bgCanvas { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }
@@ -817,8 +803,6 @@ function saveJSON(key, val){
 }
 
 function applyTheme(){
-  const theme = loadJSON('aion2-theme', 'default');
-  document.body.setAttribute('data-theme', theme);
   updateParticleColors();
 }
 
@@ -884,12 +868,6 @@ function initParticleBackground(){
   updateParticleColors();
   window.addEventListener('resize', resize);
   requestAnimationFrame(tick);
-}
-
-function setTheme(id){
-  saveJSON('aion2-theme', id);
-  applyTheme();
-  render();
 }
 
 const firebaseConfig = {
@@ -1151,20 +1129,6 @@ function renderSyncPanel(){
   if (!syncPanelOpen){ el.innerHTML = ''; el.style.display = 'none'; return; }
   el.style.display = 'block';
   const statusLabel = { idle: '', syncing: 'Synchronisation...', synced: 'Synchronisé ✓', error: 'Erreur de synchro' }[cloudSyncStatus] || '';
-  const THEME_OPTIONS = [
-    { id: 'default', color: '#4fd1c5', label: 'Violet turquoise' },
-    { id: 'amber', color: '#e0bd5f', label: 'Or royal' },
-    { id: 'ice', color: '#4fc3e8', label: 'Cristal glacé' },
-  ];
-  const currentTheme = loadJSON('aion2-theme', 'default');
-  const themeRowsHtml = THEME_OPTIONS.map(t => `
-    <button class="icon-menu-row" onclick="setTheme('${t.id}')">
-      <span class="icon-menu-icon" style="background:${t.color}30;">
-        <span style="width:14px;height:14px;border-radius:50%;background:${t.color};display:block;"></span>
-      </span>
-      ${t.label}
-      ${currentTheme===t.id ? '<span class="icon-menu-check">✓</span>' : ''}
-    </button>`).join('');
   const dataActionsHtml = `
     <div class="icon-menu" style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.07);">
       <button class="icon-menu-row" onclick="showHistory();closeSyncPanel()">
@@ -1198,9 +1162,6 @@ function renderSyncPanel(){
           </div>
         </div>
         <div class="icon-menu" style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.07);">
-          ${themeRowsHtml}
-        </div>
-        <div class="icon-menu" style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.07);">
           <button class="icon-menu-row danger" onclick="logoutDiscord()">
             <span class="icon-menu-icon" style="background:rgba(212,120,90,.18);color:#e08a6a;">⏻</span>
             Se déconnecter
@@ -1215,9 +1176,6 @@ function renderSyncPanel(){
           <span class="icon-menu-icon" style="background:#5865F230;color:#5865F2;">💬</span>
           Se connecter avec Discord
         </button>
-        <div class="icon-menu" style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.07);">
-          ${themeRowsHtml}
-        </div>
         ${dataActionsHtml}
       </div>`;
   }
