@@ -46,6 +46,7 @@
   .class-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
   .class-picker img { width: 24px; height: 24px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; opacity: 0.6; }
   .class-picker img.selected { border-color: #4fd1c5; opacity: 1; }
+  .new-player-check { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #8b8299; cursor: pointer; }
   .claim-form-actions { display: flex; gap: 4px; }
   .claim-form-actions button { flex: 1; border-radius: 6px; border: none; padding: 5px; font-size: 11px; font-weight: 700; cursor: pointer; }
   .claim-btn-ok { background: #4fd1c5; color: #0f0d1a; }
@@ -131,10 +132,12 @@ function pickClass(classId, imgEl){
 function confirmClaim(teamId, slotIndex){
   const input = document.getElementById('claimNameInput');
   const name = input ? input.value.trim() : '';
+  const newPlayerCheckbox = document.getElementById('claimNewPlayer');
+  const isNewPlayer = newPlayerCheckbox ? newPlayerCheckbox.checked : false;
   if (!name){ alert('Entre un pseudo.'); return; }
   if (!pendingClassId){ alert('Choisis une classe.'); return; }
   const t = teamsData.find(t => t.id === teamId);
-  if (t) t.slots[slotIndex] = { role: t.slots[slotIndex].role, name, classId: pendingClassId };
+  if (t) t.slots[slotIndex] = { role: t.slots[slotIndex].role, name, classId: pendingClassId, isNewPlayer };
   openClaimSlot = null;
   pendingClassId = null;
   saveTeams();
@@ -142,7 +145,7 @@ function confirmClaim(teamId, slotIndex){
 
 function leaveSlot(teamId, slotIndex){
   const t = teamsData.find(t => t.id === teamId);
-  if (t) t.slots[slotIndex] = { role: t.slots[slotIndex].role, name: '', classId: '' };
+  if (t) t.slots[slotIndex] = { role: t.slots[slotIndex].role, name: '', classId: '', isNewPlayer: false };
   saveTeams();
 }
 
@@ -179,6 +182,10 @@ function render(){
           <div class="claim-form">
             <input id="claimNameInput" type="text" placeholder="Pseudo" maxlength="20" />
             <div class="class-picker">${classPickerHtml}</div>
+            <label class="new-player-check">
+              <input type="checkbox" id="claimNewPlayer" />
+              🌿 Nouveau joueur sur Aion 2
+            </label>
             <div class="claim-form-actions">
               <button class="claim-btn-ok" onclick="confirmClaim('${team.id}', ${i})">OK</button>
               <button class="claim-btn-cancel" onclick="cancelClaim()">Annuler</button>
@@ -192,7 +199,7 @@ function render(){
           <div class="slot-role">${slot.role}</div>
           <div class="slot-filled">
             ${cls ? `<img src="${cls.icon}" alt="" title="${cls.label}" />` : ''}
-            <span class="slot-player-name">${slot.name.replace(/</g,'&lt;')}</span>
+            <span class="slot-player-name">${slot.name.replace(/</g,'&lt;')}${slot.isNewPlayer ? ' <span title="Nouveau joueur sur Aion 2">🌿</span>' : ''}</span>
             <button class="slot-leave-btn" onclick="leaveSlot('${team.id}', ${i})" title="Se retirer">✕</button>
           </div>
         </div>`;
