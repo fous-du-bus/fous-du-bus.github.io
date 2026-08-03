@@ -23,6 +23,10 @@
   h1 { font-family: Georgia, serif; font-size: clamp(22px, 5vw, 30px); text-align: center; margin: 0 0 4px;
        background: linear-gradient(135deg, #4fd1c5, #7c9fd4 55%, #c47ed4); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
   .subtitle { text-align: center; color: #8b8299; font-size: 13px; margin-bottom: 24px; }
+  .class-counter { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 4px 0 18px; }
+  .class-count-item { display: flex; align-items: center; gap: 5px; background: #1a1530; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 4px 10px; font-size: 11px; color: #8b8299; }
+  .class-count-item img { width: 18px; height: 18px; border-radius: 5px; }
+  .class-count-item.has-players { color: #e8e3f0; border-color: rgba(79,209,197,0.25); }
   .add-team-btn { display: block; margin: 0 auto 24px; background: rgba(79,209,197,0.1); border: 1px solid #4fd1c5; color: #4fd1c5; border-radius: 12px; padding: 10px 20px; font-size: 14px; font-weight: 700; cursor: pointer; }
   .add-team-btn:hover { background: rgba(79,209,197,0.18); }
   .team-card { background: rgba(196,126,212,0.06); border: 1px solid rgba(196,126,212,0.25); border-radius: 16px; padding: 18px 20px; margin-bottom: 18px; }
@@ -65,6 +69,7 @@
   <h1>Compositions d'équipes</h1>
   <div class="subtitle">Inscris-toi dans un rôle libre — visible en temps réel pour tout le monde</div>
   <div class="subtitle" id="signupCount" style="font-weight:700;"></div>
+  <div id="classCounter"></div>
   <button class="add-team-btn" onclick="addTeam()">+ Ajouter une équipe</button>
   <div id="teamsContainer"></div>
   <div class="status-line" id="statusLine"></div>
@@ -173,6 +178,16 @@ function render(){
   const filledSlots = teamsData.reduce((sum, t) => sum + t.slots.filter(s => s.name).length, 0);
   const countEl = document.getElementById('signupCount');
   if (countEl) countEl.textContent = totalSlots ? `${filledSlots}/${totalSlots} inscrits` : '';
+
+  const classCounterEl = document.getElementById('classCounter');
+  if (classCounterEl){
+    const counts = {};
+    CLASS_OPTIONS.forEach(c => counts[c.id] = 0);
+    teamsData.forEach(t => t.slots.forEach(s => { if (s.classId && counts[s.classId] !== undefined) counts[s.classId]++; }));
+    classCounterEl.innerHTML = filledSlots ? `<div class="class-counter">${CLASS_OPTIONS.map(c =>
+      `<div class="class-count-item ${counts[c.id] > 0 ? 'has-players' : ''}"><img src="${c.icon}" alt="" title="${c.label}" /> ${c.label} · ${counts[c.id]}</div>`
+    ).join('')}</div>` : '';
+  }
 
   const container = document.getElementById('teamsContainer');
   if (!teamsData.length){
