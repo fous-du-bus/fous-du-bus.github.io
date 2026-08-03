@@ -42,7 +42,7 @@
   .slot-empty:hover { background: rgba(79,209,197,0.08); color: #4fd1c5; }
   .slot-filled { flex: 1; display: flex; align-items: center; gap: 8px; }
   .slot-filled img { width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; }
-  .slot-player-name { font-size: 13px; font-weight: 700; color: #e8e3f0; word-break: break-word; flex: 1; }
+  .slot-player-name { font-size: 13px; font-weight: 700; color: #e8e3f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
   .new-player-toggle { background: none; border: none; font-size: 13px; cursor: pointer; padding: 2px; flex-shrink: 0; opacity: 0.25; filter: grayscale(1); }
   .new-player-toggle.active { opacity: 1; filter: none; }
   .new-player-toggle:hover { opacity: 0.7; }
