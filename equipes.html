@@ -294,8 +294,21 @@ function verifyRoleAndProceed(isNewLogin){
       const roles = member.roles || [];
       if (roles.includes(REQUIRED_ROLE_ID)){
         ACCESS_STATE = 'granted';
-        startApp();
-        if (isNewLogin) syncOwnPlayerFromDiscord();
+        if (isNewLogin){
+          docRef.get().then(snap => {
+            if (snap.exists){
+              const d = snap.data();
+              if (d.players) PLAYERS = d.players;
+              if (d.classes && d.classes.length) CLASSES = d.classes;
+              if (d.groups) GROUPS = d.groups;
+            }
+            syncOwnPlayerFromDiscord();
+            docRef.set({ players: PLAYERS, classes: CLASSES, groups: GROUPS }).catch(err => console.error('save error', err))
+              .then(() => startApp());
+          }).catch(() => startApp());
+        } else {
+          startApp();
+        }
       } else {
         ACCESS_STATE = 'denied';
         renderGate();
