@@ -960,6 +960,14 @@ function showGate(state){
       <div style="font-size:15px;font-weight:600;color:#ff8b96;margin-bottom:8px;">Accès refusé</div>
       <div style="font-size:13px;color:#8790ac;line-height:1.6;margin-bottom:18px;">Cette page est réservée aux membres ayant le rôle <strong style="color:#e7e9f7;">Aion 2</strong> sur le serveur Discord de la guilde.</div>
       <button onclick="gateLogout()" style="border:1px solid rgba(255,255,255,0.15);background:transparent;color:#e7e9f7;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">Se déconnecter</button>`;
+  } else if (state === 'error'){
+    el.innerHTML = `
+      <div style="font-size:15px;font-weight:600;color:#ffb84f;margin-bottom:8px;">Vérification impossible</div>
+      <div style="font-size:13px;color:#8790ac;line-height:1.6;margin-bottom:18px;">Un problème technique empêche de vérifier ton accès (souci réseau ou Discord momentanément indisponible). Ce n'est pas forcément un refus.</div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+        <button onclick="verifyGateRole()" style="background:#8b6bff;border:none;color:#fff;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">Réessayer</button>
+        <button onclick="gateLogout()" style="border:1px solid rgba(255,255,255,0.15);background:transparent;color:#e7e9f7;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">Se déconnecter</button>
+      </div>`;
   } else {
     el.innerHTML = `
       <img src="./logo.webp" alt="" style="width:72px;height:72px;object-fit:contain;margin:0 auto 16px;display:block;" />
@@ -1019,8 +1027,14 @@ function bootstrapGate(){
 function verifyGateRole(onGranted){
   showGate('checking');
   fetch(`https://discord.com/api/users/@me/guilds/${GUILD_ID}/member`, { headers: { Authorization: `Bearer ${siteSession.accessToken}` } })
-    .then(r => { if (!r.ok) throw new Error('not a member'); return r.json(); })
+    .then(r => {
+      if (r.status === 404){ showGate('denied'); return null; }
+      if (r.status === 401){ siteSession = null; localStorage.removeItem('equipes-discord-session'); showGate('gate'); return null; }
+      if (!r.ok){ showGate('error'); return null; }
+      return r.json();
+    })
     .then(member => {
+      if (!member) return;
       const roles = member.roles || [];
       if (roles.includes(REQUIRED_ROLE_ID)){
         hideGate();
@@ -1029,7 +1043,7 @@ function verifyGateRole(onGranted){
         showGate('denied');
       }
     })
-    .catch(() => showGate('denied'));
+    .catch(() => showGate('error'));
 }
 
 function runDiscordSync(user, token){
