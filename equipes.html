@@ -275,6 +275,12 @@ function bootstrapAccess(){
     return;
   }
   if (discordSession && discordSession.accessToken && discordSession.expiresAt > Date.now()){
+    const ROLE_CACHE_MS = 20 * 60 * 1000;
+    if (discordSession.roleVerifiedAt && (Date.now() - discordSession.roleVerifiedAt) < ROLE_CACHE_MS){
+      ACCESS_STATE = 'granted';
+      startApp();
+      return;
+    }
     verifyRoleAndProceed(false);
     return;
   }
@@ -297,6 +303,8 @@ function verifyRoleAndProceed(isNewLogin){
       const roles = member.roles || [];
       if (roles.includes(REQUIRED_ROLE_ID)){
         ACCESS_STATE = 'granted';
+        discordSession.roleVerifiedAt = Date.now();
+        localStorage.setItem('equipes-discord-session', JSON.stringify(discordSession));
         if (isNewLogin){
           docRef.get().then(snap => {
             if (snap.exists){
