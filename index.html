@@ -38,6 +38,15 @@
       </div>
     </div>
   </nav>
+<div class="event-carousel-wrap">
+  <div class="event-carousel" id="eventSidebar">
+    <div id="riftCard"></div>
+    <div id="artifactCard"></div>
+    <div id="abyssRiftCard"></div>
+    <div id="bossWedSatCard"></div>
+    <div id="bossFriSunCard"></div>
+  </div>
+</div>
 <div class="wrap">
   <img class="logo-img" src="./logo.webp" alt="Les Fous du Bus" />
   <div id="headerRow"></div>
@@ -70,16 +79,7 @@
   <div class="app-toolbar" id="appToolbar"></div>
   <div class="dashboard" id="dashboard"></div>
   <div class="weekly-planner" id="weeklyPlanner"></div>
-  <div class="content-columns">
   <div id="blocksContainer"></div>
-  <div id="eventSidebar">
-    <div id="riftCard"></div>
-    <div id="artifactCard"></div>
-    <div id="abyssRiftCard"></div>
-    <div id="bossWedSatCard"></div>
-    <div id="bossFriSunCard"></div>
-  </div>
-  </div>
   <div class="history-modal" id="historyModal" role="dialog" aria-modal="true" aria-label="Historique"><div class="modal-card" id="historyContent"></div></div>
   <div class="toast" id="toast"></div>
   <input type="file" id="importInput" accept="application/json" hidden />
@@ -419,129 +419,28 @@
 
 
 
-  /* ===== Spacetime Rift : panneau latéral toujours visible, en flux normal (plus de position fixed) ===== */
-  .content-columns { display: block; }
-  #eventSidebar { display: block; }
-  #eventSidebar > div { margin-bottom: 20px; }
-
-  @media (min-width: 1100px) {
-    .wrap {
-      width: 100%;
-      max-width: 1900px;
-      margin: 0 auto;
-      padding-right: 0;
-    }
-
-    .tabs,
-    .progress-box,
-    .summary-box,
-    .chips,
-    .edit-panel,
-    .app-toolbar,
-    .dashboard,
-    .reset-btn,
-    .footer-note,
-    .footer-copy {
-      width: 100%;
-      max-width: none;
-      margin-left: 0;
-      margin-right: 0;
-    }
-
-    .content-columns {
-      display: flex;
-      align-items: flex-start;
-      gap: 24px;
-    }
-
-    #blocksContainer {
-      flex: 1;
-      min-width: 0;
-      width: auto;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 22px 24px;
-    }
-
-    #eventSidebar {
-      flex: 0 0 360px;
-      width: 360px;
-      position: sticky;
-      top: 110px;
-      max-height: calc(100vh - 130px);
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      scrollbar-gutter: stable;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    #eventSidebar > div {
-      margin-bottom: 0;
-    }
-
-    #eventSidebar .rift-card,
-    #eventSidebar .rift-collapsed {
-      width: 100%;
-      margin: 0;
-      box-shadow: 0 10px 24px rgba(0,0,0,.42), 0 0 0 1px rgba(196,126,212,.06);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-    }
-
-    #eventSidebar .rift-card {
-      padding: 15px 16px;
-    }
-
-    #eventSidebar .rift-head {
-      margin-bottom: 12px;
-    }
-
-    #eventSidebar .rift-title {
-      font-size: 15px;
-    }
-
-    #eventSidebar .rift-subtitle {
-      font-size: 11px;
-      line-height: 1.35;
-    }
-
-    #eventSidebar .rift-hero {
-      padding: 12px 13px;
-      margin-bottom: 11px;
-    }
-
-    #eventSidebar .rift-countdown-big {
-      font-size: 24px;
-    }
-
-    #eventSidebar .rift-window-value {
-      font-size: 14px;
-    }
-
-    #eventSidebar .rift-row {
-      padding: 7px 2px;
-      font-size: 12px;
-    }
-
-    #eventSidebar .rift-row-day,
-    #eventSidebar .rift-row-cd {
-      font-size: 11px;
-    }
-
-    #eventSidebar .rift-footer {
-      font-size: 10px;
-      line-height: 1.45;
-      margin-top: 11px;
-    }
-
+  /* ===== Spacetime Rift & événements : carrousel horizontal juste sous la nav ===== */
+  .event-carousel-wrap { width: 100%; padding: 0 clamp(16px, 4vw, 40px); box-sizing: border-box; margin-bottom: 8px; }
+  .event-carousel {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    padding: 4px 4px 14px;
+    -webkit-overflow-scrolling: touch;
   }
-
-  /* En dessous de 1400 px, le bloc revient dans le flux normal (empilé). */
-  @media (max-width: 1099px) {
-    .wrap {
-      padding-right: 16px;
-    }
+  .event-carousel::-webkit-scrollbar { height: 6px; }
+  .event-carousel::-webkit-scrollbar-thumb { background: #322a49; border-radius: 3px; }
+  .event-carousel > div { flex: 0 0 340px; scroll-snap-align: start; }
+  .event-carousel .rift-card,
+  .event-carousel .rift-collapsed {
+    height: 100%;
+    box-shadow: 0 10px 24px rgba(0,0,0,.42), 0 0 0 1px rgba(196,126,212,.06);
+  }
+  @media (max-width: 680px) {
+    .event-carousel > div { flex-basis: 280px; }
   }
 
 
@@ -2168,17 +2067,6 @@ function renderSeasonPanel(){const el=document.getElementById('seasonPanel');if(
 function enhanceContextLinks(){document.querySelectorAll('.task-row').forEach(row=>{if(row.querySelector('.context-links'))return;const cb=row.querySelector('.checkbox');if(!cb)return;const onclick=cb.getAttribute('onclick')||'';const m=onclick.match(/toggle\('([^']+)'/);if(!m)return;const cfg=GUIDE_MAP[m[1]];if(!cfg)return;const label=row.querySelector('.task-label');if(label)label.insertAdjacentHTML('beforeend',`<span class="context-links"><a class="context-link" href="${cfg[1]}" target="_blank" rel="noopener">${cfg[0]}</a></span>`);});}
 function enhanceCharacterEditor(){const panel=document.getElementById('editPanel');if(!panel||!editingNames)return;[...panel.children].forEach((node,i)=>{const c=CHARACTERS[i];if(!c||node.querySelector('.char-profile-grid'))return;const p=getCharProfile(c.id);node.insertAdjacentHTML('beforeend',`<div class="char-profile-grid"><div class="char-field"><label>Nom</label><input value="${esc(getChar(c.id).name)}" onchange="charNames['${c.id}']=this.value;saveJSON(CHAR_NAMES_KEY,charNames);render()"></div><div class="char-field"><label>Niveau</label><input type="number" min="1" max="99" value="${p.level}" onchange="updateCharProfile('${c.id}','level',this.value)"></div><div class="char-field"><label>Item level</label><input type="number" min="0" value="${p.itemLevel}" onchange="updateCharProfile('${c.id}','itemLevel',this.value)"></div><div class="char-field"><label>Faction</label><select onchange="updateCharProfile('${c.id}','faction',this.value)"><option ${p.faction==='Elyos'?'selected':''}>Elyos</option><option ${p.faction==='Asmodian'?'selected':''}>Asmodian</option></select></div><div class="char-field"><label>Serveur</label><input value="${esc(p.server)}" onchange="updateCharProfile('${c.id}','server',this.value)"></div><label class="char-main-toggle"><input type="checkbox" ${p.main?'checked':''} onchange="updateCharProfile('${c.id}','main',this.checked)"> Principal</label></div>`);});}
 
-let riftStructureSignature='';
-renderRiftCard=function(force=false){
-  const el=document.getElementById('riftCard');if(!el)return;if(loadJSON(RIFT_HIDDEN_KEY,false)){el.innerHTML=`<div class="rift-collapsed"><span>⚡ Spacetime Rift masqué</span><button class="rift-toggle-btn" onclick="toggleRiftCard()">Réafficher</button></div>`;riftStructureSignature='hidden';return;}
-  const windows=getRiftWindows(8),sig=windows.map(w=>w.start.getTime()).join('|');if(!force&&sig===riftStructureSignature&&el.querySelector('.rift-card')){updateRiftClock();return;}riftStructureSignature=sig;
-  const now=Date.now(),timeFmt=d=>d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),next=windows[0];
-  const chips=windows.slice(0,4).map(w=>`<span class="rift-slot-chip">${timeFmt(w.start)} · ${w.dayLabel}</span>`).join('');
-  const rows=windows.map((w,i)=>{const ts=w.start.getTime(),armed=!!riftReminders[String(ts)];return `<div class="rift-row${i===0?' is-next':''}"><div><span class="rift-row-time">${timeFmt(w.start)} - ${timeFmt(w.end)}</span><span class="rift-row-day">${w.dayLabel}</span></div><div class="rift-row-right"><span class="rift-row-cd" data-rift-row-ts="${ts}"></span><button class="rift-bell${armed?' armed':''}" onclick="toggleRiftReminder(${ts})">${armed?'🔔':'🔕'}</button></div></div>`}).join('');
-  el.innerHTML=`<div class="rift-card"><div class="rift-head"><div class="rift-icon">⚡</div><div style="flex:1"><div class="rift-title">Spacetime Rift</div><div class="rift-status-line"><span class="rift-status-dot"></span><span id="riftStatusText">Calcul…</span></div></div><button class="rift-toggle-btn" onclick="toggleRiftCard()">✕</button></div><div class="rift-hero"><div class="rift-ring" id="riftRing"><div class="rift-ring-content"><div class="rift-ring-time" id="riftClock">--:--</div><div class="rift-ring-label" id="riftClockLabel">prochain</div></div></div><div><div class="rift-window-label">Prochaine ouverture</div><div class="rift-window-value">${next?timeFmt(next.start):'—'}</div><div class="rift-window-day">${next?next.dayLabel:''}</div><div class="rift-compact-schedule">${chips}</div></div></div><details class="rift-details"><summary>Voir tous les horaires</summary>${rows}<div class="rift-footer">Portail ouvert pendant 5 minutes, événement actif pendant 1 heure.</div></details></div>`;updateRiftClock();
-};
-function updateRiftClock(){const card=document.querySelector('#riftCard .rift-card');if(!card)return;const now=new Date(),hours=RIFT_HOURS.slice().sort((a,b)=>a-b);let activeStart=null,nextStart=null;for(let d=-1;d<=1;d++)for(const h of hours){const st=new Date(now.getFullYear(),now.getMonth(),now.getDate()+d,h);const en=new Date(st.getTime()+RIFT_DURATION_MIN*60000);if(st<=now&&now<en)activeStart=st;if(st>now&&(!nextStart||st<nextStart))nextStart=st;}const portalOpen=activeStart&&now<new Date(activeStart.getTime()+RIFT_PORTAL_MIN*60000);let target,label,status,pct=0;if(portalOpen){target=new Date(activeStart.getTime()+RIFT_PORTAL_MIN*60000);label='portail';status='PORTAIL OUVERT';pct=((now-activeStart)/(RIFT_PORTAL_MIN*60000))*100;}else if(activeStart){target=new Date(activeStart.getTime()+RIFT_DURATION_MIN*60000);label='fin';status='ÉVÉNEMENT EN COURS · PORTAIL FERMÉ';pct=((now-activeStart)/(RIFT_DURATION_MIN*60000))*100;}else{target=nextStart;label='prochain';status='PROCHAIN RIFT';const prev=new Date(nextStart.getTime()-3*3600000);pct=((now-prev)/(nextStart-prev))*100;}card.classList.toggle('portal-open',!!portalOpen);card.classList.toggle('urgent',!activeStart&&target-now<30*60000);document.getElementById('riftStatusText').textContent=status;document.getElementById('riftClock').textContent=formatCountdown(target-now);document.getElementById('riftClockLabel').textContent=label;document.getElementById('riftRing').style.setProperty('--p',Math.max(0,Math.min(100,pct)));document.querySelectorAll('[data-rift-row-ts]').forEach(x=>x.textContent=formatCountdownShort(Number(x.dataset.riftRowTs)-Date.now()));}
-
 const renderBefore813=render;
 render=function(){renderBefore813();renderWeeklyPlanner();enhanceContextLinks();enhanceCharacterEditor();renderRiftCard();};
 function formatResetCountdown(ms){
@@ -2212,7 +2100,7 @@ function renderResetBanner(){
   if (dailyBadge) dailyBadge.textContent = formatResetBadge(nextResetAt(5) - now);
   if (weeklyBadge) weeklyBadge.textContent = formatResetBadge(nextResetAt(5, 3) - now);
 }
-function masterTick(){refreshEnhancedTimers();updateRiftClock();renderAllEventCards();renderResetBanner();if(new Date().getSeconds()===0){renderWeeklyPlanner();renderRiftCard();}}
+function masterTick(){refreshEnhancedTimers();renderRiftCard();renderAllEventCards();renderResetBanner();if(new Date().getSeconds()===0){renderWeeklyPlanner();}}
 
 migrateStorage(); applySettings();
 document.getElementById('year').textContent = new Date().getFullYear();
