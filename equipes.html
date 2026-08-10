@@ -94,9 +94,9 @@ html, body { margin: 0; padding: 0; }
 .gm-slots { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
 @media (max-width: 900px) { .gm-slots { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 560px) { .gm-slots { grid-template-columns: 1fr; } }
-.gm-slot { border: 1.5px dashed var(--border); border-radius: 12px; padding: 10px; min-height: 128px; display: flex; flex-direction: column; justify-content: space-between; position: relative; background: rgba(255,255,255,0.015); }
+.gm-slot { border: 1.5px dashed var(--border); border-radius: 12px; padding: 10px; min-height: auto; display: flex; flex-direction: column; gap: 6px; position: relative; background: rgba(255,255,255,0.015); }
 .gm-slot.filled { border-style: solid; border-color: var(--border-strong); background: rgba(139,107,255,0.05); }
-.gm-slot-num { font-size: 10px; color: var(--muted-2); font-family:'JetBrains Mono'; margin-bottom: 6px; }
+.gm-slot-num { font-size: 10px; color: var(--muted-2); font-family:'JetBrains Mono'; margin-bottom: 0; }
 .gm-slot-empty { flex: 1; display: flex; align-items: center; justify-content: center; }
 .gm-slot select { width: 100%; background: var(--panel-solid); border: 1px solid var(--border); color: var(--text); padding: 7px 8px; border-radius: 8px; font-size: 12px; outline: none; font-family:'Inter'; cursor:pointer; }
 .gm-slot select:hover, .gm-slot select:focus { border-color: #4fd1c5; color: #4fd1c5; }
@@ -790,11 +790,6 @@ function renderGroupCard(g){
     <div class="gm-group-head">
       <div class="gm-group-title-row">
         <input class="gm-group-name" value="${esc(g.name).replace(/"/g,'&quot;')}" data-action="update-group-name" data-group="${g.id}" />
-        <div class="gm-group-meta-inputs">
-          <input type="text" placeholder="Activité" value="${esc(g.activity||'')}" data-action="update-group-field" data-field="activity" data-group="${g.id}" style="width:120px;" />
-          <input type="date" value="${esc(g.date||'')}" data-action="update-group-field" data-field="date" data-group="${g.id}" />
-          <input type="time" value="${esc(g.time||'')}" data-action="update-group-field" data-field="time" data-group="${g.id}" />
-        </div>
       </div>
       <div class="gm-group-actions">
         <span class="gm-alert-chip" style="background:rgba(139,107,255,.1);border-color:var(--border-strong);color:var(--text);">${filledCount}/5</span>
