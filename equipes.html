@@ -272,17 +272,20 @@ function syncOwnPlayerFromDiscord(){
     p.discordUsername = discordUser.username;
     p.discordAvatar = discordUser.avatar;
     toast('Profil Discord synchronisé.');
+    saveTeams();
+    render();
   } else {
     p = {
-      id: uid('p'), pseudo: uniquePseudo(discordUser.username), classId: CLASSES[0] ? CLASSES[0].id : '',
+      id: uid('p'), pseudo: uniquePseudo(discordUser.username), classId: '',
       isNewPlayer: false, pve: true, pvp: true,
       discordId: discordUser.id, discordUsername: discordUser.username, discordAvatar: discordUser.avatar,
     };
     PLAYERS.push(p);
-    toast('Bienvenue ! Ton profil a été créé automatiquement — pense à choisir ta classe.');
+    toast('Bienvenue ! Choisis ta classe pour terminer ton profil.');
+    saveTeams();
+    ACTIVE_TAB = 'players';
+    openPlayerModal(p.id);
   }
-  saveTeams();
-  render();
 }
 
 function uniquePseudo(base){
@@ -312,6 +315,7 @@ function savePlayerForm(){
   if (!pseudo) { MODAL.error = 'Le pseudo est obligatoire.'; render(); return; }
   const dup = PLAYERS.find(p => p.pseudo.toLowerCase() === pseudo.toLowerCase() && p.id !== MODAL.editingId);
   if (dup) { MODAL.error = 'Ce pseudo est déjà utilisé.'; render(); return; }
+  if (!f.classId) { MODAL.error = 'Choisis une classe.'; render(); return; }
   if (MODAL.editingId) {
     const idx = PLAYERS.findIndex(p => p.id === MODAL.editingId);
     PLAYERS[idx] = { ...PLAYERS[idx], ...f, pseudo };
@@ -787,7 +791,10 @@ function renderPlayerModal(){
       </div>
       <div class="gm-form-row">
         <label>Classe</label>
-        <select id="pf-class">${CLASSES.map(c => `<option value="${c.id}" ${f.classId===c.id?'selected':''}>${esc(c.name)} (${c.role})</option>`).join('')}</select>
+        <select id="pf-class">
+          ${!f.classId ? '<option value="" selected disabled>-- Choisir une classe --</option>' : ''}
+          ${CLASSES.map(c => `<option value="${c.id}" ${f.classId===c.id?'selected':''}>${esc(c.name)} (${c.role})</option>`).join('')}
+        </select>
       </div>
       <div class="gm-form-row gm-form-2col">
         <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text);"><input type="checkbox" id="pf-pve" ${f.pve?'checked':''} /> Disponible PvE</label>
