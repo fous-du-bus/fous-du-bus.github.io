@@ -230,8 +230,20 @@ function leaveRoster(name){
   saveTeams();
 }
 
+let resetConfirmPending = false;
+
+function askResetRoster(){
+  resetConfirmPending = true;
+  render();
+}
+
+function cancelResetRoster(){
+  resetConfirmPending = false;
+  render();
+}
+
 function resetRoster(){
-  if (!confirm('Réinitialiser toute la liste des joueurs inscrits ? Cette action est irréversible.')) return;
+  resetConfirmPending = false;
   allTeams.roster = [];
   saveTeams();
 }
@@ -371,7 +383,18 @@ function renderRosterView(){
     </div>
   </div>` : `<button class="add-team-btn" style="margin:0 0 16px;" onclick="openRosterForm()">+ M'inscrire sur la liste</button>`;
 
-  const resetBtnHtml = allTeams.roster.length ? `<button class="delete-team-btn" style="display:block;margin:0 auto 16px;" onclick="resetRoster()">Réinitialiser la liste</button>` : '';
+  let resetBtnHtml = '';
+  if (allTeams.roster.length){
+    resetBtnHtml = resetConfirmPending
+      ? `<div style="text-align:center;margin:0 0 16px;background:rgba(212,120,90,.1);border:1px solid rgba(212,120,90,.4);border-radius:12px;padding:12px;">
+          <div style="font-size:13px;color:#e8e3f0;margin-bottom:10px;">Es-tu sûr de vouloir réinitialiser toute la liste ? Cette action est irréversible.</div>
+          <div style="display:flex;gap:8px;justify-content:center;">
+            <button class="delete-team-btn" style="background:#d4785a;color:#0f0d1a;border-color:#d4785a;" onclick="resetRoster()">Oui, réinitialiser</button>
+            <button class="claim-btn-cancel" style="border-radius:8px;padding:5px 10px;" onclick="cancelResetRoster()">Annuler</button>
+          </div>
+        </div>`
+      : `<button class="delete-team-btn" style="display:block;margin:0 auto 16px;" onclick="askResetRoster()">Réinitialiser la liste</button>`;
+  }
 
   if (!players.length){
     container.innerHTML = joinFormHtml + '<div class="empty-state">Personne n\'est encore inscrit.</div>';
