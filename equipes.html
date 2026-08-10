@@ -39,6 +39,9 @@ html, body { margin: 0; padding: 0; }
 .gm-discord-account { display: flex; align-items: center; gap: 8px; }
 .gm-discord-account img { width: 28px; height: 28px; border-radius: 50%; }
 .gm-main { flex: 1; min-width: 0; padding: 26px 30px 60px; }
+.wingmate-banner { width: 100%; border-radius: 16px; overflow: hidden; margin-bottom: 22px; border: 1px solid var(--border); }
+.wingmate-banner img { width: 100%; height: auto; max-height: 220px; object-fit: cover; display: block; }
+@media (max-width: 780px) { .wingmate-banner img { max-height: 120px; } }
 .gm-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; flex-wrap: wrap; gap: 12px;}
 .gm-page-title { font-size: 22px; font-weight: 600; }
 .gm-page-sub { color: var(--muted); font-size: 13px; margin-top: 3px; font-family:'Inter'; }
@@ -541,6 +544,7 @@ function renderShell(){
     <div class="gm-shell">
       ${renderSidebar()}
       <div class="gm-main">
+        <div class="wingmate-banner"><img src="./wingmate-banner.webp" alt="Wingmate" /></div>
         ${renderTopbar()}
         ${renderTabContent()}
       </div>
