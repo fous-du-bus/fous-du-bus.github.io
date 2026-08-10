@@ -199,15 +199,26 @@ function toggleNewPlayer(mode, teamId, slotIndex){
 }
 
 let rosterFormOpen = false;
+let rosterEditName = null;
 
 function openRosterForm(){
   rosterFormOpen = true;
+  rosterEditName = null;
   pendingClassId = null;
+  render();
+}
+
+function editRoster(name){
+  const p = allTeams.roster.find(p => p.name === name);
+  rosterFormOpen = true;
+  rosterEditName = name;
+  pendingClassId = p ? p.classId : null;
   render();
 }
 
 function cancelRosterForm(){
   rosterFormOpen = false;
+  rosterEditName = null;
   render();
 }
 
@@ -221,6 +232,7 @@ function confirmRosterJoin(){
   allTeams.roster = allTeams.roster.filter(p => p.name.toLowerCase() !== name.toLowerCase());
   allTeams.roster.push({ name, classId: pendingClassId, isNewPlayer });
   rosterFormOpen = false;
+  rosterEditName = null;
   pendingClassId = null;
   saveTeams();
 }
@@ -365,17 +377,19 @@ function renderRosterView(){
   const players = Object.values(byName).sort((a,b) => a.name.localeCompare(b.name));
   const container = document.getElementById('teamsContainer');
 
+  const editingPlayer = rosterEditName ? allTeams.roster.find(p => p.name === rosterEditName) : null;
   const joinFormHtml = rosterFormOpen ? `<div class="roster-row" style="flex-direction:column;align-items:stretch;gap:8px;">
-    <input id="rosterNameInput" type="text" placeholder="Pseudo" maxlength="20" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:7px;color:#e8e3f0;font-size:13px;" />
+    ${rosterEditName ? `<div style="font-size:11px;color:#8b8299;">Modifier l'inscription de <strong style="color:#e8e3f0;">${rosterEditName}</strong></div>` : ''}
+    <input id="rosterNameInput" type="text" placeholder="Pseudo" maxlength="20" value="${rosterEditName ? rosterEditName.replace(/"/g,'&quot;') : ''}" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:7px;color:#e8e3f0;font-size:13px;" />
     <div class="class-picker">${CLASS_OPTIONS.map(c =>
       `<img src="${c.icon}" title="${c.label}" class="${pendingClassId===c.id?'selected':''}" onclick="pickClass('${c.id}', this)" />`
     ).join('')}</div>
     <label class="new-player-check">
-      <input type="checkbox" id="rosterNewPlayer" />
+      <input type="checkbox" id="rosterNewPlayer" ${editingPlayer && editingPlayer.isNewPlayer ? 'checked' : ''} />
       ${LEAF_IMG} Nouveau joueur sur Aion 2
     </label>
     <div class="claim-form-actions">
-      <button class="claim-btn-ok" onclick="confirmRosterJoin()">S'inscrire</button>
+      <button class="claim-btn-ok" onclick="confirmRosterJoin()">${rosterEditName ? 'Enregistrer' : "S'inscrire"}</button>
       <button class="claim-btn-cancel" onclick="cancelRosterForm()">Annuler</button>
     </div>
   </div>` : `<button class="add-team-btn" style="margin:0 0 16px;" onclick="openRosterForm()">+ M'inscrire sur la liste</button>`;
@@ -400,11 +414,13 @@ function renderRosterView(){
   container.innerHTML = joinFormHtml + resetBtnHtml + `<div class="roster-list">${players.map(p => {
     const cls = CLASS_OPTIONS.find(c => c.id === p.classId);
     const tagsHtml = p.tags.map(t => `<span class="roster-tag ${t.mode}">${MODE_LABELS[t.mode]} · ${t.team} · ${t.role}</span>`).join('');
+    const editBtn = p.fromRoster ? `<button class="slot-leave-btn" onclick="editRoster('${p.name.replace(/'/g,"\\'")}')" title="Modifier">✎</button>` : '';
     const leaveBtn = p.fromRoster ? `<button class="slot-leave-btn" onclick="leaveRoster('${p.name.replace(/'/g,"\\'")}')" title="Se retirer de la liste">✕</button>` : '';
     return `<div class="roster-row">
       ${cls ? `<img class="class-icon" src="${cls.icon}" alt="" title="${cls.label}" />` : ''}
       <span class="roster-name">${p.name.replace(/</g,'&lt;')} ${p.isNewPlayer ? LEAF_IMG : ''}</span>
       <div class="roster-tags">${tagsHtml}</div>
+      ${editBtn}
       ${leaveBtn}
     </div>`;
   }).join('')}</div>`;
