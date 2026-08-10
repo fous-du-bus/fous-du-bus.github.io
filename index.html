@@ -127,7 +127,9 @@
     transition: background 0.3s ease;
   }
   .wrap { max-width: 720px; margin: 0 auto; }
-  .site-nav { max-width:1400px; margin:0 auto 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+  .site-nav { position: sticky; top: 0; z-index: 600; max-width:1400px; margin:0 auto 20px; padding: 12px max(16px, calc((100vw - 1400px)/2)); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+    background: rgba(9,12,22,0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid transparent; transition: border-color 0.2s ease, background 0.2s ease; }
+  .site-nav.scrolled { background: rgba(9,12,22,0.82); border-bottom-color: rgba(139,130,255,0.16); }
   .nav-left { display:flex; align-items:center; gap:16px; }
   .nav-logo { width:38px; height:38px; object-fit:contain; display:block; }
   .nav-link { color:#8b8299; text-decoration:none; font-size:13px; font-weight:600; font-family:'Cinzel',serif; letter-spacing:0.02em; padding:6px 2px; border-bottom:2px solid transparent; }
@@ -191,6 +193,8 @@
   .remove-alt-btn { margin-left: auto; background: rgba(212,120,90,.12); border: 1px solid rgba(212,120,90,.35); color: #e08a6a; font-size: 13px; font-weight: 700; cursor: pointer; padding: 4px 9px; border-radius: 8px; }
   .remove-alt-btn:hover { background: rgba(212,120,90,.25); }
   .remove-alt-btn:hover { background: rgba(212,120,90,0.15); color: #d4785a; }
+  .odyle-input-clean::-webkit-outer-spin-button, .odyle-input-clean::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .odyle-input-clean { -moz-appearance: textfield; appearance: textfield; }
   .add-alt-btn { margin-top: 4px; width: 100%; padding: 8px; border-radius: 10px; border: 1px dashed rgba(255,255,255,0.2);
                  background: transparent; color: #8b8299; font-size: 13px; font-weight: 600; cursor: pointer; }
   .add-alt-btn:hover { border-color: #4fd1c5; color: #4fd1c5; }
@@ -2159,7 +2163,7 @@ function renderDashboard(){
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
         <span style="font-size:12px;font-weight:700;color:${dc.color};">${dc.name}</span>
         <span style="display:flex;align-items:center;gap:4px;">
-          <input type="number" min="0" max="${odyleCap}" step="1" value="${val}" onchange="setOdyleEnergy('${dc.id}', this.value)"
+          <input type="number" class="odyle-input-clean" min="0" max="${odyleCap}" step="40" value="${val}" onchange="setOdyleEnergy('${dc.id}', this.value)"
             style="width:52px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:2px 4px;color:#e8e3f0;font-size:11px;font-family:'Courier New',monospace;text-align:right;" />
           <span style="font-size:11px;color:var(--text-secondary,#8b8299);font-family:'Courier New',monospace;">/ ${odyleCap}</span>
         </span>
@@ -2312,6 +2316,14 @@ function setSiteLang(l){
 document.getElementById('tabDaily').setAttribute('role','tab'); document.getElementById('tabWeekly').setAttribute('role','tab');
 document.querySelector('.tabs').setAttribute('role','tablist');
 applyTheme();
+(function(){
+  const nav = document.querySelector('.site-nav');
+  if (nav){
+    const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 8);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+})();
 bootstrapGate();
 handleDiscordRedirect();
 renderDiscordTopButton();
