@@ -792,9 +792,6 @@ function renderGroupCard(g){
         <input class="gm-group-name" value="${esc(g.name).replace(/"/g,'&quot;')}" data-action="update-group-name" data-group="${g.id}" />
       </div>
       <div class="gm-group-actions">
-        <span class="gm-alert-chip" style="background:rgba(139,107,255,.1);border-color:var(--border-strong);color:var(--text);">${filledCount}/5</span>
-        <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="copy-group" data-group="${g.id}">📋 Copier</button>
-        <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="duplicate-group" data-group="${g.id}">⧉ Dupliquer</button>
         <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="reset-group" data-group="${g.id}">↺ Réinitialiser</button>
         <button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-group" data-group="${g.id}">Supprimer</button>
       </div>
