@@ -18,12 +18,20 @@
     padding: 24px 16px 60px;
   }
   .wrap { max-width: 1400px; margin: 0 auto; }
-  .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-  .back-link { display: inline-block; color: #8b8299; text-decoration: none; font-size: 13px; }
-  .back-link:hover { color: #4fd1c5; }
-  .lang-switch { display: flex; gap: 4px; }
-  .lang-btn { border: 1px solid rgba(255,255,255,0.12); background: #1a1530; color: #8b8299; border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 700; cursor: pointer; }
-  .lang-btn.active { border-color: #4fd1c5; background: rgba(79,209,197,0.1); color: #4fd1c5; }
+  .site-nav { max-width:1400px; margin:0 auto 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+  .nav-left { display:flex; align-items:center; gap:16px; }
+  .nav-logo { width:38px; height:38px; object-fit:contain; display:block; }
+  .nav-link { color:#8b8299; text-decoration:none; font-size:13px; font-weight:700; padding:6px 2px; border-bottom:2px solid transparent; }
+  .nav-link.active { color:#4fd1c5; border-bottom-color:#4fd1c5; }
+  .nav-link:hover { color:#4fd1c5; }
+  .nav-right { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .nav-social { color:#8b8299; text-decoration:none; font-size:13px; display:flex; align-items:center; gap:5px; }
+  .nav-social:hover { color:#4fd1c5; }
+  .nav-social img { width:15px; height:15px; }
+  .nav-spacer { width:2px; height:16px; background:rgba(255,255,255,0.1); }
+  .nav-lang-switch { display:flex; gap:4px; }
+  .nav-lang-btn { border:1px solid rgba(255,255,255,0.12); background:#1a1530; color:#8b8299; border-radius:8px; padding:5px 10px; font-size:11px; font-weight:700; cursor:pointer; }
+  .nav-lang-btn.active { border-color:#4fd1c5; background:rgba(79,209,197,0.1); color:#4fd1c5; }
   h1 { font-family: Georgia, serif; font-size: clamp(22px, 5vw, 30px); text-align: center; margin: 0 0 4px;
        background: linear-gradient(135deg, #4fd1c5, #7c9fd4 55%, #c47ed4); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
   .subtitle { text-align: center; color: #8b8299; font-size: 13px; margin-bottom: 24px; }
@@ -34,17 +42,26 @@
   .howto[open] summary::before { transform: rotate(90deg); }
   .howto ol { margin: 0 0 14px; padding-left: 20px; font-size: 12px; color: #b8b2c4; line-height: 1.7; }
   .howto ol li strong { color: #e8e3f0; }
-  .mode-tabs { display: flex; gap: 8px; justify-content: center; margin: 0 0 20px; flex-wrap: wrap; }
-  .mode-tab { border: 1px solid rgba(255,255,255,0.12); background: #1a1530; color: #8b8299; border-radius: 12px; padding: 9px 18px; font-size: 13px; font-weight: 700; cursor: pointer; }
-  .mode-select { border: 1px solid #4fd1c5; background: rgba(79,209,197,0.1); color: #4fd1c5; border-radius: 12px; padding: 9px 14px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
-  .mode-select option { background: #1a1530; color: #e8e3f0; }
+  .page-layout { display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: start; }
+  .sidebar-roster { position: sticky; top: 20px; background: rgba(196,126,212,0.06); border: 1px solid rgba(196,126,212,0.25); border-radius: 16px; padding: 18px; }
+  .sidebar-roster h2 { font-family: Georgia, serif; font-size: 15px; margin: 0 0 4px; color: #e8e3f0; }
+  .sidebar-count { font-size: 11px; color: #8b8299; margin-bottom: 12px; }
+  .main-teams { min-width: 0; }
+  @media (max-width: 900px) {
+    .page-layout { grid-template-columns: 1fr; }
+    .sidebar-roster { position: static; }
+  }
+  .mode-tabs { display: flex; gap: 8px; margin: 0 0 16px; }
+  .mode-tab { flex: 1; border: 1px solid rgba(255,255,255,0.12); background: #1a1530; color: #8b8299; border-radius: 12px; padding: 10px 18px; font-size: 13px; font-weight: 700; cursor: pointer; }
   .mode-tab.active { border-color: #4fd1c5; background: rgba(79,209,197,0.1); color: #4fd1c5; }
-  .class-counter { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 4px 0 18px; }
+  .class-counter { display: flex; flex-wrap: wrap; gap: 10px; margin: 4px 0 18px; }
   .class-count-item { display: flex; align-items: center; gap: 5px; background: #1a1530; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 4px 10px; font-size: 11px; color: #8b8299; }
   .class-count-item img { width: 18px; height: 18px; border-radius: 5px; }
   .class-count-item.has-players { color: #e8e3f0; border-color: rgba(79,209,197,0.25); }
-  .add-team-btn { display: block; margin: 0 auto 24px; background: rgba(79,209,197,0.1); border: 1px solid #4fd1c5; color: #4fd1c5; border-radius: 12px; padding: 10px 20px; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .add-team-btn { display: block; width: 100%; box-sizing: border-box; margin: 0 0 24px; background: rgba(79,209,197,0.1); border: 1px solid #4fd1c5; color: #4fd1c5; border-radius: 12px; padding: 32px 20px; font-size: 14px; font-weight: 700; cursor: pointer; }
   .add-team-btn:hover { background: rgba(79,209,197,0.18); }
+  .roster-join-btn { display: block; width: 100%; box-sizing: border-box; margin: 0 0 14px; background: rgba(79,209,197,0.1); border: 1px solid #4fd1c5; color: #4fd1c5; border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .roster-join-btn:hover { background: rgba(79,209,197,0.18); }
   .team-card { background: rgba(196,126,212,0.06); border: 1px solid rgba(196,126,212,0.25); border-radius: 16px; padding: 18px 20px; margin-bottom: 18px; }
   .team-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 8px; }
   .team-name-input { background: transparent; border: none; color: #f0eaf5; font-family: Georgia, serif; font-size: 18px; font-weight: 700; flex: 1; padding: 4px 0; }
@@ -68,6 +85,9 @@
   .slot-leave-btn:hover { color: #e08a6a; }
   .claim-form { flex: 1; display: flex; flex-direction: column; gap: 6px; }
   .claim-form input { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 5px 7px; color: #e8e3f0; font-size: 12px; }
+  .claim-select { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 6px; color: #e8e3f0; font-size: 12px; cursor: pointer; }
+  .claim-select:hover, .claim-select:focus { border-color: #4fd1c5; color: #4fd1c5; outline: none; }
+  .claim-select option { background: #1a1530; color: #e8e3f0; }
   .class-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
   .class-picker img { width: 24px; height: 24px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; opacity: 0.6; }
   .class-picker img.selected { border-color: #4fd1c5; opacity: 1; }
@@ -78,28 +98,34 @@
   .claim-btn-cancel { background: rgba(255,255,255,0.08); color: #8b8299; }
   .empty-state { text-align: center; color: #544b68; font-size: 13px; margin-top: 40px; }
   .status-line { text-align: center; font-size: 11px; color: #544b68; margin-top: 20px; }
-  .roster-list { display: flex; flex-direction: column; gap: 8px; max-width: 640px; margin: 0 auto; }
-  .roster-row { display: flex; align-items: center; gap: 10px; background: #1a1530; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 14px; }
-  .roster-row img.class-icon { width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; }
-  .roster-name { font-size: 14px; font-weight: 700; color: #e8e3f0; display: flex; align-items: center; gap: 6px; }
-  .roster-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-left: auto; }
-  .roster-tag { font-size: 10px; padding: 3px 8px; border-radius: 10px; background: rgba(255,255,255,0.06); color: #8b8299; white-space: nowrap; }
+  .roster-list { display: flex; flex-direction: column; gap: 8px; }
+  .roster-row { display: flex; align-items: center; gap: 10px; background: #1a1530; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 14px; flex-wrap: wrap; }
+  .roster-row img.class-icon { width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0; }
+  .roster-name { font-size: 13px; font-weight: 700; color: #e8e3f0; display: flex; align-items: center; gap: 6px; }
+  .roster-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .roster-tag { font-size: 9px; padding: 3px 7px; border-radius: 10px; background: rgba(255,255,255,0.06); color: #8b8299; white-space: nowrap; }
   .roster-tag.pve { color: #4fd1c5; background: rgba(79,209,197,0.1); }
   .roster-tag.pvp { color: #e08a6a; background: rgba(212,120,90,0.1); }
-  @media (max-width: 800px) {
-    .slots { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
-  }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="top-row">
-    <a class="back-link" href="./index.html" id="backLink">← Retour au site</a>
-    <div class="lang-switch">
-      <button class="lang-btn" id="langBtn-fr" onclick="setLang('fr')">FR</button>
-      <button class="lang-btn" id="langBtn-en" onclick="setLang('en')">EN</button>
+  <nav class="site-nav">
+    <div class="nav-left">
+      <img class="nav-logo" src="./logo.webp" alt="Les Fous du Bus" />
+      <a class="nav-link" href="./index.html">Dailies</a>
+      <a class="nav-link active" href="./equipes.html">Groupe</a>
     </div>
-  </div>
+    <div class="nav-right">
+      <a class="nav-social" href="https://discord.gg/BKyVEdTgP9" target="_blank" rel="noopener"><img src="data:image/webp;base64,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" alt="Discord" /> Discord</a>
+      <a class="nav-social" href="https://coubo.fr/" target="_blank" rel="noopener">🌐 coubo.fr</a>
+      <div class="nav-spacer"></div>
+      <div class="nav-lang-switch">
+        <button class="nav-lang-btn" id="langBtn-fr" onclick="setLang('fr')">FR</button>
+        <button class="nav-lang-btn" id="langBtn-en" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
+  </nav>
   <img src="./logo.webp" alt="Les Fous du Bus" style="width:96px;height:96px;display:block;margin:0 auto 10px;object-fit:contain;" />
   <h1 id="pageH1">Compositions d'équipes</h1>
   <div class="subtitle" id="pageSubtitle">Inscris-toi dans un rôle libre — visible en temps réel pour tout le monde</div>
@@ -109,17 +135,22 @@
     <ol id="howtoSteps"></ol>
   </details>
 
-  <div class="mode-tabs">
-    <select class="mode-select" id="modeSelect" onchange="switchTab(this.value)">
-      <option value="pve">⚔️ PvE</option>
-      <option value="pvp">🛡️ PvP</option>
-    </select>
-    <button class="mode-tab" id="tabBtn-roster" onclick="switchTab('roster')"></button>
+  <div class="page-layout">
+    <aside class="sidebar-roster">
+      <h2 id="sidebarTitle">Liste des joueurs</h2>
+      <div class="sidebar-count" id="signupCount"></div>
+      <div id="rosterContainer"></div>
+    </aside>
+    <main class="main-teams">
+      <div class="mode-tabs">
+        <button class="mode-tab" id="tabBtn-pvp" onclick="switchTab('pvp')">PVP</button>
+        <button class="mode-tab" id="tabBtn-pve" onclick="switchTab('pve')">PVE</button>
+      </div>
+      <div id="classCounter"></div>
+      <button class="add-team-btn" id="addTeamBtn" onclick="addTeam()"></button>
+      <div id="teamsContainer"></div>
+    </main>
   </div>
-  <div class="subtitle" id="signupCount" style="font-weight:700;"></div>
-  <div id="classCounter"></div>
-  <button class="add-team-btn" id="addTeamBtn" onclick="addTeam()"></button>
-  <div id="teamsContainer"></div>
   <div class="status-line" id="statusLine"></div>
 </div>
 
@@ -144,23 +175,22 @@ const MODE_LABELS = { pve: 'PvE', pvp: 'PvP' };
 const TRANSLATIONS = {
   fr: {
     pageTitle: "Compositions d'équipes - Fous du bus",
-    backLink: '← Retour au site',
     h1: "Compositions d'équipes",
     subtitle: "Inscris-toi dans un rôle libre — visible en temps réel pour tout le monde",
     howtoSummary: 'Comment ça marche ?',
     howtoSteps: [
-      "<strong>Inscris-toi</strong> sur l'onglet « Liste des joueurs » avec ton pseudo, ta classe, et coche si tu es nouveau sur Aion 2.",
-      "Va sur l'onglet <strong>PvE</strong> ou <strong>PvP</strong>, clique sur un rôle libre dans un groupe, puis choisis ton pseudo dans le menu déroulant.",
+      "<strong>Ajoute-toi</strong> dans la liste des joueurs (à gauche) avec ton pseudo, ta classe, et coche si tu es nouveau sur Aion 2.",
+      "Choisis l'onglet <strong>PVP</strong> ou <strong>PVE</strong>, clique sur un rôle libre dans un groupe, puis choisis ton pseudo dans le menu déroulant.",
       "Tu peux changer de classe (bouton ✎), te retirer (✕) ou marquer/démarquer « nouveau joueur » à tout moment, depuis la liste ou depuis un groupe."
     ],
-    rosterTab: '📋 Liste des joueurs',
+    sidebarTitle: 'Liste des joueurs',
     addTeam: '+ Ajouter une équipe',
     teamDefaultName: 'Groupe',
     deleteTeam: 'Supprimer',
     deleteTeamConfirm: 'Supprimer ce groupe ?',
     slotEmpty: "Libre —<br>clique pour t'inscrire",
-    chooseNamePlaceholder: '-- Choisir un pseudo --',
-    needRosterFirst: "Inscris-toi d'abord sur la liste des joueurs 📋",
+    chooseNamePlaceholder: '-- Choisir un joueur --',
+    needRosterFirst: "Ajoute un joueur à la liste d'abord",
     ok: 'OK',
     cancel: 'Annuler',
     leaveSlotTitle: 'Se retirer',
@@ -170,9 +200,9 @@ const TRANSLATIONS = {
     playerNotFoundAlert: 'Joueur introuvable sur la liste.',
     enterNameAlert: 'Entre un pseudo.',
     chooseClassAlert: 'Choisis une classe.',
-    joinList: "+ M'inscrire sur la liste",
+    joinList: '+ Ajouter un joueur',
     editingLabel: "Modifier l'inscription de",
-    register: "S'inscrire",
+    register: 'Ajouter',
     save: 'Enregistrer',
     resetList: 'Réinitialiser la liste',
     resetConfirmMsg: 'Es-tu sûr de vouloir réinitialiser toute la liste ? Cette action est irréversible.',
@@ -180,7 +210,7 @@ const TRANSLATIONS = {
     nobodyYet: "Personne n'est encore inscrit.",
     noTeamsYet: (mode) => `Aucune équipe ${mode} pour le moment — clique sur "+ Ajouter une équipe" pour commencer.`,
     signupsCount: (filled, total, mode) => `${filled}/${total} inscrits (${mode})`,
-    rosterCount: (n) => `${n} inscrit(s) sur la liste`,
+    rosterCount: (n) => `${n} inscrit(s)`,
     editTitle: 'Modifier',
     leaveListTitle: 'Se retirer de la liste',
     pseudoPlaceholder: 'Pseudo',
@@ -190,23 +220,22 @@ const TRANSLATIONS = {
   },
   en: {
     pageTitle: "Team Compositions - Fous du bus",
-    backLink: '← Back to site',
     h1: 'Team Compositions',
     subtitle: 'Sign up for an open role — visible in real time for everyone',
     howtoSummary: 'How does it work?',
     howtoSteps: [
-      '<strong>Sign up</strong> on the "Player list" tab with your name, your class, and check the box if you\'re new to Aion 2.',
-      'Go to the <strong>PvE</strong> or <strong>PvP</strong> tab, click an open role in a team, then pick your name from the dropdown.',
+      '<strong>Add yourself</strong> to the player list (left) with your name, your class, and check the box if you\'re new to Aion 2.',
+      'Pick the <strong>PVP</strong> or <strong>PVE</strong> tab, click an open role in a team, then pick your name from the dropdown.',
       'You can change class (✎ button), leave a role (✕), or toggle "new player" anytime, from the list or from a team.'
     ],
-    rosterTab: '📋 Player list',
+    sidebarTitle: 'Player list',
     addTeam: '+ Add a team',
     teamDefaultName: 'Team',
     deleteTeam: 'Delete',
     deleteTeamConfirm: 'Delete this team?',
     slotEmpty: 'Open —<br>click to join',
-    chooseNamePlaceholder: '-- Choose a name --',
-    needRosterFirst: 'Sign up on the player list first 📋',
+    chooseNamePlaceholder: '-- Choose a player --',
+    needRosterFirst: 'Add a player to the list first',
     ok: 'OK',
     cancel: 'Cancel',
     leaveSlotTitle: 'Leave',
@@ -216,9 +245,9 @@ const TRANSLATIONS = {
     playerNotFoundAlert: 'Player not found on the list.',
     enterNameAlert: 'Enter a name.',
     chooseClassAlert: 'Choose a class.',
-    joinList: '+ Join the list',
+    joinList: '+ Add a player',
     editingLabel: 'Editing',
-    register: 'Join',
+    register: 'Add',
     save: 'Save',
     resetList: 'Reset the list',
     resetConfirmMsg: 'Are you sure you want to reset the whole list? This cannot be undone.',
@@ -249,19 +278,20 @@ function setLang(l){
 function applyStaticTranslations(){
   document.documentElement.lang = lang;
   document.getElementById('pageTitle').textContent = t('pageTitle');
-  document.getElementById('backLink').textContent = t('backLink');
   document.getElementById('pageH1').textContent = t('h1');
   document.getElementById('pageSubtitle').textContent = t('subtitle');
   document.getElementById('howtoSummary').textContent = t('howtoSummary');
   document.getElementById('howtoSteps').innerHTML = t('howtoSteps').map(s => `<li>${s}</li>`).join('');
-  document.getElementById('tabBtn-roster').textContent = t('rosterTab');
+  document.getElementById('sidebarTitle').textContent = t('sidebarTitle');
   document.getElementById('addTeamBtn').textContent = t('addTeam');
+  document.getElementById('tabBtn-pvp').textContent = 'PVP';
+  document.getElementById('tabBtn-pve').textContent = 'PVE';
   document.getElementById('langBtn-fr').classList.toggle('active', lang === 'fr');
   document.getElementById('langBtn-en').classList.toggle('active', lang === 'en');
 }
 
 let allTeams = { pve: [], pvp: [], roster: [] };
-let activeTab = 'pve';
+let activeTab = 'pvp';
 let openClaimSlot = null; // "mode:teamId:slotIndex"
 let pendingClassId = null;
 
@@ -432,7 +462,7 @@ function renderTeamCard(mode, team){
       return `<div class="slot">
         <div class="slot-role">${slot.role}</div>
         <div class="claim-form">
-          <select id="claimNameSelect" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:6px;color:#e8e3f0;font-size:12px;">
+          <select id="claimNameSelect" class="claim-select">
             <option value="">${t('chooseNamePlaceholder')}</option>
             ${optionsHtml}
           </select>
@@ -473,8 +503,6 @@ function renderModeView(mode){
   const teams = allTeams[mode];
   const totalSlots = teams.reduce((sum, t) => sum + t.slots.length, 0);
   const filledSlots = teams.reduce((sum, t) => sum + t.slots.filter(s => s.name).length, 0);
-  const countEl = document.getElementById('signupCount');
-  if (countEl) countEl.textContent = totalSlots ? t('signupsCount')(filledSlots, totalSlots, MODE_LABELS[mode]) : '';
 
   const classCounterEl = document.getElementById('classCounter');
   if (classCounterEl){
@@ -494,11 +522,9 @@ function renderModeView(mode){
   container.innerHTML = teams.map(team => renderTeamCard(mode, team)).join('');
 }
 
-function renderRosterView(){
+function renderSidebarRoster(){
   const countEl = document.getElementById('signupCount');
-  const classCounterEl = document.getElementById('classCounter');
   if (countEl) countEl.textContent = allTeams.roster.length ? t('rosterCount')(allTeams.roster.length) : '';
-  if (classCounterEl) classCounterEl.innerHTML = '';
 
   const byName = {};
   allTeams.roster.forEach(p => {
@@ -517,7 +543,7 @@ function renderRosterView(){
   });
 
   const players = Object.values(byName).sort((a,b) => a.name.localeCompare(b.name));
-  const container = document.getElementById('teamsContainer');
+  const container = document.getElementById('rosterContainer');
 
   const editingPlayer = rosterEditName ? allTeams.roster.find(p => p.name === rosterEditName) : null;
   const joinFormHtml = rosterFormOpen ? `<div class="roster-row" style="flex-direction:column;align-items:stretch;gap:8px;">
@@ -534,23 +560,23 @@ function renderRosterView(){
       <button class="claim-btn-ok" onclick="confirmRosterJoin()">${rosterEditName ? t('save') : t('register')}</button>
       <button class="claim-btn-cancel" onclick="cancelRosterForm()">${t('cancel')}</button>
     </div>
-  </div>` : `<button class="add-team-btn" style="margin:0 0 16px;" onclick="openRosterForm()">${t('joinList')}</button>`;
+  </div>` : `<button class="roster-join-btn" onclick="openRosterForm()">${t('joinList')}</button>`;
 
   let resetBtnHtml = '';
   if (allTeams.roster.length){
     resetBtnHtml = resetConfirmPending
-      ? `<div style="text-align:center;margin:0 0 16px;background:rgba(212,120,90,.1);border:1px solid rgba(212,120,90,.4);border-radius:12px;padding:12px;">
-          <div style="font-size:13px;color:#e8e3f0;margin-bottom:10px;">${t('resetConfirmMsg')}</div>
-          <div style="display:flex;gap:8px;justify-content:center;">
-            <button class="delete-team-btn" style="background:#d4785a;color:#0f0d1a;border-color:#d4785a;" onclick="resetRoster()">${t('resetYes')}</button>
-            <button class="claim-btn-cancel" style="border-radius:8px;padding:5px 10px;" onclick="cancelResetRoster()">${t('cancel')}</button>
+      ? `<div style="margin:0 0 14px;background:rgba(212,120,90,.1);border:1px solid rgba(212,120,90,.4);border-radius:12px;padding:12px;">
+          <div style="font-size:12px;color:#e8e3f0;margin-bottom:10px;">${t('resetConfirmMsg')}</div>
+          <div style="display:flex;gap:8px;">
+            <button class="delete-team-btn" style="flex:1;background:#d4785a;color:#0f0d1a;border-color:#d4785a;" onclick="resetRoster()">${t('resetYes')}</button>
+            <button class="claim-btn-cancel" style="flex:1;border-radius:8px;padding:5px 10px;" onclick="cancelResetRoster()">${t('cancel')}</button>
           </div>
         </div>`
-      : `<button class="delete-team-btn" style="display:block;margin:0 auto 16px;" onclick="askResetRoster()">${t('resetList')}</button>`;
+      : `<button class="delete-team-btn" style="display:block;width:100%;margin:0 0 14px;" onclick="askResetRoster()">${t('resetList')}</button>`;
   }
 
   if (!players.length){
-    container.innerHTML = joinFormHtml + `<div class="empty-state">${t('nobodyYet')}</div>`;
+    container.innerHTML = joinFormHtml + `<div class="empty-state" style="margin-top:16px;">${t('nobodyYet')}</div>`;
     return;
   }
   container.innerHTML = joinFormHtml + resetBtnHtml + `<div class="roster-list">${players.map(p => {
@@ -570,19 +596,11 @@ function renderRosterView(){
 
 function render(){
   document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
-  const rosterBtn = document.getElementById('tabBtn-roster');
-  if (rosterBtn) rosterBtn.classList.toggle('active', activeTab === 'roster');
-  const modeSelect = document.getElementById('modeSelect');
-  if (modeSelect && activeTab !== 'roster') modeSelect.value = activeTab;
+  const activeBtn = document.getElementById('tabBtn-' + activeTab);
+  if (activeBtn) activeBtn.classList.add('active');
 
-  const addBtn = document.getElementById('addTeamBtn');
-  if (addBtn) addBtn.style.display = (activeTab === 'roster') ? 'none' : 'block';
-
-  if (activeTab === 'roster'){
-    renderRosterView();
-  } else {
-    renderModeView(activeTab);
-  }
+  renderModeView(activeTab);
+  renderSidebarRoster();
 }
 
 applyStaticTranslations();
