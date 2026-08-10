@@ -178,7 +178,7 @@ let GROUPS = [];
 let ACTIVE_TAB = 'dashboard';
 let TOASTS = [];
 let MODAL = null;
-let PLAYER_FILTERS = { search: '', classId: '', pve: '', pvp: '' };
+let PLAYER_FILTERS = { search: '', classId: '', status: '' };
 let MOBILE_NAV_OPEN = false;
 
 const GUILD_ID = '1355632831333798200';
@@ -644,19 +644,8 @@ function renderDashboard(){
       <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${pvpGroups}</div><div class="gm-stat-label">Groupes PvP</div></div>
       <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${newCount}</div><div class="gm-stat-label">Nouveaux joueurs</div></div>
     </div>
-    <div class="gm-dash-row">
-      <div class="gm-panel">
-        <h3 style="font-size:14px;margin:0 0 12px;">Répartition par rôle</h3>
-        ${Object.entries(roleCounts).map(([role,count]) => `
-          <div class="gm-bar-row">
-            <div class="gm-bar-label">${role}</div>
-            <div class="gm-bar-track"><div class="gm-bar-fill" style="width:${(count/maxRole)*100}%;background:${roleColor(role)};"></div></div>
-            <div class="gm-bar-value">${count}</div>
-          </div>
-        `).join('')}
-      </div>
-      <div class="gm-panel">
-        <h3 style="font-size:14px;margin:0 0 12px;">Répartition par classe</h3>
+    <div class="gm-panel">
+      <h3 style="font-size:14px;margin:0 0 12px;">Répartition par classe</h3>
         ${CLASSES.map(c => `
           <div class="gm-bar-row">
             <div class="gm-bar-label" style="display:flex;align-items:center;gap:5px;"><img src="${c.icon}" style="width:14px;height:14px;border-radius:3px;" alt="" />${c.name}</div>
@@ -664,9 +653,8 @@ function renderDashboard(){
             <div class="gm-bar-value">${classCounts[c.id]}</div>
           </div>
         `).join('')}
-      </div>
     </div>
-    <div class="gm-panel">
+    <div class="gm-panel" style="margin-top:16px;">
       <h3 style="font-size:14px;margin:0 0 12px;">Disponibilité</h3>
       <div class="gm-bar-row"><div class="gm-bar-label">PvE</div><div class="gm-bar-track"><div class="gm-bar-fill" style="width:${totalPlayers?(pveCount/totalPlayers)*100:0}%;background:var(--blue);"></div></div><div class="gm-bar-value">${pveCount}</div></div>
       <div class="gm-bar-row"><div class="gm-bar-label">PvP</div><div class="gm-bar-track"><div class="gm-bar-fill" style="width:${totalPlayers?(pvpCount/totalPlayers)*100:0}%;background:var(--dps);"></div></div><div class="gm-bar-value">${pvpCount}</div></div>
@@ -679,8 +667,8 @@ function renderPlayers(){
   let list = PLAYERS.slice();
   if (PLAYER_FILTERS.search) list = list.filter(p => p.pseudo.toLowerCase().includes(PLAYER_FILTERS.search.toLowerCase()));
   if (PLAYER_FILTERS.classId) list = list.filter(p => p.classId === PLAYER_FILTERS.classId);
-  if (PLAYER_FILTERS.pve) list = list.filter(p => p.pve);
-  if (PLAYER_FILTERS.pvp) list = list.filter(p => p.pvp);
+  if (PLAYER_FILTERS.status === 'new') list = list.filter(p => p.isNewPlayer);
+  if (PLAYER_FILTERS.status === 'experienced') list = list.filter(p => !p.isNewPlayer);
 
   if (!PLAYERS.length){
     return `<div class="gm-empty"><div class="gm-empty-crest"></div>Aucun joueur pour le moment.<br>Les joueurs apparaissent automatiquement en se connectant avec Discord.</div>`;
@@ -689,8 +677,11 @@ function renderPlayers(){
   return `
     <div class="gm-filters">
       <select class="gm-select" data-action="filter-class"><option value="">Toutes les classes</option>${CLASSES.map(c => `<option value="${c.id}" ${PLAYER_FILTERS.classId===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select>
-      <select class="gm-select" data-action="filter-pve"><option value="">PvE : tous</option><option value="1" ${PLAYER_FILTERS.pve?'selected':''}>PvE dispo</option></select>
-      <select class="gm-select" data-action="filter-pvp"><option value="">PvP : tous</option><option value="1" ${PLAYER_FILTERS.pvp?'selected':''}>PvP dispo</option></select>
+      <select class="gm-select" data-action="filter-status">
+        <option value="">Tous les statuts</option>
+        <option value="new" ${PLAYER_FILTERS.status==='new'?'selected':''}>Nouveau joueur</option>
+        <option value="experienced" ${PLAYER_FILTERS.status==='experienced'?'selected':''}>Joueur expérimenté</option>
+      </select>
     </div>
     ${!list.length ? `<div class="gm-empty">Aucun joueur ne correspond à ces filtres.</div>` : `
     <div class="gm-players-grid">
@@ -808,11 +799,9 @@ function renderGroupCard(g){
       </div>
     </div>
     <div class="gm-slots">${slotsHtml}</div>
-    <div class="gm-subs-title">Remplaçants</div>
-    <div class="gm-subs-list">
-      ${subsHtml}
-      <div class="gm-add-sub"><select data-action="add-substitute" data-group="${g.id}"><option value="">+ Ajouter un remplaçant</option>${subEligible.map(p => `<option value="${p.id}">${esc(p.pseudo)}</option>`).join('')}</select></div>
-    </div>
+    ${subsHtml ? `<div class="gm-subs-title">Remplaçants</div>
+    <div class="gm-subs-list">${subsHtml}</div>` : ''}
+    <div style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center;">${filledCount}/5 inscrit${filledCount>1?'s':''}</div>
   </div>`;
 }
 
@@ -912,10 +901,8 @@ function bindEvents(){
       el.addEventListener('input', () => { PLAYER_FILTERS.search = el.value; render(); });
     } else if (action === 'filter-class'){
       el.addEventListener('change', () => { PLAYER_FILTERS.classId = el.value; render(); });
-    } else if (action === 'filter-pve'){
-      el.addEventListener('change', () => { PLAYER_FILTERS.pve = el.value; render(); });
-    } else if (action === 'filter-pvp'){
-      el.addEventListener('change', () => { PLAYER_FILTERS.pvp = el.value; render(); });
+    } else if (action === 'filter-status'){
+      el.addEventListener('change', () => { PLAYER_FILTERS.status = el.value; render(); });
     } else if (action === 'open-class-modal'){
       el.addEventListener('click', () => openClassModal(null));
     } else if (action === 'edit-class'){
