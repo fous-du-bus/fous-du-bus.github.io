@@ -356,10 +356,7 @@ function renderRosterView(){
       team.slots.forEach(slot => {
         if (!slot.name) return;
         const key = slot.name.toLowerCase();
-        if (!byName[key]){
-          byName[key] = { name: slot.name, classId: slot.classId, isNewPlayer: false, tags: [], fromRoster: false };
-        }
-        if (slot.isNewPlayer) byName[key].isNewPlayer = true;
+        if (!byName[key]) return; // only show tags for people already registered on the list
         byName[key].tags.push({ mode, team: team.name, role: slot.role });
       });
     });
