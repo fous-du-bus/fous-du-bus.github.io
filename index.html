@@ -21,7 +21,6 @@
 </div>
 <canvas id="bgCanvas"></canvas>
 <section>
-<div class="wrap">
   <nav class="site-nav">
     <div class="nav-left">
       <img class="nav-logo" src="./logo.webp" alt="Les Fous du Bus" />
@@ -39,6 +38,7 @@
       </div>
     </div>
   </nav>
+<div class="wrap">
   <img class="logo-img" src="./logo.webp" alt="Les Fous du Bus" />
   <div id="headerRow"></div>
 
@@ -124,7 +124,7 @@
     transition: background 0.3s ease;
   }
   .wrap { max-width: 720px; margin: 0 auto; }
-  .site-nav { position: sticky; top: 0; z-index: 600; max-width:1400px; margin:0 auto 20px; padding: 12px 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+  .site-nav { position: sticky; top: 0; z-index: 600; width: 100%; margin: 0 0 20px; padding: 12px clamp(16px, 4vw, 40px); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-sizing: border-box;
     background: rgba(9,12,22,0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid transparent; transition: border-color 0.2s ease, background 0.2s ease; }
   .site-nav.scrolled { background: rgba(9,12,22,0.82); border-bottom-color: rgba(139,130,255,0.16); }
   .nav-left { display:flex; align-items:center; gap:16px; }
