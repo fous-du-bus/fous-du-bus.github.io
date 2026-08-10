@@ -181,7 +181,12 @@ let MODAL = null;
 let PLAYER_FILTERS = { search: '', classId: '', pve: '', pvp: '' };
 let MOBILE_NAV_OPEN = false;
 
-let discordUser = JSON.parse(localStorage.getItem('equipes-discord-user') || 'null');
+const GUILD_ID = '1355632831333798200';
+const REQUIRED_ROLE_ID = '1443636744267501618';
+
+let discordSession = JSON.parse(localStorage.getItem('equipes-discord-session') || 'null');
+let discordUser = discordSession ? { id: discordSession.id, username: discordSession.username, avatar: discordSession.avatar } : null;
+let ACCESS_STATE = 'checking'; // 'checking' | 'gate' | 'denied' | 'granted'
 
 /* ---------- utils ---------- */
 function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -236,33 +241,70 @@ function getRedirectUri(){ return location.origin + location.pathname; }
 
 function loginWithDiscord(){
   const redirect = encodeURIComponent(getRedirectUri());
-  location.href = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${redirect}&response_type=token&scope=identify`;
+  location.href = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${redirect}&response_type=token&scope=identify%20guilds.members.read`;
 }
 
 function logoutDiscord(){
   discordUser = null;
-  localStorage.removeItem('equipes-discord-user');
-  render();
+  discordSession = null;
+  localStorage.removeItem('equipes-discord-session');
+  ACCESS_STATE = 'gate';
+  renderGate();
 }
 
-function handleDiscordRedirect(){
+function bootstrapAccess(){
   const hash = location.hash;
-  if (!hash || !hash.includes('access_token')) return;
-  const params = new URLSearchParams(hash.slice(1));
-  const token = params.get('access_token');
-  if (!token) return;
-  history.replaceState(null, '', getRedirectUri());
-  fetch('https://discord.com/api/users/@me', { headers: { Authorization: `Bearer ${token}` } })
-    .then(r => r.json())
-    .then(user => {
-      const avatarUrl = user.avatar
-        ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64`
-        : `https://cdn.discordapp.com/embed/avatars/0.png`;
-      discordUser = { id: user.id, username: user.username, avatar: avatarUrl };
-      localStorage.setItem('equipes-discord-user', JSON.stringify(discordUser));
-      syncOwnPlayerFromDiscord();
+  if (hash && hash.includes('access_token')){
+    const params = new URLSearchParams(hash.slice(1));
+    const token = params.get('access_token');
+    const expiresIn = parseInt(params.get('expires_in') || '0', 10);
+    history.replaceState(null, '', getRedirectUri());
+    if (!token) { ACCESS_STATE = 'gate'; renderGate(); return; }
+    fetch('https://discord.com/api/users/@me', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(user => {
+        const avatarUrl = user.avatar
+          ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64`
+          : `https://cdn.discordapp.com/embed/avatars/0.png`;
+        discordSession = { id: user.id, username: user.username, avatar: avatarUrl, accessToken: token, expiresAt: Date.now() + expiresIn * 1000 };
+        discordUser = { id: user.id, username: user.username, avatar: avatarUrl };
+        localStorage.setItem('equipes-discord-session', JSON.stringify(discordSession));
+        verifyRoleAndProceed(true);
+      })
+      .catch(() => { ACCESS_STATE = 'gate'; renderGate(); });
+    return;
+  }
+  if (discordSession && discordSession.accessToken && discordSession.expiresAt > Date.now()){
+    verifyRoleAndProceed(false);
+    return;
+  }
+  ACCESS_STATE = 'gate';
+  renderGate();
+}
+
+function verifyRoleAndProceed(isNewLogin){
+  ACCESS_STATE = 'checking';
+  renderGate();
+  fetch(`https://discord.com/api/users/@me/guilds/${GUILD_ID}/member`, { headers: { Authorization: `Bearer ${discordSession.accessToken}` } })
+    .then(r => {
+      if (!r.ok) throw new Error('not a member or token invalid');
+      return r.json();
     })
-    .catch(err => console.error('Discord auth error', err));
+    .then(member => {
+      const roles = member.roles || [];
+      if (roles.includes(REQUIRED_ROLE_ID)){
+        ACCESS_STATE = 'granted';
+        startApp();
+        if (isNewLogin) syncOwnPlayerFromDiscord();
+      } else {
+        ACCESS_STATE = 'denied';
+        renderGate();
+      }
+    })
+    .catch(() => {
+      ACCESS_STATE = 'denied';
+      renderGate();
+    });
 }
 
 function syncOwnPlayerFromDiscord(){
@@ -536,7 +578,6 @@ function renderTopbar(){
       ${ACTIVE_TAB==='players' ? `
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <div class="gm-search"><input type="text" placeholder="Rechercher un pseudo…" value="${esc(PLAYER_FILTERS.search)}" data-action="filter-search" /></div>
-          <button class="gm-btn gm-btn-primary" data-action="open-player-modal">+ Nouveau joueur</button>
         </div>
       ` : ''}
       ${ACTIVE_TAB==='classes' ? `<button class="gm-btn gm-btn-primary" data-action="open-class-modal">+ Nouvelle classe</button>` : ''}
@@ -618,7 +659,7 @@ function renderPlayers(){
   if (PLAYER_FILTERS.pvp) list = list.filter(p => p.pvp);
 
   if (!PLAYERS.length){
-    return `<div class="gm-empty"><div class="gm-empty-crest"></div>Aucun joueur pour le moment.<br><br><button class="gm-btn gm-btn-primary" data-action="open-player-modal">+ Ajouter le premier joueur</button></div>`;
+    return `<div class="gm-empty"><div class="gm-empty-crest"></div>Aucun joueur pour le moment.<br>Les joueurs apparaissent automatiquement en se connectant avec Discord.</div>`;
   }
 
   return `
@@ -847,8 +888,6 @@ function bindEvents(){
       el.addEventListener('click', loginWithDiscord);
     } else if (action === 'discord-logout'){
       el.addEventListener('click', logoutDiscord);
-    } else if (action === 'open-player-modal'){
-      el.addEventListener('click', () => openPlayerModal(null));
     } else if (action === 'edit-player'){
       el.addEventListener('click', () => openPlayerModal(el.dataset.id));
     } else if (action === 'delete-player'){
@@ -915,25 +954,57 @@ function bindEvents(){
   });
 }
 
-/* ---- Init ---- */
-handleDiscordRedirect();
-
-let firstLoad = true;
-docRef.onSnapshot(snap => {
-  if (snap.exists){
-    const d = snap.data();
-    if (d.players) PLAYERS = d.players;
-    if (d.classes && d.classes.length) CLASSES = d.classes;
-    if (d.groups) GROUPS = d.groups;
-  } else if (firstLoad){
-    scheduleSave();
+/* ---- Access gate ---- */
+function renderGate(){
+  const root = document.getElementById('gm-app');
+  let body = '';
+  if (ACCESS_STATE === 'checking'){
+    body = `<div style="text-align:center;color:var(--muted);">Vérification de ton accès…</div>`;
+  } else if (ACCESS_STATE === 'denied'){
+    body = `
+      <div style="text-align:center;max-width:360px;">
+        <div style="font-size:15px;font-weight:600;color:#ff8b96;margin-bottom:8px;">Accès refusé</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px;">Cette page est réservée aux membres ayant le rôle <strong style="color:var(--text);">Aion 2</strong> sur le serveur Discord de la guilde.</div>
+        <button class="gm-btn gm-btn-ghost" data-gate-action="logout">Se déconnecter</button>
+      </div>`;
+  } else {
+    body = `
+      <div style="text-align:center;max-width:360px;">
+        <img src="./logo.webp" alt="" style="width:72px;height:72px;object-fit:contain;margin:0 auto 16px;display:block;" />
+        <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;">Accès réservé</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px;">Connecte-toi avec Discord pour accéder au Guilde Manager (réservé aux membres avec le rôle Aion 2).</div>
+        <button class="gm-btn gm-btn-primary" style="background:#5865F2;border-color:#5865F2;color:#fff;" data-gate-action="login">${DISCORD_LOGO} Se connecter avec Discord</button>
+      </div>`;
   }
-  firstLoad = false;
-  render();
-}, err => {
-  console.error('Firestore error', err);
-  render();
-});
+  root.innerHTML = `<div class="gm-root" style="display:flex;align-items:center;justify-content:center;padding:20px;">${body}</div>`;
+  const loginBtn = root.querySelector('[data-gate-action="login"]');
+  if (loginBtn) loginBtn.addEventListener('click', loginWithDiscord);
+  const logoutBtn = root.querySelector('[data-gate-action="logout"]');
+  if (logoutBtn) logoutBtn.addEventListener('click', logoutDiscord);
+}
+
+function startApp(){
+  let firstLoad = true;
+  docRef.onSnapshot(snap => {
+    if (snap.exists){
+      const d = snap.data();
+      if (d.players) PLAYERS = d.players;
+      if (d.classes && d.classes.length) CLASSES = d.classes;
+      if (d.groups) GROUPS = d.groups;
+    } else if (firstLoad){
+      scheduleSave();
+    }
+    firstLoad = false;
+    render();
+  }, err => {
+    console.error('Firestore error', err);
+    render();
+  });
+}
+
+/* ---- Init ---- */
+renderGate();
+bootstrapAccess();
 
 })();
 </script>
