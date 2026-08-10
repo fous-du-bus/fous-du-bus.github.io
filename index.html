@@ -70,6 +70,7 @@
   <div class="app-toolbar" id="appToolbar"></div>
   <div class="dashboard" id="dashboard"></div>
   <div class="weekly-planner" id="weeklyPlanner"></div>
+  <div class="content-columns">
   <div id="blocksContainer"></div>
   <div id="eventSidebar">
     <div id="riftCard"></div>
@@ -77,6 +78,7 @@
     <div id="abyssRiftCard"></div>
     <div id="bossWedSatCard"></div>
     <div id="bossFriSunCard"></div>
+  </div>
   </div>
   <div class="history-modal" id="historyModal" role="dialog" aria-modal="true" aria-label="Historique"><div class="modal-card" id="historyContent"></div></div>
   <div class="toast" id="toast"></div>
@@ -417,9 +419,12 @@
 
 
 
-  /* ===== Spacetime Rift : panneau latéral toujours visible ===== */
+  /* ===== Spacetime Rift : panneau latéral toujours visible, en flux normal (plus de position fixed) ===== */
+  .content-columns { display: block; }
+  #eventSidebar { display: block; }
+  #eventSidebar > div { margin-bottom: 20px; }
+
   @media (min-width: 1400px) {
-    /* Le panneau Rift occupe la droite ; toute la largeur restante est donnée au contenu. */
     body {
       padding-left: 24px;
       padding-right: 24px;
@@ -427,12 +432,11 @@
 
     .wrap {
       width: 100%;
-      max-width: 1300px;
-      margin: 0;
+      max-width: 1480px;
+      margin: 0 auto;
       padding-right: 0;
     }
 
-    /* Suppression des anciennes limites à 1180 px sur grand écran. */
     .tabs,
     .progress-box,
     .summary-box,
@@ -449,25 +453,36 @@
       margin-right: 0;
     }
 
+    .content-columns {
+      display: flex;
+      align-items: flex-start;
+      gap: 24px;
+    }
+
     #blocksContainer {
-      width: 100%;
+      flex: 1;
+      min-width: 0;
+      width: auto;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 22px 24px;
     }
 
     #eventSidebar {
-      position: fixed;
-      z-index: 500;
-      top: 22px;
-      right: 22px;
+      flex: 0 0 360px;
       width: 360px;
-      max-height: calc(100vh - 44px);
+      position: sticky;
+      top: 86px;
+      max-height: calc(100vh - 106px);
       overflow-y: auto;
       overscroll-behavior: contain;
       scrollbar-gutter: stable;
       display: flex;
       flex-direction: column;
       gap: 16px;
+    }
+
+    #eventSidebar > div {
+      margin-bottom: 0;
     }
 
     #eventSidebar .rift-card,
@@ -527,7 +542,7 @@
 
   }
 
-  /* En dessous de 1400 px, le bloc revient dans le flux pour éviter tout chevauchement. */
+  /* En dessous de 1400 px, le bloc revient dans le flux normal (empilé). */
   @media (max-width: 1399px) {
     body {
       padding-right: 16px;
@@ -535,18 +550,6 @@
 
     .wrap {
       padding-right: 0;
-    }
-
-    #eventSidebar {
-      position: static;
-      width: auto;
-      max-height: none;
-      overflow: visible;
-      display: block;
-    }
-
-    #eventSidebar > div {
-      margin-bottom: 20px;
     }
   }
 
@@ -632,51 +635,6 @@
   .compact .rift-details summary { font-size:8px; margin-top:5px; }
 
 
-
-  /* ===== Largeur fixe desktop / ultrawide =====
-     Le contenu principal ne s'étire plus au-delà de 1480 px.
-     Le panneau événements reste fixé à droite du contenu, dans un shell total de 1864 px (1480 + 24 + 360). */
-  @media (min-width: 1400px) {
-    body {
-      padding: 28px 24px 60px;
-    }
-
-    .wrap {
-      width: min(1480px, calc(100vw - 570px));
-      max-width: 1480px;
-      margin-left: max(70px, calc((100vw - 1910px) / 2));
-      margin-right: 0;
-      padding-right: 0;
-    }
-
-    .tabs,
-    .progress-box,
-    .summary-box,
-    .chips,
-    .edit-panel,
-    .app-toolbar,
-    .dashboard,
-    .reset-btn,
-    .footer-note,
-    .footer-copy {
-      width: 100%;
-      max-width: none;
-      margin-left: 0;
-      margin-right: 0;
-    }
-
-    #blocksContainer {
-      width: 100%;
-      max-width: none;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    #eventSidebar {
-      right: max(70px, calc((100vw - 1910px) / 2));
-      width: 360px;
-    }
-
-  }
 
 </style>
 <script>
