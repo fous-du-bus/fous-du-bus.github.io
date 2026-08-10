@@ -175,16 +175,14 @@ function pickClass(classId, imgEl){
 }
 
 function confirmClaim(mode, teamId, slotIndex){
-  const input = document.getElementById('claimNameInput');
-  const name = input ? input.value.trim() : '';
-  const newPlayerCheckbox = document.getElementById('claimNewPlayer');
-  const isNewPlayer = newPlayerCheckbox ? newPlayerCheckbox.checked : false;
-  if (!name){ alert('Entre un pseudo.'); return; }
-  if (!pendingClassId){ alert('Choisis une classe.'); return; }
+  const select = document.getElementById('claimNameSelect');
+  const name = select ? select.value : '';
+  if (!name){ alert('Choisis un pseudo.'); return; }
+  const player = allTeams.roster.find(p => p.name === name);
+  if (!player){ alert('Joueur introuvable sur la liste.'); return; }
   const t = allTeams[mode].find(t => t.id === teamId);
-  if (t) t.slots[slotIndex] = { role: t.slots[slotIndex].role, name, classId: pendingClassId, isNewPlayer };
+  if (t) t.slots[slotIndex] = { role: t.slots[slotIndex].role, name: player.name, classId: player.classId, isNewPlayer: player.isNewPlayer };
   openClaimSlot = null;
-  pendingClassId = null;
   saveTeams();
 }
 
@@ -252,18 +250,26 @@ function renderTeamCard(mode, team){
   const slotsHtml = team.slots.map((slot, i) => {
     const key = mode + ':' + team.id + ':' + i;
     if (openClaimSlot === key){
-      const classPickerHtml = CLASS_OPTIONS.map(c =>
-        `<img src="${c.icon}" title="${c.label}" class="${pendingClassId===c.id?'selected':''}" onclick="pickClass('${c.id}', this)" />`
-      ).join('');
+      if (!allTeams.roster.length){
+        return `<div class="slot">
+          <div class="slot-role">${slot.role}</div>
+          <div class="claim-form">
+            <div style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center;color:#544b68;font-size:11px;">Inscris-toi d'abord sur la liste des joueurs 📋</div>
+            <button class="claim-btn-cancel" onclick="cancelClaim()">Annuler</button>
+          </div>
+        </div>`;
+      }
+      const alreadyUsedNames = new Set(team.slots.filter((s,si) => si !== i && s.name).map(s => s.name));
+      const optionsHtml = allTeams.roster
+        .filter(p => !alreadyUsedNames.has(p.name))
+        .map(p => `<option value="${p.name.replace(/"/g,'&quot;')}">${p.name}</option>`).join('');
       return `<div class="slot">
         <div class="slot-role">${slot.role}</div>
         <div class="claim-form">
-          <input id="claimNameInput" type="text" placeholder="Pseudo" maxlength="20" />
-          <div class="class-picker">${classPickerHtml}</div>
-          <label class="new-player-check">
-            <input type="checkbox" id="claimNewPlayer" />
-            ${LEAF_IMG} Nouveau joueur sur Aion 2
-          </label>
+          <select id="claimNameSelect" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:6px;color:#e8e3f0;font-size:12px;">
+            <option value="">-- Choisir un pseudo --</option>
+            ${optionsHtml}
+          </select>
           <div class="claim-form-actions">
             <button class="claim-btn-ok" onclick="confirmClaim('${mode}', '${team.id}', ${i})">OK</button>
             <button class="claim-btn-cancel" onclick="cancelClaim()">Annuler</button>
