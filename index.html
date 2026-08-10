@@ -14,6 +14,11 @@
 <meta name="apple-mobile-web-app-title" content="Fous du Bus">
 </head>
 <body>
+<div id="accessGate" style="position:fixed;inset:0;z-index:9999;background:radial-gradient(ellipse at top, #141a2e 0%, #0d1220 55%, #090c16 100%);display:flex;align-items:center;justify-content:center;padding:20px;">
+  <div id="accessGateContent" style="text-align:center;max-width:360px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#e7e9f7;">
+    <div style="color:#8790ac;font-size:13px;">Vérification de ton accès…</div>
+  </div>
+</div>
 <canvas id="bgCanvas"></canvas>
 <div id="discordTopBtn"></div>
 <div id="notesPanel"></div>
@@ -940,6 +945,116 @@ let cloudSyncStatus = 'idle';
 const DISCORD_CLIENT_ID = '1532248812771606691';
 const DISCORD_USER_KEY = 'aion2-discord-user';
 let discordUser = loadJSON(DISCORD_USER_KEY, null);
+
+const GUILD_ID = '1355632831333798200';
+const REQUIRED_ROLE_ID = '1443636744267501618';
+let siteSession = JSON.parse(localStorage.getItem('equipes-discord-session') || 'null');
+
+function showGate(state){
+  const el = document.getElementById('accessGateContent');
+  if (!el) return;
+  if (state === 'checking'){
+    el.innerHTML = `<div style="color:#8790ac;font-size:13px;">Vérification de ton accès…</div>`;
+  } else if (state === 'denied'){
+    el.innerHTML = `
+      <div style="font-size:15px;font-weight:600;color:#ff8b96;margin-bottom:8px;">Accès refusé</div>
+      <div style="font-size:13px;color:#8790ac;line-height:1.6;margin-bottom:18px;">Cette page est réservée aux membres ayant le rôle <strong style="color:#e7e9f7;">Aion 2</strong> sur le serveur Discord de la guilde.</div>
+      <button onclick="gateLogout()" style="border:1px solid rgba(255,255,255,0.15);background:transparent;color:#e7e9f7;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">Se déconnecter</button>`;
+  } else {
+    el.innerHTML = `
+      <img src="./logo.webp" alt="" style="width:72px;height:72px;object-fit:contain;margin:0 auto 16px;display:block;" />
+      <div style="font-size:15px;font-weight:600;color:#e7e9f7;margin-bottom:8px;">Accès réservé</div>
+      <div style="font-size:13px;color:#8790ac;line-height:1.6;margin-bottom:18px;">Connecte-toi avec Discord pour accéder au site (réservé aux membres avec le rôle Aion 2).</div>
+      <button onclick="gateLogin()" style="display:inline-flex;align-items:center;gap:6px;background:#5865F2;border:none;color:#fff;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">Se connecter avec Discord</button>`;
+  }
+}
+
+function hideGate(){
+  const gate = document.getElementById('accessGate');
+  if (gate) gate.style.display = 'none';
+}
+
+function gateLogin(){
+  const redirect = encodeURIComponent(getRedirectUri());
+  location.href = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${redirect}&response_type=token&scope=identify%20guilds.members.read`;
+}
+
+function gateLogout(){
+  siteSession = null;
+  localStorage.removeItem('equipes-discord-session');
+  showGate('gate');
+}
+
+let gateHandledOwnRedirect = false;
+
+function bootstrapGate(){
+  const hash = location.hash;
+  if (hash && hash.includes('access_token')){
+    gateHandledOwnRedirect = true;
+    const params = new URLSearchParams(hash.slice(1));
+    const token = params.get('access_token');
+    const expiresIn = parseInt(params.get('expires_in') || '0', 10);
+    history.replaceState(null, '', getRedirectUri());
+    if (!token){ showGate('gate'); return; }
+    fetch('https://discord.com/api/users/@me', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(user => {
+        const avatarUrl = user.avatar
+          ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64`
+          : `https://cdn.discordapp.com/embed/avatars/0.png`;
+        siteSession = { id: user.id, username: user.username, avatar: avatarUrl, accessToken: token, expiresAt: Date.now() + expiresIn * 1000 };
+        localStorage.setItem('equipes-discord-session', JSON.stringify(siteSession));
+        verifyGateRole(() => runDiscordSync(user, token));
+      })
+      .catch(() => showGate('gate'));
+    return;
+  }
+  if (siteSession && siteSession.accessToken && siteSession.expiresAt > Date.now()){
+    verifyGateRole();
+    return;
+  }
+  showGate('gate');
+}
+
+function verifyGateRole(onGranted){
+  showGate('checking');
+  fetch(`https://discord.com/api/users/@me/guilds/${GUILD_ID}/member`, { headers: { Authorization: `Bearer ${siteSession.accessToken}` } })
+    .then(r => { if (!r.ok) throw new Error('not a member'); return r.json(); })
+    .then(member => {
+      const roles = member.roles || [];
+      if (roles.includes(REQUIRED_ROLE_ID)){
+        hideGate();
+        if (onGranted) onGranted();
+      } else {
+        showGate('denied');
+      }
+    })
+    .catch(() => showGate('denied'));
+}
+
+function runDiscordSync(user, token){
+  discordUser = { id: user.id, username: user.username, avatar: user.avatar };
+  saveJSON(DISCORD_USER_KEY, discordUser);
+  const code = 'discord-' + user.id;
+  syncCode = code;
+  localStorage.setItem(SYNC_CODE_KEY, code);
+  addToSyncHistory(code);
+  if (!fbDb) { renderSyncPanel(); return; }
+  fbDb.collection('syncCodes').doc(code).get().then(snap => {
+    if (snap.exists && snap.data().data){
+      const remote = snap.data().data;
+      for (let i = localStorage.length - 1; i >= 0; i--){
+        const k = localStorage.key(i);
+        if (k && k.startsWith('aion2-') && k !== SYNC_CODE_KEY && k !== SYNC_HISTORY_KEY && k !== DISCORD_USER_KEY) localStorage.removeItem(k);
+      }
+      Object.entries(remote).forEach(([k, v]) => { if (k !== SYNC_HISTORY_KEY) localStorage.setItem(k, v); });
+      location.reload();
+    } else {
+      pushToCloud();
+      renderSyncPanel();
+    }
+  });
+}
 
 function getRedirectUri(){
   return location.origin + location.pathname;
@@ -2177,6 +2292,7 @@ function setSiteLang(l){
 document.getElementById('tabDaily').setAttribute('role','tab'); document.getElementById('tabWeekly').setAttribute('role','tab');
 document.querySelector('.tabs').setAttribute('role','tablist');
 applyTheme();
+bootstrapGate();
 handleDiscordRedirect();
 renderDiscordTopButton();
 initParticleBackground();
