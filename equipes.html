@@ -287,10 +287,13 @@ function verifyRoleAndProceed(isNewLogin){
   renderGate();
   fetch(`https://discord.com/api/users/@me/guilds/${GUILD_ID}/member`, { headers: { Authorization: `Bearer ${discordSession.accessToken}` } })
     .then(r => {
-      if (!r.ok) throw new Error('not a member or token invalid');
+      if (r.status === 404){ ACCESS_STATE = 'denied'; renderGate(); return null; }
+      if (r.status === 401){ discordSession = null; discordUser = null; localStorage.removeItem('equipes-discord-session'); ACCESS_STATE = 'gate'; renderGate(); return null; }
+      if (!r.ok){ ACCESS_STATE = 'error'; renderGate(); return null; }
       return r.json();
     })
     .then(member => {
+      if (!member) return;
       const roles = member.roles || [];
       if (roles.includes(REQUIRED_ROLE_ID)){
         ACCESS_STATE = 'granted';
@@ -315,7 +318,7 @@ function verifyRoleAndProceed(isNewLogin){
       }
     })
     .catch(() => {
-      ACCESS_STATE = 'denied';
+      ACCESS_STATE = 'error';
       renderGate();
     });
 }
@@ -972,6 +975,16 @@ function renderGate(){
         <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px;">Cette page est réservée aux membres ayant le rôle <strong style="color:var(--text);">Aion 2</strong> sur le serveur Discord de la guilde.</div>
         <button class="gm-btn gm-btn-ghost" data-gate-action="logout">Se déconnecter</button>
       </div>`;
+  } else if (ACCESS_STATE === 'error'){
+    body = `
+      <div style="text-align:center;max-width:360px;">
+        <div style="font-size:15px;font-weight:600;color:var(--new);margin-bottom:8px;">Vérification impossible</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px;">Un problème technique empêche de vérifier ton accès (souci réseau ou Discord momentanément indisponible). Ce n'est pas forcément un refus.</div>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+          <button class="gm-btn gm-btn-primary" data-gate-action="retry">Réessayer</button>
+          <button class="gm-btn gm-btn-ghost" data-gate-action="logout">Se déconnecter</button>
+        </div>
+      </div>`;
   } else {
     body = `
       <div style="text-align:center;max-width:360px;">
@@ -986,6 +999,8 @@ function renderGate(){
   if (loginBtn) loginBtn.addEventListener('click', loginWithDiscord);
   const logoutBtn = root.querySelector('[data-gate-action="logout"]');
   if (logoutBtn) logoutBtn.addEventListener('click', logoutDiscord);
+  const retryBtn = root.querySelector('[data-gate-action="retry"]');
+  if (retryBtn) retryBtn.addEventListener('click', () => verifyRoleAndProceed(false));
 }
 
 function startApp(){
