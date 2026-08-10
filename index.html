@@ -38,15 +38,6 @@
       </div>
     </div>
   </nav>
-<div class="event-carousel-wrap">
-  <div class="event-carousel" id="eventSidebar">
-    <div id="riftCard"></div>
-    <div id="artifactCard"></div>
-    <div id="abyssRiftCard"></div>
-    <div id="bossWedSatCard"></div>
-    <div id="bossFriSunCard"></div>
-  </div>
-</div>
 <div class="wrap">
   <img class="logo-img" src="./logo.webp" alt="Les Fous du Bus" />
   <div id="headerRow"></div>
@@ -80,6 +71,13 @@
   <div class="dashboard" id="dashboard"></div>
   <div class="weekly-planner" id="weeklyPlanner"></div>
   <div id="blocksContainer"></div>
+  <div id="eventSidebar">
+    <div id="riftCard"></div>
+    <div id="artifactCard"></div>
+    <div id="abyssRiftCard"></div>
+    <div id="bossWedSatCard"></div>
+    <div id="bossFriSunCard"></div>
+  </div>
   <div class="history-modal" id="historyModal" role="dialog" aria-modal="true" aria-label="Historique"><div class="modal-card" id="historyContent"></div></div>
   <div class="toast" id="toast"></div>
   <input type="file" id="importInput" accept="application/json" hidden />
@@ -419,28 +417,98 @@
 
 
 
-  /* ===== Spacetime Rift & événements : carrousel horizontal juste sous la nav ===== */
-  .event-carousel-wrap { width: 100%; padding: 0 clamp(16px, 4vw, 40px); box-sizing: border-box; margin-bottom: 8px; }
-  .event-carousel {
-    display: flex;
-    gap: 16px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scroll-snap-type: x proximity;
-    scrollbar-width: thin;
-    padding: 4px 4px 14px;
-    -webkit-overflow-scrolling: touch;
+  /* ===== Spacetime Rift : panneau latéral toujours visible (position fixe d'origine) ===== */
+  @media (min-width: 1400px) {
+    .wrap {
+      padding-left: 24px;
+      padding-right: 24px;
+    }
+
+    #eventSidebar {
+      position: fixed;
+      z-index: 500;
+      top: 22px;
+      right: 22px;
+      width: 360px;
+      max-height: calc(100vh - 44px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-gutter: stable;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    #eventSidebar .rift-card,
+    #eventSidebar .rift-collapsed {
+      width: 100%;
+      margin: 0;
+      box-shadow: 0 10px 24px rgba(0,0,0,.42), 0 0 0 1px rgba(196,126,212,.06);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    #eventSidebar .rift-card {
+      padding: 15px 16px;
+    }
+
+    #eventSidebar .rift-head {
+      margin-bottom: 12px;
+    }
+
+    #eventSidebar .rift-title {
+      font-size: 15px;
+    }
+
+    #eventSidebar .rift-subtitle {
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    #eventSidebar .rift-hero {
+      padding: 12px 13px;
+      margin-bottom: 11px;
+    }
+
+    #eventSidebar .rift-countdown-big {
+      font-size: 24px;
+    }
+
+    #eventSidebar .rift-window-value {
+      font-size: 14px;
+    }
+
+    #eventSidebar .rift-row {
+      padding: 7px 2px;
+      font-size: 12px;
+    }
+
+    #eventSidebar .rift-row-day,
+    #eventSidebar .rift-row-cd {
+      font-size: 11px;
+    }
+
+    #eventSidebar .rift-footer {
+      font-size: 10px;
+      line-height: 1.45;
+      margin-top: 11px;
+    }
+
   }
-  .event-carousel::-webkit-scrollbar { height: 6px; }
-  .event-carousel::-webkit-scrollbar-thumb { background: #322a49; border-radius: 3px; }
-  .event-carousel > div { flex: 0 0 340px; scroll-snap-align: start; }
-  .event-carousel .rift-card,
-  .event-carousel .rift-collapsed {
-    height: 100%;
-    box-shadow: 0 10px 24px rgba(0,0,0,.42), 0 0 0 1px rgba(196,126,212,.06);
-  }
-  @media (max-width: 680px) {
-    .event-carousel > div { flex-basis: 280px; }
+
+  /* En dessous de 1400 px, le bloc revient dans le flux pour éviter tout chevauchement. */
+  @media (max-width: 1399px) {
+    #eventSidebar {
+      position: static;
+      width: auto;
+      max-height: none;
+      overflow: visible;
+      display: block;
+    }
+
+    #eventSidebar > div {
+      margin-bottom: 20px;
+    }
   }
 
 
