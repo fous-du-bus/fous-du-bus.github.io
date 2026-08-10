@@ -25,6 +25,8 @@
   .subtitle { text-align: center; color: #8b8299; font-size: 13px; margin-bottom: 24px; }
   .mode-tabs { display: flex; gap: 8px; justify-content: center; margin: 0 0 20px; flex-wrap: wrap; }
   .mode-tab { border: 1px solid rgba(255,255,255,0.12); background: #1a1530; color: #8b8299; border-radius: 12px; padding: 9px 18px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .mode-select { border: 1px solid #4fd1c5; background: rgba(79,209,197,0.1); color: #4fd1c5; border-radius: 12px; padding: 9px 14px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .mode-select option { background: #1a1530; color: #e8e3f0; }
   .mode-tab.active { border-color: #4fd1c5; background: rgba(79,209,197,0.1); color: #4fd1c5; }
   .class-counter { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 4px 0 18px; }
   .class-count-item { display: flex; align-items: center; gap: 5px; background: #1a1530; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 4px 10px; font-size: 11px; color: #8b8299; }
@@ -85,8 +87,10 @@
   <h1>Compositions d'équipes</h1>
   <div class="subtitle">Inscris-toi dans un rôle libre — visible en temps réel pour tout le monde</div>
   <div class="mode-tabs">
-    <button class="mode-tab" id="tabBtn-pve" onclick="switchTab('pve')">⚔️ PvE</button>
-    <button class="mode-tab" id="tabBtn-pvp" onclick="switchTab('pvp')">🛡️ PvP</button>
+    <select class="mode-select" id="modeSelect" onchange="switchTab(this.value)">
+      <option value="pve">⚔️ PvE</option>
+      <option value="pvp">🛡️ PvP</option>
+    </select>
     <button class="mode-tab" id="tabBtn-roster" onclick="switchTab('roster')">📋 Liste des joueurs</button>
   </div>
   <div class="subtitle" id="signupCount" style="font-weight:700;"></div>
@@ -374,8 +378,10 @@ function renderRosterView(){
 
 function render(){
   document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
-  const activeBtn = document.getElementById('tabBtn-' + activeTab);
-  if (activeBtn) activeBtn.classList.add('active');
+  const rosterBtn = document.getElementById('tabBtn-roster');
+  if (rosterBtn) rosterBtn.classList.toggle('active', activeTab === 'roster');
+  const modeSelect = document.getElementById('modeSelect');
+  if (modeSelect && activeTab !== 'roster') modeSelect.value = activeTab;
 
   const addBtn = document.getElementById('addTeamBtn');
   if (addBtn) addBtn.style.display = (activeTab === 'roster') ? 'none' : 'block';
