@@ -232,6 +232,12 @@ function leaveRoster(name){
   saveTeams();
 }
 
+function resetRoster(){
+  if (!confirm('Réinitialiser toute la liste des joueurs inscrits ? Cette action est irréversible.')) return;
+  allTeams.roster = [];
+  saveTeams();
+}
+
 function saveTeams(){
   document.getElementById('statusLine').textContent = 'Enregistrement...';
   docRef.set({ pve: allTeams.pve, pvp: allTeams.pvp, roster: allTeams.roster }).then(() => {
@@ -359,11 +365,13 @@ function renderRosterView(){
     </div>
   </div>` : `<button class="add-team-btn" style="margin:0 0 16px;" onclick="openRosterForm()">+ M'inscrire sur la liste</button>`;
 
+  const resetBtnHtml = allTeams.roster.length ? `<button class="delete-team-btn" style="display:block;margin:0 auto 16px;" onclick="resetRoster()">Réinitialiser la liste</button>` : '';
+
   if (!players.length){
     container.innerHTML = joinFormHtml + '<div class="empty-state">Personne n\'est encore inscrit.</div>';
     return;
   }
-  container.innerHTML = joinFormHtml + `<div class="roster-list">${players.map(p => {
+  container.innerHTML = joinFormHtml + resetBtnHtml + `<div class="roster-list">${players.map(p => {
     const cls = CLASS_OPTIONS.find(c => c.id === p.classId);
     const tagsHtml = p.tags.map(t => `<span class="roster-tag ${t.mode}">${MODE_LABELS[t.mode]} · ${t.team} · ${t.role}</span>`).join('');
     const leaveBtn = p.fromRoster ? `<button class="slot-leave-btn" onclick="leaveRoster('${p.name.replace(/'/g,"\\'")}')" title="Se retirer de la liste">✕</button>` : '';
