@@ -188,7 +188,8 @@
   .edit-panel.show { display: flex; }
   .edit-row-head { display: flex; align-items: center; gap: 10px; }
   .edit-role { font-size: 12px; color: #8b8299; width: 70px; flex-shrink: 0; }
-  .remove-alt-btn { margin-left: auto; background: none; border: none; color: #544b68; font-size: 13px; cursor: pointer; padding: 2px 6px; border-radius: 6px; }
+  .remove-alt-btn { margin-left: auto; background: rgba(212,120,90,.12); border: 1px solid rgba(212,120,90,.35); color: #e08a6a; font-size: 13px; font-weight: 700; cursor: pointer; padding: 4px 9px; border-radius: 8px; }
+  .remove-alt-btn:hover { background: rgba(212,120,90,.25); }
   .remove-alt-btn:hover { background: rgba(212,120,90,0.15); color: #d4785a; }
   .add-alt-btn { margin-top: 4px; width: 100%; padding: 8px; border-radius: 10px; border: 1px dashed rgba(255,255,255,0.2);
                  background: transparent; color: #8b8299; font-size: 13px; font-weight: 600; cursor: pointer; }
@@ -689,8 +690,7 @@ const ICONS = {
 };
 
 const DEFAULT_CHARACTERS = [
-  { id: 'main', name: 'Templier', role: 'Main', icon: 'templar', color: '#4fd1c5' },
-  { id: 'ranger', name: 'Ranger', role: 'Alt', icon: 'ranger', color: '#7c9fd4' },
+  { id: 'main', name: 'Main', role: 'Main', icon: 'target', color: '#4fd1c5' },
 ];
 const ALT_COLOR_PALETTE = ['#7c9fd4', '#c47ed4', '#e0a458', '#5fc98d', '#e07a9d', '#8dd1c9', '#d4785a', '#a58ee0'];
 const CHAR_LIST_KEY = 'aion2-char-list';
@@ -1924,7 +1924,7 @@ function render(){
                        color:${isSelected ? dc.color : '#544b68'}">${iconHtml}</button>`;
     }).join('');
     const removeBtn = c.id !== 'main'
-      ? `<button class="remove-alt-btn" title="Supprimer cet alt" onclick="removeAlt('${c.id}')">🗑</button>`
+      ? `<button class="remove-alt-btn" title="Supprimer cet alt" onclick="removeAlt('${c.id}')">🗑 Retirer</button>`
       : '';
     return `
       <div>
