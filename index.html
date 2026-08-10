@@ -1018,6 +1018,11 @@ function bootstrapGate(){
     return;
   }
   if (siteSession && siteSession.accessToken && siteSession.expiresAt > Date.now()){
+    const ROLE_CACHE_MS = 20 * 60 * 1000;
+    if (siteSession.roleVerifiedAt && (Date.now() - siteSession.roleVerifiedAt) < ROLE_CACHE_MS){
+      hideGate();
+      return;
+    }
     verifyGateRole();
     return;
   }
@@ -1037,6 +1042,8 @@ function verifyGateRole(onGranted){
       if (!member) return;
       const roles = member.roles || [];
       if (roles.includes(REQUIRED_ROLE_ID)){
+        siteSession.roleVerifiedAt = Date.now();
+        localStorage.setItem('equipes-discord-session', JSON.stringify(siteSession));
         hideGate();
         if (onGranted) onGranted();
       } else {
