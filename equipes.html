@@ -179,6 +179,10 @@ html, body { margin: 0; padding: 0; }
 .gm-dashboard-event-card { padding: 14px; border-left: 3px solid var(--violet); }
 .gm-group-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
 .gm-group-title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.gm-open-badge { background: rgba(53,210,154,0.14); border: 1px solid rgba(53,210,154,0.4); color: var(--success); font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 3px 9px; border-radius: 20px; }
+.gm-needed-roles { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 4px 0 14px; }
+.gm-needed-roles-label { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+.gm-role-pill { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; border: 1px solid; text-transform: uppercase; letter-spacing: 0.03em; }
 .gm-group-name { font-family: 'Cinzel'; font-size: 16px; font-weight: 600; background: transparent; border: none; color: var(--text); outline: none; border-bottom: 1px dashed transparent; }
 .gm-group-name:focus { border-bottom: 1px dashed var(--border-strong); }
 .gm-group-meta-inputs { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -356,6 +360,8 @@ const I18N = {
     'groups.lfg_seeking_short': 'Recherche de second groupe (10 joueurs)',
     'groups.cancel_event': 'Annuler la demande',
     'groups.event_cancelled': 'Demande annulée.',
+    'groups.open_badge': '🔓 Ouvert', 'groups.open_group': '🔓 Rendre ouvert', 'groups.close_group': '🔒 Rendre fermé',
+    'groups.seeking_roles': '🔍 Recherche :',
     'topbar.events.title': 'Événements', 'topbar.events.sub': 'Planifier et annoncer les événements de guilde',
     'topbar.new_event': '+ Nouvel événement',
     'events.empty': 'Aucun événement prévu pour le moment.',
@@ -492,6 +498,8 @@ const I18N = {
     'groups.lfg_seeking_short': 'Looking for a second group (10 players)',
     'groups.cancel_event': 'Cancel request',
     'groups.event_cancelled': 'Request cancelled.',
+    'groups.open_badge': '🔓 Open', 'groups.open_group': '🔓 Mark as open', 'groups.close_group': '🔒 Mark as closed',
+    'groups.seeking_roles': '🔍 Looking for:',
     'topbar.events.title': 'Events', 'topbar.events.sub': 'Plan and announce guild events',
     'topbar.new_event': '+ New event',
     'events.empty': 'No event planned yet.',
@@ -663,6 +671,28 @@ function renderPlayerCard(p, actionsHtml, noteHtml){
 
 function roleColor(role){
   return { Tank: 'var(--tank)', Heal: 'var(--healer)', DPS: 'var(--dps)', Flex: 'var(--support)' }[role] || '#888';
+}
+function computeNeededRoles(g){
+  const template = { Tank: 1, Heal: 1, DPS: 3 };
+  const counts = { Tank: 0, Heal: 0, DPS: 0, Flex: 0 };
+  g.slots.forEach(s => {
+    if (!s.playerId) return;
+    const p = player(s.playerId);
+    const c = p ? cls(p.classId) : null;
+    if (c && counts[c.role] !== undefined) counts[c.role]++;
+  });
+  const needed = [];
+  Object.keys(template).forEach(role => {
+    let missing = template[role] - counts[role];
+    while (missing > 0) { needed.push(role); missing--; }
+  });
+  return needed;
+}
+function toggleGroupOpen(groupId){
+  const g = GROUPS.find(x => x.id === groupId);
+  if (!g) return;
+  g.open = !g.open;
+  saveTeams(); render();
 }
 
 function groupsContainingPlayer(playerId, type, excludeGroupId){
@@ -892,7 +922,7 @@ function requestDeleteClass(classId){
 /* ---------- Groups actions ---------- */
 function createGroup(type){
   const count = GROUPS.filter(g => g.type === type).length;
-  const g = { id: uid('g'), type, name: 'Groupe ' + (count + 1), activity: '', date: '', time: '',
+  const g = { id: uid('g'), type, name: 'Groupe ' + (count + 1), activity: '', date: '', time: '', open: false,
     slots: [0,1,2,3,4].map(() => ({ playerId: null })), substitutes: [] };
   GROUPS.push(g);
   toast(t('toast.group_created')); saveTeams(); render();
@@ -1168,6 +1198,8 @@ function publishGroupToDiscord(groupId, opts){
   descParts.push('');
   descParts.push(lines.join('\n') || t('groups.lfg_empty'));
   descParts.push('');
+  const neededRoles = computeNeededRoles(g);
+  if (neededRoles.length) descParts.push(`🔍 **${t('groups.seeking_roles')}** ${neededRoles.join(', ')}`, '');
   descParts.push(`${filledCount}/5 ${t('groups.registered')}`);
   descParts.push('');
   descParts.push(t('groups.lfg_react_prompt'));
@@ -1595,17 +1627,25 @@ function renderGroupCard(g, showPublish){
     return `<div class="gm-sub-chip">${avatarHtml(p, 22)}${esc(p.pseudo)}<button data-action="remove-substitute" data-group="${g.id}" data-player="${p.id}">✕</button></div>`;
   }).join('');
 
+  const neededRoles = computeNeededRoles(g);
   return `<div class="gm-panel gm-group-card">
     <div class="gm-group-head">
       <div class="gm-group-title-row">
         <input class="gm-group-name" value="${esc(g.name).replace(/"/g,'&quot;')}" data-action="update-group-name" data-group="${g.id}" />
+        ${g.open ? `<span class="gm-open-badge">${t('groups.open_badge')}</span>` : ''}
       </div>
       <div class="gm-group-actions">
+        <button class="gm-btn gm-btn-sm ${g.open ? 'gm-btn-primary' : 'gm-btn-ghost'}" data-action="toggle-group-open" data-group="${g.id}">${g.open ? t('groups.close_group') : t('groups.open_group')}</button>
         ${showPublish ? `<button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="publish-group-discord" data-group="${g.id}" style="background:#5865F2;border-color:#5865F2;color:#fff;">${t('groups.publish_discord')}</button>` : ''}
         ${isAdminView() ? `<button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="reset-group" data-group="${g.id}">${t('groups.reset')}</button>` : ''}
         ${isAdminView() ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-group" data-group="${g.id}">${t('groups.delete')}</button>` : ''}
       </div>
     </div>
+    ${g.open && neededRoles.length ? `
+    <div class="gm-needed-roles">
+      <span class="gm-needed-roles-label">${t('groups.seeking_roles')}</span>
+      ${neededRoles.map(role => `<span class="gm-role-pill" style="border-color:${roleColor(role)}66;background:${roleColor(role)}1c;color:${roleColor(role)}">${role}</span>`).join('')}
+    </div>` : ''}
     <div class="gm-slots">${slotsHtml}</div>
     ${subsHtml ? `<div class="gm-subs-title">${t('groups.substitutes')}</div>
     <div class="gm-subs-list">${subsHtml}</div>` : ''}
@@ -1983,6 +2023,8 @@ function bindEvents(){
       });
     } else if (action === 'cancel-group-event'){
       el.addEventListener('click', () => cancelGroupEvent(el.dataset.group));
+    } else if (action === 'toggle-group-open'){
+      el.addEventListener('click', () => toggleGroupOpen(el.dataset.group));
     } else if (action === 'reset-group'){
       el.addEventListener('click', () => resetGroup(el.dataset.group));
     } else if (action === 'delete-group'){
