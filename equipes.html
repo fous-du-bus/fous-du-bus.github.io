@@ -399,6 +399,7 @@ const I18N = {
     'dashboard.next_event': 'Prochain événement',
     'dashboard.no_upcoming_event': 'Aucun événement à venir.',
     'dashboard.my_group_events': 'Événement(s) de ton groupe',
+    'dashboard.open_groups': 'Groupes ouverts en recherche',
     'access.admin_only': 'Accès réservé aux administrateurs.',
     'dash.stat.players': 'Joueurs inscrits', 'dash.stat.pve_groups': 'Groupes PvE',
     'dash.stat.pvp_groups': 'Groupes PvP', 'dash.stat.new_players': 'Nouveaux joueurs',
@@ -541,6 +542,7 @@ const I18N = {
     'dashboard.next_event': 'Next event',
     'dashboard.no_upcoming_event': 'No upcoming event.',
     'dashboard.my_group_events': 'Your group event(s)',
+    'dashboard.open_groups': 'Open groups looking for players',
     'access.admin_only': 'Access restricted to administrators.',
     'dash.stat.players': 'Registered players', 'dash.stat.pve_groups': 'PvE groups',
     'dash.stat.pvp_groups': 'PvP groups', 'dash.stat.new_players': 'New players',
@@ -1450,6 +1452,15 @@ function renderDashboard(){
         </div>` : ''}
       </div>
     </div>
+    ${(() => {
+      const openGroups = GROUPS.filter(g => g.open);
+      if (!openGroups.length) return '';
+      return `
+      <div class="gm-panel" style="margin-top:16px;">
+        <h3 style="font-size:13px;margin:0 0 14px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">🔓 ${t('dashboard.open_groups')} (${openGroups.length})</h3>
+        ${openGroups.map(g => renderGroupCard(g, true, true)).join('')}
+      </div>`;
+    })()}
   `;
 }
 
