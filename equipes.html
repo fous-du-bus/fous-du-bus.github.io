@@ -137,6 +137,7 @@ html, body { margin: 0; padding: 0; }
 .gm-player-actions { display: flex; gap: 6px; margin-top: 10px; }
 .gm-group-card { padding: 16px; margin-bottom: 18px; }
 .gm-mygroup-section-title { font-family: 'Cinzel'; font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.gm-open-create-row { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
 .gm-event-request-banner { background: rgba(255,184,79,0.14); border: 1px solid rgba(255,184,79,0.4); color: var(--new); font-size: 13px; padding: 10px 14px; border-radius: 10px; margin-bottom: 10px; }
 .gm-events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
 .gm-view-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
@@ -342,6 +343,7 @@ const I18N = {
     'nav.opengroups': 'Groupe ouvert',
     'topbar.opengroups.title': 'Groupe ouvert', 'topbar.opengroups.sub': 'Tous les groupes PvE et PvP activement en recherche de joueurs',
     'opengroups.empty': "Aucun groupe ouvert pour le moment.",
+    'opengroups.create_pve': '+ Créer un groupe ouvert PvE', 'opengroups.create_pvp': '+ Créer un groupe ouvert PvP',
     'nav.auditlog': 'Journal',
     'topbar.auditlog.title': 'Journal d\'activité', 'topbar.auditlog.sub': 'Historique des suppressions et modifications effectuées par les admins',
     'audit.empty': 'Aucune activité enregistrée pour le moment.',
@@ -483,6 +485,7 @@ const I18N = {
     'nav.opengroups': 'Open groups',
     'topbar.opengroups.title': 'Open groups', 'topbar.opengroups.sub': 'All PvE and PvP groups actively looking for players',
     'opengroups.empty': 'No open group at the moment.',
+    'opengroups.create_pve': '+ Create open PvE group', 'opengroups.create_pvp': '+ Create open PvP group',
     'nav.auditlog': 'Log',
     'topbar.auditlog.title': 'Activity log', 'topbar.auditlog.sub': 'History of deletions and changes made by admins',
     'audit.empty': 'No activity recorded yet.',
@@ -929,6 +932,13 @@ function requestDeleteClass(classId){
 function createGroup(type){
   const count = GROUPS.filter(g => g.type === type).length;
   const g = { id: uid('g'), type, name: 'Groupe ' + (count + 1), activity: '', date: '', time: '', open: false,
+    slots: [0,1,2,3,4].map(() => ({ playerId: null })), substitutes: [] };
+  GROUPS.push(g);
+  toast(t('toast.group_created')); saveTeams(); render();
+}
+function createOpenGroup(type){
+  const count = GROUPS.filter(g => g.type === type).length;
+  const g = { id: uid('g'), type, name: 'Groupe ' + (count + 1), activity: '', date: '', time: '', open: true,
     slots: [0,1,2,3,4].map(() => ({ playerId: null })), substitutes: [] };
   GROUPS.push(g);
   toast(t('toast.group_created')); saveTeams(); render();
@@ -1605,7 +1615,7 @@ function renderGroupsTab(type){
   return groups.map(g => renderGroupCard(g)).join('');
 }
 
-function renderGroupCard(g, showPublish){
+function renderGroupCard(g, showPublish, showOpenControls){
   const filledCount = g.slots.filter(s => s.playerId).length;
   const eligiblePlayers = PLAYERS.filter(p => g.type === 'pve' ? p.pve : p.pvp);
 
@@ -1642,16 +1652,16 @@ function renderGroupCard(g, showPublish){
     <div class="gm-group-head">
       <div class="gm-group-title-row">
         <input class="gm-group-name" value="${esc(g.name).replace(/"/g,'&quot;')}" data-action="update-group-name" data-group="${g.id}" />
-        ${g.open ? `<span class="gm-open-badge">${t('groups.open_badge')}</span>` : ''}
+        ${g.open && showOpenControls ? `<span class="gm-open-badge">${t('groups.open_badge')}</span>` : ''}
       </div>
       <div class="gm-group-actions">
-        <button class="gm-btn gm-btn-sm ${g.open ? 'gm-btn-primary' : 'gm-btn-ghost'}" data-action="toggle-group-open" data-group="${g.id}">${g.open ? t('groups.close_group') : t('groups.open_group')}</button>
+        ${showOpenControls ? `<button class="gm-btn gm-btn-sm ${g.open ? 'gm-btn-primary' : 'gm-btn-ghost'}" data-action="toggle-group-open" data-group="${g.id}">${g.open ? t('groups.close_group') : t('groups.open_group')}</button>` : ''}
         ${showPublish ? `<button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="publish-group-discord" data-group="${g.id}" style="background:#5865F2;border-color:#5865F2;color:#fff;">${t('groups.publish_discord')}</button>` : ''}
         ${isAdminView() ? `<button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="reset-group" data-group="${g.id}">${t('groups.reset')}</button>` : ''}
         ${isAdminView() ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-group" data-group="${g.id}">${t('groups.delete')}</button>` : ''}
       </div>
     </div>
-    ${g.open && neededRoles.length ? `
+    ${showOpenControls && g.open && neededRoles.length ? `
     <div class="gm-needed-roles">
       <span class="gm-needed-roles-label">${t('groups.seeking_roles')}</span>
       ${neededRoles.map(role => `<span class="gm-role-pill" style="border-color:${roleColor(role)}66;background:${roleColor(role)}1c;color:${roleColor(role)}">${role}</span>`).join('')}
@@ -1737,19 +1747,23 @@ function renderMyGroupTab(){
 }
 function renderOpenGroupsTab(){
   const openGroups = GROUPS.filter(g => g.open);
+  const createButtons = `<div class="gm-open-create-row">
+    <button class="gm-btn gm-btn-primary" data-action="create-open-group" data-type="pve">${t('opengroups.create_pve')}</button>
+    <button class="gm-btn gm-btn-primary" data-action="create-open-group" data-type="pvp">${t('opengroups.create_pvp')}</button>
+  </div>`;
   if (!openGroups.length){
-    return `<div class="gm-empty"><div class="gm-empty-crest"></div>${t('opengroups.empty')}</div>`;
+    return `${createButtons}<div class="gm-empty"><div class="gm-empty-crest"></div>${t('opengroups.empty')}</div>`;
   }
   const pveGroups = openGroups.filter(g => g.type === 'pve');
   const pvpGroups = openGroups.filter(g => g.type === 'pvp');
-  let html = '';
+  let html = createButtons;
   if (pveGroups.length){
     html += `<div class="gm-mygroup-section-title" style="color:var(--blue);">⚔ ${t('nav.pve')}</div>`;
-    html += pveGroups.map(g => renderGroupCard(g, true)).join('');
+    html += pveGroups.map(g => renderGroupCard(g, true, true)).join('');
   }
   if (pvpGroups.length){
     html += `<div class="gm-mygroup-section-title" style="color:var(--dps);margin-top:${pveGroups.length?'20px':'0'};">⚡ ${t('nav.pvp')}</div>`;
-    html += pvpGroups.map(g => renderGroupCard(g, true)).join('');
+    html += pvpGroups.map(g => renderGroupCard(g, true, true)).join('');
   }
   return html;
 }
@@ -2017,6 +2031,8 @@ function bindEvents(){
       el.addEventListener('click', () => requestDeleteClass(el.dataset.id));
     } else if (action === 'create-group'){
       el.addEventListener('click', () => createGroup(el.dataset.type));
+    } else if (action === 'create-open-group'){
+      el.addEventListener('click', () => createOpenGroup(el.dataset.type));
     } else if (action === 'set-slot-player'){
       el.addEventListener('change', () => setSlotPlayer(el.dataset.group, parseInt(el.dataset.slot), el.value));
     } else if (action === 'remove-slot-player'){
