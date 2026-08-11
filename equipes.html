@@ -342,6 +342,8 @@ const I18N = {
     'groups.seeking_badge': 'Cherche x2',
     'groups.lfg_seeking_banner': 'Ce groupe cherche un SECOND groupe de 5 (10 joueurs au total) !',
     'groups.lfg_seeking_short': 'Recherche de second groupe (10 joueurs)',
+    'groups.cancel_event': 'Annuler la demande',
+    'groups.event_cancelled': 'Demande annulée.',
     'topbar.events.title': 'Événements', 'topbar.events.sub': 'Planifier et annoncer les événements de guilde',
     'topbar.new_event': '+ Nouvel événement',
     'events.empty': 'Aucun événement prévu pour le moment.',
@@ -476,6 +478,8 @@ const I18N = {
     'groups.seeking_badge': 'Seeking x2',
     'groups.lfg_seeking_banner': 'This group is looking for a SECOND group of 5 (10 players total)!',
     'groups.lfg_seeking_short': 'Looking for a second group (10 players)',
+    'groups.cancel_event': 'Cancel request',
+    'groups.event_cancelled': 'Request cancelled.',
     'topbar.events.title': 'Events', 'topbar.events.sub': 'Plan and announce guild events',
     'topbar.new_event': '+ New event',
     'events.empty': 'No event planned yet.',
@@ -1123,6 +1127,8 @@ function publishGroupToDiscord(groupId, opts){
     type: opts && opts.type ? opts.type : g.type,
     seekingSecondGroup: !!(opts && opts.seekingSecondGroup),
     createdAt: Date.now(),
+    createdById: discordUser ? discordUser.id : null,
+    createdByName: discordUser ? discordUser.username : '',
   };
   saveTeams(); render();
   const roleOrder = ['Tank', 'Heal', 'DPS', 'Flex'];
@@ -1623,6 +1629,16 @@ function renderGroupEventCard(g){
     ${renderRsvpBlock(ev.rsvps, 'group', g.id)}
   </div>`;
 }
+function canCancelGroupEvent(g){
+  return g.event && (isAdminView() || (discordUser && g.event.createdById === discordUser.id));
+}
+function cancelGroupEvent(groupId){
+  const g = GROUPS.find(x => x.id === groupId);
+  if (!g || !canCancelGroupEvent(g)) { toast(t('toast.admin_only'), 'danger'); return; }
+  g.event = null;
+  toast(t('groups.event_cancelled'));
+  saveTeams(); render();
+}
 function groupEventBanner(g){
   if (!g.event || !g.event.date) return '';
   const isUpcoming = new Date(g.event.date + 'T' + (g.event.time || '00:00')).getTime() >= Date.now();
@@ -1631,7 +1647,10 @@ function groupEventBanner(g){
   const msg = g.event.seekingSecondGroup
     ? t('mygroup.event_request_banner_seeking').replace('{type}', typeLabel)
     : t('mygroup.event_request_banner').replace('{type}', typeLabel);
-  return `<div class="gm-event-request-banner">📢 ${esc(msg)}${renderRsvpBlock(g.event.rsvps, 'group', g.id)}</div>`;
+  const cancelBtn = canCancelGroupEvent(g)
+    ? `<div style="margin-top:8px;"><button class="gm-btn gm-btn-danger gm-btn-sm" data-action="cancel-group-event" data-group="${g.id}">${t('groups.cancel_event')}</button></div>`
+    : '';
+  return `<div class="gm-event-request-banner">📢 ${esc(msg)}${renderRsvpBlock(g.event.rsvps, 'group', g.id)}${cancelBtn}</div>`;
 }
 function renderMyGroupTab(){
   if (!discordUser) return `<div class="gm-empty">${t('mygroup.not_logged')}</div>`;
@@ -1948,6 +1967,8 @@ function bindEvents(){
         MODAL = null; render();
         publishGroupToDiscord(groupId, opts);
       });
+    } else if (action === 'cancel-group-event'){
+      el.addEventListener('click', () => cancelGroupEvent(el.dataset.group));
     } else if (action === 'reset-group'){
       el.addEventListener('click', () => resetGroup(el.dataset.group));
     } else if (action === 'delete-group'){
