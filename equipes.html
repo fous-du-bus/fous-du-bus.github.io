@@ -933,6 +933,8 @@ function createGroup(type){
   const count = GROUPS.filter(g => g.type === type).length;
   const g = { id: uid('g'), type, name: 'Groupe ' + (count + 1), activity: '', date: '', time: '', open: false,
     slots: [0,1,2,3,4].map(() => ({ playerId: null })), substitutes: [] };
+  const me = myPlayerRecord();
+  if (me && (type === 'pve' ? me.pve : me.pvp)) g.slots[0].playerId = me.id;
   GROUPS.push(g);
   toast(t('toast.group_created')); saveTeams(); render();
 }
@@ -940,6 +942,8 @@ function createOpenGroup(type){
   const count = GROUPS.filter(g => g.type === type).length;
   const g = { id: uid('g'), type, name: 'Groupe ' + (count + 1), activity: '', date: '', time: '', open: true,
     slots: [0,1,2,3,4].map(() => ({ playerId: null })), substitutes: [] };
+  const me = myPlayerRecord();
+  if (me && (type === 'pve' ? me.pve : me.pvp)) g.slots[0].playerId = me.id;
   GROUPS.push(g);
   toast(t('toast.group_created')); saveTeams(); render();
 }
