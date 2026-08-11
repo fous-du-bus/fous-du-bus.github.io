@@ -71,7 +71,7 @@ html, body { margin: 0; padding: 0; }
 .gm-bar-value { width: 26px; text-align: right; font-family: 'JetBrains Mono'; color: var(--text); }
 .gm-class-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px 3px 6px; border-radius: 20px; font-size: 11.5px; font-weight: 600; border: 1px solid; white-space: nowrap; }
 .gm-class-pill img { width: 15px; height: 15px; object-fit: contain; vertical-align: -3px; }
-.gm-badge-new { background: #ffffff; color: var(--new); border: 1px solid var(--new); font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.03em; display: inline-flex; align-items: center; gap: 3px; }
+.gm-badge-new { background: rgba(255,184,79,0.14); color: var(--new); border: 1px solid rgba(255,184,79,0.4); font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.03em; display: inline-flex; align-items: center; gap: 3px; backdrop-filter: blur(2px); }
 .gm-badge-new img { width: 12px; height: 12px; }
 .gm-filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
 .gm-select { background: var(--panel-solid); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 9px; font-size: 12.5px; font-family: 'Inter'; outline: none; }
@@ -82,12 +82,12 @@ html, body { margin: 0; padding: 0; }
 .gm-not-registered-list { display: flex; flex-direction: column; gap: 6px; max-height: 60vh; overflow-y: auto; }
 .gm-not-registered-item { font-size: 12.5px; color: var(--text); background: var(--panel-solid); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; }
 @media (max-width: 900px) { .gm-players-layout { flex-direction: column; } .gm-not-registered { flex: none; width: 100%; position: static; } }
-.gm-player-card { padding: 18px; position: relative; transition: transform .15s ease, border-color .15s ease; overflow: visible; display: flex; align-items: center; gap: 12px; }
+.gm-player-card { padding: 18px; position: relative; transition: transform .15s ease, border-color .15s ease; overflow: hidden; display: flex; align-items: center; gap: 12px; }
 .gm-player-info { flex: 1; min-width: 0; }
 .gm-player-emblem { width: 82px; height: 82px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4)); align-self: center; }
 .gm-player-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
 .gm-player-top { display: flex; gap: 10px; align-items: flex-start; }
-.gm-badge-new-ribbon { position: absolute; top: -10px; right: 16px; z-index: 2; }
+.gm-badge-new-ribbon { position: absolute; top: 12px; right: 12px; z-index: 2; }
 .gm-avatar { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; object-fit: cover; border: 2px solid var(--border-strong); background: #222840; }
 .gm-avatar-fallback { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; display:flex; align-items:center; justify-content:center; background: linear-gradient(135deg, var(--violet), var(--blue)); font-weight: 700; color: #0a0e1a; font-family:'Cinzel'; border: 2px solid var(--border-strong); }
 .gm-player-names { flex: 1; min-width: 0; }
