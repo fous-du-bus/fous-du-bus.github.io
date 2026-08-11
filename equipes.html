@@ -426,6 +426,7 @@ const I18N = {
     'groups.lfg_posted': 'Groupe publié sur Discord.',
     'groups.lfg_error': "Erreur lors de la publication sur Discord.",
     'groups.lfg_empty': 'Aucun joueur assigné pour le moment.',
+    'groups.limit_reached': 'Ce joueur est déjà inscrit dans un groupe de cette catégorie (fixe PvE, fixe PvP ou ouvert).',
     'groups.lfg_react_prompt': '✅ Disponible · ❌ Indisponible — réagissez pour indiquer votre dispo !',
     'groups.publish_title_label': "Intitulé de l'événement",
     'groups.publish_title_placeholder': 'Ex : Boss Kroban, Sortie donjon...',
@@ -569,6 +570,7 @@ const I18N = {
     'groups.lfg_posted': 'Group posted to Discord.',
     'groups.lfg_error': 'Error posting to Discord.',
     'groups.lfg_empty': 'No player assigned yet.',
+    'groups.limit_reached': 'This player is already registered in a group of this category (fixed PvE, fixed PvP, or open).',
     'groups.lfg_react_prompt': '✅ Available · ❌ Not available — react to let us know!',
     'groups.publish_title_label': 'Event title',
     'groups.publish_title_placeholder': 'E.g. Kroban boss, dungeon run...',
@@ -716,6 +718,13 @@ function toggleGroupOpen(groupId){
 function groupsContainingPlayer(playerId, type, excludeGroupId){
   return GROUPS.filter(g => g.type === type && g.id !== excludeGroupId &&
     (g.slots.some(s => s.playerId === playerId) || g.substitutes.includes(playerId)));
+}
+function playerLimitReached(playerId, targetGroup){
+  const isMember = g => g.slots.some(s => s.playerId === playerId) || g.substitutes.includes(playerId);
+  if (targetGroup.open){
+    return GROUPS.some(g => g.id !== targetGroup.id && g.open && isMember(g));
+  }
+  return GROUPS.some(g => g.id !== targetGroup.id && !g.open && g.type === targetGroup.type && isMember(g));
 }
 
 /* ---------- Discord OAuth (individual auto-sync) ---------- */
@@ -993,6 +1002,11 @@ function deleteGroup(groupId){
 }
 function setSlotPlayer(groupId, slotIdx, playerId){
   const g = GROUPS.find(x => x.id === groupId);
+  if (playerId && playerLimitReached(playerId, g)) {
+    toast(t('groups.limit_reached'), 'danger');
+    render();
+    return;
+  }
   g.slots[slotIdx].playerId = playerId || null;
   saveTeams(); render();
 }
@@ -1683,7 +1697,7 @@ function renderGroupCard(g, showPublish, showOpenControls){
       return `<div class="gm-slot-wrapper">${renderPlayerCard(p, actions, note)}</div>`;
     }
     const usedIds = new Set(g.slots.filter((s,si) => si !== i && s.playerId).map(s => s.playerId));
-    const options = eligiblePlayers.filter(p => !usedIds.has(p.id));
+    const options = eligiblePlayers.filter(p => !usedIds.has(p.id) && !playerLimitReached(p.id, g));
     return `<div class="gm-slot">
       <div class="gm-slot-empty">
         <select data-action="set-slot-player" data-group="${g.id}" data-slot="${i}">
