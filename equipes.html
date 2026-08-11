@@ -85,7 +85,8 @@ html, body { margin: 0; padding: 0; }
 .gm-player-info { flex: 1; min-width: 0; }
 .gm-player-emblem { width: 92px; height: 92px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4)); }
 .gm-player-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
-.gm-player-top { display: flex; gap: 10px; align-items: flex-start; }
+.gm-player-top { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; }
+.gm-player-top .gm-badge-new { flex-shrink: 0; }
 .gm-avatar { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; object-fit: cover; border: 2px solid var(--border-strong); background: #222840; }
 .gm-avatar-fallback { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; display:flex; align-items:center; justify-content:center; background: linear-gradient(135deg, var(--violet), var(--blue)); font-weight: 700; color: #0a0e1a; font-family:'Cinzel'; border: 2px solid var(--border-strong); }
 .gm-player-names { flex: 1; min-width: 0; }
@@ -216,6 +217,7 @@ const I18N = {
   fr: {
     'nav.dashboard': 'Tableau de bord', 'nav.players': 'Joueurs', 'nav.classes': 'Classes',
     'nav.pve': 'PvE', 'nav.pvp': 'PvP', 'nav.dailies': 'Dailies',
+    'badge.new': 'Nouveau',
     'brand.subtitle': 'Gestion des groupes',
     'role.connected': 'Connecté', 'role.logout_title': 'Se déconnecter',
     'role.preview_on': '◈ Revenir en vue admin', 'role.preview_off': '◎ Voir en tant que membre',
@@ -294,6 +296,7 @@ const I18N = {
   en: {
     'nav.dashboard': 'Dashboard', 'nav.players': 'Players', 'nav.classes': 'Classes',
     'nav.pve': 'PvE', 'nav.pvp': 'PvP', 'nav.dailies': 'Dailies',
+    'badge.new': 'New',
     'brand.subtitle': 'Group Management',
     'role.connected': 'Connected', 'role.logout_title': 'Log out',
     'role.preview_on': '◈ Back to admin view', 'role.preview_off': '◎ View as member',
@@ -910,9 +913,10 @@ function renderPlayers(){
             <div class="gm-player-top">
               ${avatarHtml(p, 44)}
               <div class="gm-player-names">
-                <div class="gm-player-pseudo">${esc(p.pseudo)} ${p.isNewPlayer ? LEAF_IMG : ''}</div>
+                <div class="gm-player-pseudo">${esc(p.pseudo)}</div>
                 ${p.discordUsername ? `<div class="gm-player-discord">${DISCORD_LOGO} ${esc(p.discordUsername)}</div>` : ''}
               </div>
+              ${p.isNewPlayer ? `<span class="gm-badge-new">▾ ${t('badge.new')}</span>` : ''}
             </div>
             <div class="gm-player-meta">${classPill(p.classId)}</div>
             <div class="gm-player-actions">
