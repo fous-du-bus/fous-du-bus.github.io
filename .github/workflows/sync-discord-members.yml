@@ -2,6 +2,8 @@ name: Sync Discord members with Aion 2 role
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 * * * *'
 
 jobs:
   sync:
