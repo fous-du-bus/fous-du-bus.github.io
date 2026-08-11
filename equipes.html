@@ -163,6 +163,13 @@ html, body { margin: 0; padding: 0; }
 .gm-event-datetime { font-size: 12.5px; color: var(--muted); margin-bottom: 8px; }
 .gm-event-desc { font-size: 12.5px; color: var(--text); line-height: 1.5; margin-bottom: 8px; white-space: pre-wrap; }
 .gm-event-creator { font-size: 11px; color: var(--muted-2); }
+.gm-rsvp-block { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.gm-rsvp-buttons { display: flex; gap: 6px; }
+.gm-rsvp-btn { background: var(--panel); border: 1px solid var(--border); color: var(--muted); font-size: 11.5px; font-weight: 600; padding: 5px 10px; border-radius: 8px; cursor: pointer; transition: all .15s ease; }
+.gm-rsvp-btn:hover { border-color: var(--border-strong); color: var(--text); }
+.gm-rsvp-btn.gm-rsvp-active-yes { background: rgba(53,210,154,0.16); border-color: var(--success); color: var(--success); }
+.gm-rsvp-btn.gm-rsvp-active-no { background: rgba(239,77,95,0.16); border-color: var(--danger); color: var(--danger); }
+.gm-rsvp-counts { font-size: 11.5px; color: var(--muted); }
 .gm-dashboard-event-card { padding: 14px; border-left: 3px solid var(--violet); }
 .gm-group-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
 .gm-group-title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -329,6 +336,8 @@ const I18N = {
     'events.create_first': '+ Créer le premier événement',
     'events.view_calendar': '🗓 Calendrier', 'events.view_list': '☰ Liste',
     'events.no_event_this_day': 'Aucun événement ce jour-là.',
+    'rsvp.present': 'Présent', 'rsvp.absent': 'Absent',
+    'rsvp.no_profile': 'Tu dois avoir un profil joueur pour indiquer ta présence.',
     'events.type.pve': 'PvE', 'events.type.pvp': 'PvP', 'events.type.other': 'Autre',
     'events.field.title': 'Titre', 'events.field.date': 'Date', 'events.field.time': 'Heure',
     'events.field.type': 'Type', 'events.field.description': 'Description (facultatif)',
@@ -454,6 +463,8 @@ const I18N = {
     'events.create_first': '+ Create the first event',
     'events.view_calendar': '🗓 Calendar', 'events.view_list': '☰ List',
     'events.no_event_this_day': 'No event on this day.',
+    'rsvp.present': 'Present', 'rsvp.absent': 'Absent',
+    'rsvp.no_profile': 'You need a player profile to mark your presence.',
     'events.type.pve': 'PvE', 'events.type.pvp': 'PvP', 'events.type.other': 'Other',
     'events.field.title': 'Title', 'events.field.date': 'Date', 'events.field.time': 'Time',
     'events.field.type': 'Type', 'events.field.description': 'Description (optional)',
@@ -922,6 +933,52 @@ function openEventModal(eventId){
 }
 function eventTypeLabel(type){
   return { pve: t('events.type.pve'), pvp: t('events.type.pvp'), other: t('events.type.other') }[type] || type;
+}
+
+/* ---- RSVP (presence) ---- */
+function myPlayerRecord(){
+  if (!discordUser) return null;
+  return PLAYERS.find(p => p.discordId === discordUser.id) || null;
+}
+function rsvpCounts(rsvps){
+  rsvps = rsvps || {};
+  let yes = 0, no = 0;
+  Object.values(rsvps).forEach(v => { if (v === 'yes') yes++; else if (v === 'no') no++; });
+  return { yes, no };
+}
+function setEventRsvp(eventId, status){
+  const me = myPlayerRecord();
+  if (!me) { toast(t('rsvp.no_profile'), 'danger'); return; }
+  const ev = EVENTS.find(e => e.id === eventId);
+  if (!ev) return;
+  ev.rsvps = ev.rsvps || {};
+  ev.rsvps[me.id] = (ev.rsvps[me.id] === status) ? undefined : status;
+  if (ev.rsvps[me.id] === undefined) delete ev.rsvps[me.id];
+  saveTeams(); render();
+}
+function setGroupEventRsvp(groupId, status){
+  const me = myPlayerRecord();
+  if (!me) { toast(t('rsvp.no_profile'), 'danger'); return; }
+  const g = GROUPS.find(x => x.id === groupId);
+  if (!g || !g.event) return;
+  g.event.rsvps = g.event.rsvps || {};
+  g.event.rsvps[me.id] = (g.event.rsvps[me.id] === status) ? undefined : status;
+  if (g.event.rsvps[me.id] === undefined) delete g.event.rsvps[me.id];
+  saveTeams(); render();
+}
+function renderRsvpBlock(rsvps, refType, refId){
+  const me = myPlayerRecord();
+  const mine = me ? (rsvps || {})[me.id] : null;
+  const { yes, no } = rsvpCounts(rsvps);
+  const yesAction = refType === 'event' ? 'rsvp-event-yes' : 'rsvp-group-yes';
+  const noAction = refType === 'event' ? 'rsvp-event-no' : 'rsvp-group-no';
+  return `<div class="gm-rsvp-block">
+    <div class="gm-rsvp-buttons">
+      <button class="gm-rsvp-btn ${mine==='yes'?'gm-rsvp-active-yes':''}" data-action="${yesAction}" data-id="${refId}">✅ ${t('rsvp.present')}</button>
+      <button class="gm-rsvp-btn ${mine==='no'?'gm-rsvp-active-no':''}" data-action="${noAction}" data-id="${refId}">❌ ${t('rsvp.absent')}</button>
+    </div>
+    <div class="gm-rsvp-counts">✅ ${yes} · ❌ ${no}</div>
+  </div>`;
 }
 function postEventToDiscord(ev){
   if (!DISCORD_ANNOUNCE_WEBHOOK_URL) return Promise.resolve('not_configured');
@@ -1433,6 +1490,7 @@ function renderEventCard(ev){
     <div class="gm-event-datetime">🗓️ ${esc(dateLabel)} · 🕐 ${esc(ev.time || '')}</div>
     ${ev.description ? `<div class="gm-event-desc">${esc(ev.description)}</div>` : ''}
     ${ev.createdBy ? `<div class="gm-event-creator">${t('events.created_by')}: ${esc(ev.createdBy)}</div>` : ''}
+    ${renderRsvpBlock(ev.rsvps, 'event', ev.id)}
   </div>`;
 }
 
@@ -1520,6 +1578,7 @@ function renderGroupEventCard(g){
     <div class="gm-event-title">${esc(ev.title)}</div>
     <div class="gm-event-datetime">🗓️ ${esc(dateLabel)} · 🕐 ${esc(ev.time || '')}</div>
     <div class="gm-event-creator">${esc(g.name)}</div>
+    ${renderRsvpBlock(ev.rsvps, 'group', g.id)}
   </div>`;
 }
 function groupEventBanner(g){
@@ -1528,7 +1587,7 @@ function groupEventBanner(g){
   if (!isUpcoming) return '';
   const typeLabel = eventTypeLabel(g.event.type || g.type);
   const msg = t('mygroup.event_request_banner').replace('{type}', typeLabel);
-  return `<div class="gm-event-request-banner">📢 ${esc(msg)}</div>`;
+  return `<div class="gm-event-request-banner">📢 ${esc(msg)}${renderRsvpBlock(g.event.rsvps, 'group', g.id)}</div>`;
 }
 function renderMyGroupTab(){
   if (!discordUser) return `<div class="gm-empty">${t('mygroup.not_logged')}</div>`;
@@ -1868,6 +1927,14 @@ function bindEvents(){
       el.addEventListener('click', () => openEventModal(el.dataset.id));
     } else if (action === 'delete-event'){
       el.addEventListener('click', () => requestDeleteEvent(el.dataset.id));
+    } else if (action === 'rsvp-event-yes'){
+      el.addEventListener('click', () => setEventRsvp(el.dataset.id, 'yes'));
+    } else if (action === 'rsvp-event-no'){
+      el.addEventListener('click', () => setEventRsvp(el.dataset.id, 'no'));
+    } else if (action === 'rsvp-group-yes'){
+      el.addEventListener('click', () => setGroupEventRsvp(el.dataset.id, 'yes'));
+    } else if (action === 'rsvp-group-no'){
+      el.addEventListener('click', () => setGroupEventRsvp(el.dataset.id, 'no'));
     } else if (action === 'events-view'){
       el.addEventListener('click', () => { EVENTS_VIEW = el.dataset.view; render(); });
     } else if (action === 'select-cal-day'){
