@@ -527,8 +527,7 @@ function renderPlayerCard(p, actionsHtml, noteHtml){
       <div class="gm-player-top">
         ${avatarHtml(p, 48)}
         <div class="gm-player-names">
-          <div class="gm-player-pseudo">${esc(p.pseudo)}</div>
-          ${p.discordUsername ? `<div class="gm-player-discord">@${esc(p.discordUsername)}</div>` : ''}
+          <div class="gm-player-pseudo">${esc(p.discordUsername || p.pseudo)}</div>
         </div>
       </div>
       <div class="gm-player-meta">${classPill(p.classId)}</div>
