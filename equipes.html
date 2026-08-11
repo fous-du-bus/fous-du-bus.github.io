@@ -251,6 +251,11 @@ const I18N = {
     'topbar.search_placeholder': 'Rechercher un pseudo…',
     'topbar.new_class': '+ Nouvelle classe', 'topbar.new_group': '+ Nouveau groupe',
     'nav.events': 'Événement de guilde',
+    'nav.mygroup': 'Mon groupe',
+    'topbar.mygroup.title': 'Mon groupe', 'topbar.mygroup.sub': 'Le ou les groupes dont tu fais partie',
+    'mygroup.not_logged': 'Connecte-toi avec Discord pour voir ton groupe.',
+    'mygroup.no_profile': 'Aucun profil joueur associé à ton compte.',
+    'mygroup.empty': "Tu ne fais partie d'aucun groupe pour le moment.",
     'topbar.events.title': 'Événements', 'topbar.events.sub': 'Planifier et annoncer les événements de guilde',
     'topbar.new_event': '+ Nouvel événement',
     'events.empty': 'Aucun événement prévu pour le moment.',
@@ -359,6 +364,11 @@ const I18N = {
     'topbar.search_placeholder': 'Search a nickname…',
     'topbar.new_class': '+ New class', 'topbar.new_group': '+ New group',
     'nav.events': 'Guild event',
+    'nav.mygroup': 'My group',
+    'topbar.mygroup.title': 'My group', 'topbar.mygroup.sub': 'The group(s) you belong to',
+    'mygroup.not_logged': 'Sign in with Discord to see your group.',
+    'mygroup.no_profile': 'No player profile linked to your account.',
+    'mygroup.empty': "You're not part of any group yet.",
     'topbar.events.title': 'Events', 'topbar.events.sub': 'Plan and announce guild events',
     'topbar.new_event': '+ New event',
     'events.empty': 'No event planned yet.',
@@ -994,6 +1004,7 @@ function renderSidebar(){
     { id: 'classes', label: t('nav.classes'), icon: '◆', adminOnly: true },
     { id: 'pve', label: t('nav.pve'), icon: '⚔' },
     { id: 'pvp', label: t('nav.pvp'), icon: '⚡' },
+    { id: 'mygroup', label: t('nav.mygroup'), icon: '👥' },
     { id: 'events', label: t('nav.events'), icon: '🗓' },
   ].filter(i => !i.adminOnly || isAdminView());
   return `
@@ -1043,6 +1054,7 @@ function renderTopbar(){
     pve: [t('topbar.pve.title'), t('topbar.pve.sub')],
     pvp: [t('topbar.pvp.title'), t('topbar.pvp.sub')],
     events: [t('topbar.events.title'), t('topbar.events.sub')],
+    mygroup: [t('topbar.mygroup.title'), t('topbar.mygroup.sub')],
   };
   const [title, sub] = titles[ACTIVE_TAB] || ['', ''];
   return `
@@ -1067,6 +1079,7 @@ function renderTabContent(){
   if (ACTIVE_TAB === 'pve') return renderGroupsTab('pve');
   if (ACTIVE_TAB === 'pvp') return renderGroupsTab('pvp');
   if (ACTIVE_TAB === 'events') return renderEvents();
+  if (ACTIVE_TAB === 'mygroup') return renderMyGroupTab();
   return '';
 }
 
@@ -1241,7 +1254,7 @@ function renderGroupsTab(type){
   return groups.map(g => renderGroupCard(g)).join('');
 }
 
-function renderGroupCard(g){
+function renderGroupCard(g, showPublish){
   const filledCount = g.slots.filter(s => s.playerId).length;
   const eligiblePlayers = PLAYERS.filter(p => g.type === 'pve' ? p.pve : p.pvp);
 
@@ -1278,7 +1291,7 @@ function renderGroupCard(g){
         <input class="gm-group-name" value="${esc(g.name).replace(/"/g,'&quot;')}" data-action="update-group-name" data-group="${g.id}" />
       </div>
       <div class="gm-group-actions">
-        <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="publish-group-discord" data-group="${g.id}" style="background:#5865F2;border-color:#5865F2;color:#fff;">${t('groups.publish_discord')}</button>
+        ${showPublish ? `<button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="publish-group-discord" data-group="${g.id}" style="background:#5865F2;border-color:#5865F2;color:#fff;">${t('groups.publish_discord')}</button>` : ''}
         ${isAdminView() ? `<button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="reset-group" data-group="${g.id}">${t('groups.reset')}</button>` : ''}
         ${isAdminView() ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-group" data-group="${g.id}">${t('groups.delete')}</button>` : ''}
       </div>
@@ -1288,6 +1301,18 @@ function renderGroupCard(g){
     <div class="gm-subs-list">${subsHtml}</div>` : ''}
     <div style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center;">${filledCount}/5 ${t('groups.registered')}</div>
   </div>`;
+}
+
+/* ---- My group ---- */
+function renderMyGroupTab(){
+  if (!discordUser) return `<div class="gm-empty">${t('mygroup.not_logged')}</div>`;
+  const myPlayer = PLAYERS.find(p => p.discordId === discordUser.id);
+  if (!myPlayer) return `<div class="gm-empty">${t('mygroup.no_profile')}</div>`;
+  const myGroups = GROUPS.filter(g => g.slots.some(s => s.playerId === myPlayer.id) || g.substitutes.includes(myPlayer.id));
+  if (!myGroups.length){
+    return `<div class="gm-empty"><div class="gm-empty-crest"></div>${t('mygroup.empty')}</div>`;
+  }
+  return myGroups.map(g => renderGroupCard(g, true)).join('');
 }
 
 /* ---- Modal ---- */
