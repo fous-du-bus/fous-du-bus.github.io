@@ -1024,8 +1024,10 @@ function publishGroupToDiscord(groupId, opts){
 ========================================================= */
 function render(){
   const root = document.getElementById('gm-app');
+  const scrollY = window.scrollY;
   root.innerHTML = renderShell();
   bindEvents();
+  window.scrollTo(0, scrollY);
 }
 
 function renderShell(){
