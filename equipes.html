@@ -272,8 +272,9 @@ function bootstrapAccess(){
         const avatarUrl = user.avatar
           ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64`
           : `https://cdn.discordapp.com/embed/avatars/0.png`;
-        discordSession = { id: user.id, username: user.username, avatar: avatarUrl, accessToken: token, expiresAt: Date.now() + expiresIn * 1000 };
-        discordUser = { id: user.id, username: user.username, avatar: avatarUrl };
+        const displayName = user.global_name || user.username;
+        discordSession = { id: user.id, username: displayName, avatar: avatarUrl, accessToken: token, expiresAt: Date.now() + expiresIn * 1000 };
+        discordUser = { id: user.id, username: displayName, avatar: avatarUrl };
         localStorage.setItem('equipes-discord-session', JSON.stringify(discordSession));
         verifyRoleAndProceed(true);
       })
