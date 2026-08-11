@@ -53,7 +53,7 @@ html, body { margin: 0; padding: 0; }
 }
 @keyframes gm-twinkle-a { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.55; } }
 @keyframes gm-twinkle-b { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.15; } }
-.gm-root > *:not(.gm-bg-layer) { position: relative; z-index: 1; }
+.gm-root > *:not(.gm-bg-layer):not(.gm-modal-overlay):not(.gm-toast-container) { position: relative; z-index: 1; }
 
 .gm-root *, .gm-root *:before, .gm-root *:after { box-sizing: border-box; }
 .gm-root h1, .gm-root h2, .gm-root h3, .gm-root .gm-font-display { font-family: 'Cinzel', serif; letter-spacing: 0.02em; }
