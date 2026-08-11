@@ -295,6 +295,7 @@ const I18N = {
     'groups.lfg_posted': 'Groupe publié sur Discord.',
     'groups.lfg_error': "Erreur lors de la publication sur Discord.",
     'groups.lfg_empty': 'Aucun joueur assigné pour le moment.',
+    'groups.lfg_react_prompt': '✅ Disponible · ❌ Indisponible — réagissez pour indiquer votre dispo !',
     'groups.substitutes': 'Remplaçants', 'groups.registered': 'inscrits',
     'modal.cancel': 'Annuler', 'modal.confirm': 'Confirmer',
     'modal.delete_player_title': 'Supprimer ce joueur ?',
@@ -400,6 +401,7 @@ const I18N = {
     'groups.lfg_posted': 'Group posted to Discord.',
     'groups.lfg_error': 'Error posting to Discord.',
     'groups.lfg_empty': 'No player assigned yet.',
+    'groups.lfg_react_prompt': '✅ Available · ❌ Not available — react to let us know!',
     'groups.substitutes': 'Substitutes', 'groups.registered': 'registered',
     'modal.cancel': 'Cancel', 'modal.confirm': 'Confirm',
     'modal.delete_player_title': 'Delete this player?',
@@ -889,27 +891,54 @@ function fallbackCopy(text, cb){
   document.body.removeChild(ta); cb();
 }
 
-function publishGroupToDiscord(groupId){
+function openPublishGroupModal(groupId){
+  const g = GROUPS.find(x => x.id === groupId);
+  if (!g) return;
+  if (!DISCORD_LFG_WEBHOOK_URL) { toast(t('groups.lfg_not_configured'), 'danger'); return; }
+  MODAL = {
+    type: 'publish-group', groupId,
+    form: { type: g.type, date: '', time: '' },
+    error: '',
+  };
+  render();
+}
+function publishGroupToDiscord(groupId, opts){
   const g = GROUPS.find(x => x.id === groupId);
   if (!g) return;
   if (!DISCORD_LFG_WEBHOOK_URL) { toast(t('groups.lfg_not_configured'), 'danger'); return; }
   const roleOrder = ['Tank', 'Heal', 'DPS', 'Flex'];
+  const mentionIds = [];
   const filled = g.slots.filter(s => s.playerId).map(s => {
     const p = player(s.playerId);
     const c = p ? cls(p.classId) : null;
-    return { pseudo: p ? p.pseudo : '?', className: c ? c.name : '?', role: c ? c.role : '' };
+    const mention = p && p.discordId ? `<@${p.discordId}>` : (p ? esc(p.pseudo) : '?');
+    if (p && p.discordId) mentionIds.push(p.discordId);
+    return { mention, className: c ? c.name : '?', role: c ? c.role : '' };
   });
   const lines = [];
   roleOrder.forEach(role => {
-    filled.filter(f => f.role === role).forEach(f => lines.push(`**${role}** — ${f.pseudo} (${f.className})`));
+    filled.filter(f => f.role === role).forEach(f => lines.push(`**${role}** — ${f.mention} (${f.className})`));
   });
-  filled.filter(f => !roleOrder.includes(f.role)).forEach(f => lines.push(`**${f.role || '?'}** — ${f.pseudo} (${f.className})`));
+  filled.filter(f => !roleOrder.includes(f.role)).forEach(f => lines.push(`**${f.role || '?'}** — ${f.mention} (${f.className})`));
   const filledCount = filled.length;
+  const dateLabel = (opts && opts.date) ? new Date(opts.date + 'T' + (opts.time || '00:00')).toLocaleString(LANG==='en'?'en-GB':'fr-FR', { weekday:'long', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+  const typeLabel = eventTypeLabel(opts && opts.type ? opts.type : g.type);
+  const descParts = [];
+  if (dateLabel) descParts.push(`🗓️ ${dateLabel}`);
+  descParts.push(`🏷️ ${typeLabel}`);
+  descParts.push('');
+  descParts.push(lines.join('\n') || t('groups.lfg_empty'));
+  descParts.push('');
+  descParts.push(`${filledCount}/5 ${t('groups.registered')}`);
+  descParts.push('');
+  descParts.push(t('groups.lfg_react_prompt'));
+  const content = mentionIds.length ? mentionIds.map(id => `<@${id}>`).join(' ') : `📣 ${g.name}`;
   const payload = {
-    content: `📣 @${g.name}`,
+    content,
+    allowed_mentions: { parse: ['users'] },
     embeds: [{
       title: `${g.type === 'pve' ? 'PvE' : 'PvP'} — ${g.name}`,
-      description: (lines.join('\n') || t('groups.lfg_empty')) + `\n\n${filledCount}/5 ${t('groups.registered')}`,
+      description: descParts.join('\n'),
       color: g.type === 'pve' ? 0x4f9dff : 0xff6b7a,
     }],
   };
@@ -1255,6 +1284,7 @@ function renderModal(){
   if (MODAL.type === 'player') return renderPlayerModal();
   if (MODAL.type === 'class') return renderClassModal();
   if (MODAL.type === 'event') return renderEventModal();
+  if (MODAL.type === 'publish-group') return renderPublishGroupModal();
   return '';
 }
 
@@ -1369,6 +1399,38 @@ function renderEventModal(){
   </div>`;
 }
 
+function renderPublishGroupModal(){
+  const f = MODAL.form;
+  return `<div class="gm-modal-overlay" data-action="close-modal-overlay">
+    <div class="gm-modal" data-action="stop-propagation">
+      <h3>${t('groups.publish_discord')}</h3>
+      <div class="gm-form-row gm-form-2col">
+        <div>
+          <label>${t('events.field.date')}</label>
+          <input type="date" id="pg-date" value="${esc(f.date)}" />
+        </div>
+        <div>
+          <label>${t('events.field.time')}</label>
+          <input type="time" id="pg-time" value="${esc(f.time)}" />
+        </div>
+      </div>
+      <div class="gm-form-row">
+        <label>${t('events.field.type')}</label>
+        <select id="pg-type">
+          <option value="pve" ${f.type==='pve'?'selected':''}>${t('events.type.pve')}</option>
+          <option value="pvp" ${f.type==='pvp'?'selected':''}>${t('events.type.pvp')}</option>
+          <option value="other" ${f.type==='other'?'selected':''}>${t('events.type.other')}</option>
+        </select>
+      </div>
+      <div class="gm-note">${t('groups.lfg_react_prompt')}</div>
+      <div class="gm-modal-actions">
+        <button class="gm-btn gm-btn-ghost" data-action="close-modal">${t('modal.cancel')}</button>
+        <button class="gm-btn gm-btn-primary" style="background:#5865F2;border-color:#5865F2;" data-action="confirm-publish-group">${t('groups.publish_discord')}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
 /* ---- Event binding (delegated) ---- */
 function bindEvents(){
   const root = document.getElementById('gm-app');
@@ -1437,7 +1499,18 @@ function bindEvents(){
     } else if (action === 'duplicate-group'){
       el.addEventListener('click', () => duplicateGroup(el.dataset.group));
     } else if (action === 'publish-group-discord'){
-      el.addEventListener('click', () => publishGroupToDiscord(el.dataset.group));
+      el.addEventListener('click', () => openPublishGroupModal(el.dataset.group));
+    } else if (action === 'confirm-publish-group'){
+      el.addEventListener('click', () => {
+        const opts = {
+          date: document.getElementById('pg-date').value,
+          time: document.getElementById('pg-time').value,
+          type: document.getElementById('pg-type').value,
+        };
+        const groupId = MODAL.groupId;
+        MODAL = null; render();
+        publishGroupToDiscord(groupId, opts);
+      });
     } else if (action === 'reset-group'){
       el.addEventListener('click', () => resetGroup(el.dataset.group));
     } else if (action === 'delete-group'){
