@@ -83,10 +83,10 @@ html, body { margin: 0; padding: 0; }
 @media (max-width: 900px) { .gm-players-layout { flex-direction: column; } .gm-not-registered { flex: none; width: 100%; position: static; } }
 .gm-player-card { padding: 14px; position: relative; transition: transform .15s ease, border-color .15s ease; overflow: hidden; display: flex; align-items: center; gap: 10px; }
 .gm-player-info { flex: 1; min-width: 0; }
-.gm-player-emblem { width: 76px; height: 76px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4)); align-self: center; }
+.gm-player-emblem { width: 92px; height: 92px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4)); align-self: center; }
 .gm-player-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
-.gm-player-top { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; row-gap: 6px; }
-.gm-player-top .gm-badge-new { flex-shrink: 0; white-space: nowrap; margin-left: auto; }
+.gm-player-top { display: flex; gap: 10px; align-items: flex-start; }
+.gm-badge-new.gm-badge-new-pinned { position: absolute; top: 14px; right: 14px; z-index: 2; }
 .gm-avatar { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; object-fit: cover; border: 2px solid var(--border-strong); background: #222840; }
 .gm-avatar-fallback { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; display:flex; align-items:center; justify-content:center; background: linear-gradient(135deg, var(--violet), var(--blue)); font-weight: 700; color: #0a0e1a; font-family:'Cinzel'; border: 2px solid var(--border-strong); }
 .gm-player-names { flex: 1; min-width: 0; }
@@ -909,14 +909,14 @@ function renderPlayers(){
         const c = cls(p.classId);
         const emblem = CLASS_EMBLEMS[p.classId];
         return `<div class="gm-panel gm-player-card">
+          ${p.isNewPlayer ? `<span class="gm-badge-new gm-badge-new-pinned">▾ ${t('badge.new')}</span>` : ''}
           <div class="gm-player-info">
-            <div class="gm-player-top">
+            <div class="gm-player-top" style="${p.isNewPlayer ? 'padding-right:64px;' : ''}">
               ${avatarHtml(p, 44)}
               <div class="gm-player-names">
                 <div class="gm-player-pseudo">${esc(p.pseudo)}</div>
                 ${p.discordUsername ? `<div class="gm-player-discord">${DISCORD_LOGO} ${esc(p.discordUsername)}</div>` : ''}
               </div>
-              ${p.isNewPlayer ? `<span class="gm-badge-new">▾ ${t('badge.new')}</span>` : ''}
             </div>
             <div class="gm-player-meta">${classPill(p.classId)}</div>
             <div class="gm-player-actions">
