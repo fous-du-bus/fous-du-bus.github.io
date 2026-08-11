@@ -1502,11 +1502,11 @@ function renderPublishGroupModal(){
       </div>
       <div class="gm-form-row gm-form-2col">
         <div>
-          <label>${t('events.field.date')}</label>
+          <label>${t('events.field.date')} *</label>
           <input type="date" id="pg-date" value="${esc(f.date)}" />
         </div>
         <div>
-          <label>${t('events.field.time')}</label>
+          <label>${t('events.field.time')} *</label>
           <input type="time" id="pg-time" value="${esc(f.time)}" />
         </div>
       </div>
@@ -1519,6 +1519,7 @@ function renderPublishGroupModal(){
         </select>
       </div>
       <div class="gm-note">${t('groups.lfg_react_prompt')}</div>
+      ${MODAL.error ? `<div class="gm-form-error">${esc(MODAL.error)}</div>` : ''}
       <div class="gm-modal-actions">
         <button class="gm-btn gm-btn-ghost" data-action="close-modal">${t('modal.cancel')}</button>
         <button class="gm-btn gm-btn-primary" style="background:#5865F2;border-color:#5865F2;" data-action="confirm-publish-group">${t('groups.publish_discord')}</button>
@@ -1604,6 +1605,7 @@ function bindEvents(){
           time: document.getElementById('pg-time').value,
           type: document.getElementById('pg-type').value,
         };
+        if (!opts.date || !opts.time) { MODAL.error = t('error.event_date_required'); render(); return; }
         const groupId = MODAL.groupId;
         MODAL = null; render();
         publishGroupToDiscord(groupId, opts);
