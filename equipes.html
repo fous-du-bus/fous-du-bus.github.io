@@ -102,6 +102,7 @@ html, body { margin: 0; padding: 0; }
 .gm-player-actions { display: flex; gap: 6px; margin-top: 10px; }
 .gm-group-card { padding: 16px; margin-bottom: 18px; }
 .gm-mygroup-section-title { font-family: 'Cinzel'; font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.gm-event-request-banner { background: rgba(255,184,79,0.14); border: 1px solid rgba(255,184,79,0.4); color: var(--new); font-size: 13px; padding: 10px 14px; border-radius: 10px; margin-bottom: 10px; }
 .gm-events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
 .gm-event-card { padding: 16px; }
 .gm-event-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
@@ -257,6 +258,7 @@ const I18N = {
     'mygroup.not_logged': 'Connecte-toi avec Discord pour voir ton groupe.',
     'mygroup.no_profile': 'Aucun profil joueur associé à ton compte.',
     'mygroup.empty': "Tu ne fais partie d'aucun groupe pour le moment.",
+    'mygroup.event_request_banner': "Une demande d'événement {type} a été créée pour ton groupe — réponds sur Discord pour indiquer ta disponibilité !",
     'topbar.events.title': 'Événements', 'topbar.events.sub': 'Planifier et annoncer les événements de guilde',
     'topbar.new_event': '+ Nouvel événement',
     'events.empty': 'Aucun événement prévu pour le moment.',
@@ -371,6 +373,7 @@ const I18N = {
     'mygroup.not_logged': 'Sign in with Discord to see your group.',
     'mygroup.no_profile': 'No player profile linked to your account.',
     'mygroup.empty': "You're not part of any group yet.",
+    'mygroup.event_request_banner': 'A {type} event request has been created for your group — reply on Discord to indicate your availability!',
     'topbar.events.title': 'Events', 'topbar.events.sub': 'Plan and announce guild events',
     'topbar.new_event': '+ New event',
     'events.empty': 'No event planned yet.',
@@ -1350,6 +1353,14 @@ function renderGroupEventCard(g){
     <div class="gm-event-creator">${esc(g.name)}</div>
   </div>`;
 }
+function groupEventBanner(g){
+  if (!g.event || !g.event.date) return '';
+  const isUpcoming = new Date(g.event.date + 'T' + (g.event.time || '00:00')).getTime() >= Date.now();
+  if (!isUpcoming) return '';
+  const typeLabel = eventTypeLabel(g.event.type || g.type);
+  const msg = t('mygroup.event_request_banner').replace('{type}', typeLabel);
+  return `<div class="gm-event-request-banner">📢 ${esc(msg)}</div>`;
+}
 function renderMyGroupTab(){
   if (!discordUser) return `<div class="gm-empty">${t('mygroup.not_logged')}</div>`;
   const myPlayer = PLAYERS.find(p => p.discordId === discordUser.id);
@@ -1363,11 +1374,11 @@ function renderMyGroupTab(){
   let html = '';
   if (pveGroups.length){
     html += `<div class="gm-mygroup-section-title" style="color:var(--blue);">⚔ ${t('nav.pve')}</div>`;
-    html += pveGroups.map(g => renderGroupCard(g, true)).join('');
+    html += pveGroups.map(g => groupEventBanner(g) + renderGroupCard(g, true)).join('');
   }
   if (pvpGroups.length){
     html += `<div class="gm-mygroup-section-title" style="color:var(--dps);margin-top:${pveGroups.length?'20px':'0'};">⚡ ${t('nav.pvp')}</div>`;
-    html += pvpGroups.map(g => renderGroupCard(g, true)).join('');
+    html += pvpGroups.map(g => groupEventBanner(g) + renderGroupCard(g, true)).join('');
   }
   return html;
 }
