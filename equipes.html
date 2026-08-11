@@ -1447,13 +1447,17 @@ function renderDashboard(){
           <div class="gm-panel">
             <h3 style="font-size:13px;margin:0 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">🔓 ${t('dashboard.open_groups')} (${openGroups.length})</h3>
             <div style="display:flex;flex-direction:column;gap:10px;">
-              ${openGroups.map(g => `<div class="gm-open-group-mini">
+              ${openGroups.map(g => {
+                const neededRoles = computeNeededRoles(g);
+                return `<div class="gm-open-group-mini">
                 <span class="gm-class-pill" style="border-color:${g.type==='pve'?'var(--tank)':'var(--dps)'}66;background:${g.type==='pve'?'var(--tank)':'var(--dps)'}1c;color:${g.type==='pve'?'var(--tank)':'var(--dps)'}">${g.type.toUpperCase()}</span>
                 <div style="flex:1;min-width:0;">
                   <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(g.event.title || g.name)}</div>
                   <div style="font-size:11px;color:var(--muted);">${esc(g.name)} · ${g.slots.filter(s=>s.playerId).length}/5</div>
+                  ${neededRoles.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;">${neededRoles.map(role => `<span class="gm-role-pill" style="font-size:9.5px;padding:2px 7px;border-color:${roleColor(role)}66;background:${roleColor(role)}1c;color:${roleColor(role)}">${role}</span>`).join('')}</div>` : ''}
                 </div>
-              </div>`).join('')}
+              </div>`;
+              }).join('')}
             </div>
           </div>`;
         })()}
