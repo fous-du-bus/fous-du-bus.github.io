@@ -948,8 +948,8 @@ function createGroup(type){
   toast(t('toast.group_created')); saveTeams(); render();
 }
 function createOpenGroup(type){
-  const count = GROUPS.filter(g => g.type === type).length;
-  const g = { id: uid('g'), type, name: 'Groupe ' + (count + 1), activity: '', date: '', time: '', open: true,
+  const count = GROUPS.filter(g => g.open).length;
+  const g = { id: uid('g'), type, name: 'Recherche ' + (count + 1), activity: '', date: '', time: '', open: true,
     createdById: discordUser ? discordUser.id : null,
     slots: [0,1,2,3,4].map(() => ({ playerId: null })), substitutes: [] };
   const me = myPlayerRecord();
