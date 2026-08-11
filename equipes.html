@@ -259,11 +259,12 @@ const I18N = {
     'modal.reset_group_msg': 'Tous les emplacements et remplaçants seront vidés.',
     'modal.delete_group_title': 'Supprimer ce groupe ?',
     'modal.delete_group_msg': '« {name} » sera définitivement supprimé.',
-    'modal.player.edit_title': 'Modifier le joueur', 'modal.player.new_title': 'Nouveau joueur',
-    'modal.player.pseudo_label': 'Pseudo en jeu', 'modal.player.class_label': 'Classe',
-    'modal.player.choose_class': '-- Choisir une classe --',
-    'modal.player.pve_checkbox': 'Disponible PvE', 'modal.player.pvp_checkbox': 'Disponible PvP',
-    'modal.player.new_checkbox': 'Nouveau joueur sur Aion 2',
+    'modal.player.edit_title': 'Modifier le profil', 'modal.player.new_title': 'Nouveau profil',
+    'modal.player.pseudo_label': 'Pseudo en jeu', 'modal.player.class_label': 'Classe principale',
+    'modal.player.class_secondary_label': 'Classe secondaire (facultatif)',
+    'modal.player.choose_class': '-- Choisir une classe --', 'modal.player.no_secondary': 'Aucune',
+    'modal.player.status_label': 'Statut',
+    'modal.player.status_new': 'Nouveau joueur', 'modal.player.status_experienced': 'Joueur expérimenté',
     'modal.save': 'Enregistrer', 'modal.add': 'Ajouter',
     'modal.class.edit_title': 'Modifier la classe', 'modal.class.new_title': 'Nouvelle classe',
     'modal.class.create': 'Créer',
@@ -336,11 +337,12 @@ const I18N = {
     'modal.reset_group_msg': 'All slots and substitutes will be cleared.',
     'modal.delete_group_title': 'Delete this group?',
     'modal.delete_group_msg': '"{name}" will be permanently deleted.',
-    'modal.player.edit_title': 'Edit player', 'modal.player.new_title': 'New player',
-    'modal.player.pseudo_label': 'In-game nickname', 'modal.player.class_label': 'Class',
-    'modal.player.choose_class': '-- Choose a class --',
-    'modal.player.pve_checkbox': 'Available PvE', 'modal.player.pvp_checkbox': 'Available PvP',
-    'modal.player.new_checkbox': 'New player on Aion 2',
+    'modal.player.edit_title': 'Edit profile', 'modal.player.new_title': 'New profile',
+    'modal.player.pseudo_label': 'In-game nickname', 'modal.player.class_label': 'Main class',
+    'modal.player.class_secondary_label': 'Secondary class (optional)',
+    'modal.player.choose_class': '-- Choose a class --', 'modal.player.no_secondary': 'None',
+    'modal.player.status_label': 'Status',
+    'modal.player.status_new': 'New player', 'modal.player.status_experienced': 'Experienced player',
     'modal.save': 'Save', 'modal.add': 'Add',
     'modal.class.edit_title': 'Edit class', 'modal.class.new_title': 'New class',
     'modal.class.create': 'Create',
@@ -566,7 +568,7 @@ function openPlayerModal(playerId){
   const existing = playerId ? player(playerId) : null;
   MODAL = {
     type: 'player', editingId: playerId || null,
-    form: existing ? { ...existing } : { pseudo: '', classId: CLASSES[0] ? CLASSES[0].id : '', isNewPlayer: true, pve: true, pvp: true },
+    form: existing ? { ...existing } : { pseudo: '', classId: CLASSES[0] ? CLASSES[0].id : '', secondaryClassId: '', isNewPlayer: true, pve: true, pvp: true },
     error: '',
   };
   render();
@@ -913,10 +915,6 @@ function renderPlayers(){
               </div>
             </div>
             <div class="gm-player-meta">${classPill(p.classId)}</div>
-            <div class="gm-player-avail">
-              <span style="color:${p.pve?'var(--success)':'var(--muted-2)'}">● ${t('nav.pve')}</span>
-              <span style="color:${p.pvp?'var(--success)':'var(--muted-2)'}">● ${t('nav.pvp')}</span>
-            </div>
             <div class="gm-player-actions">
               <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="edit-player" data-id="${p.id}" style="flex:1;">${t('players.edit')}</button>
               ${isAdminView() ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-player" data-id="${p.id}">✕</button>` : ''}
@@ -1074,22 +1072,31 @@ function renderPlayerModal(){
     <div class="gm-modal" data-action="stop-propagation">
       <h3>${MODAL.editingId ? t('modal.player.edit_title') : t('modal.player.new_title')}</h3>
       <div class="gm-form-row">
-        <label>${t('modal.player.pseudo_label')}</label>
+        <label>${t('modal.player.pseudo_label')} *</label>
         <input type="text" id="pf-pseudo" value="${esc(f.pseudo).replace(/"/g,'&quot;')}" maxlength="24" />
       </div>
-      <div class="gm-form-row">
-        <label>${t('modal.player.class_label')}</label>
-        <select id="pf-class">
-          ${!f.classId ? `<option value="" selected disabled>${t('modal.player.choose_class')}</option>` : ''}
-          ${CLASSES.map(c => `<option value="${c.id}" ${f.classId===c.id?'selected':''}>${esc(c.name)} (${c.role})</option>`).join('')}
-        </select>
-      </div>
       <div class="gm-form-row gm-form-2col">
-        <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text);"><input type="checkbox" id="pf-pve" ${f.pve?'checked':''} /> ${t('modal.player.pve_checkbox')}</label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text);"><input type="checkbox" id="pf-pvp" ${f.pvp?'checked':''} /> ${t('modal.player.pvp_checkbox')}</label>
+        <div>
+          <label>${t('modal.player.class_label')}</label>
+          <select id="pf-class">
+            ${!f.classId ? `<option value="" selected disabled>${t('modal.player.choose_class')}</option>` : ''}
+            ${CLASSES.map(c => `<option value="${c.id}" ${f.classId===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label>${t('modal.player.class_secondary_label')}</label>
+          <select id="pf-class-secondary">
+            <option value="" ${!f.secondaryClassId?'selected':''}>${t('modal.player.no_secondary')}</option>
+            ${CLASSES.map(c => `<option value="${c.id}" ${f.secondaryClassId===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}
+          </select>
+        </div>
       </div>
       <div class="gm-form-row">
-        <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text);"><input type="checkbox" id="pf-new" ${f.isNewPlayer?'checked':''} /> ${LEAF_IMG} ${t('modal.player.new_checkbox')}</label>
+        <label>${t('modal.player.status_label')}</label>
+        <select id="pf-status">
+          <option value="new" ${f.isNewPlayer?'selected':''}>${t('modal.player.status_new')}</option>
+          <option value="experienced" ${!f.isNewPlayer?'selected':''}>${t('modal.player.status_experienced')}</option>
+        </select>
       </div>
       ${MODAL.error ? `<div class="gm-form-error">${esc(MODAL.error)}</div>` : ''}
       <div class="gm-modal-actions">
@@ -1198,9 +1205,8 @@ function bindEvents(){
       el.addEventListener('click', () => {
         MODAL.form.pseudo = document.getElementById('pf-pseudo').value;
         MODAL.form.classId = document.getElementById('pf-class').value;
-        MODAL.form.pve = document.getElementById('pf-pve').checked;
-        MODAL.form.pvp = document.getElementById('pf-pvp').checked;
-        MODAL.form.isNewPlayer = document.getElementById('pf-new').checked;
+        MODAL.form.secondaryClassId = document.getElementById('pf-class-secondary').value;
+        MODAL.form.isNewPlayer = document.getElementById('pf-status').value === 'new';
         savePlayerForm();
       });
     } else if (action === 'save-class'){
