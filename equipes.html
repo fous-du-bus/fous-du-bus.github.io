@@ -737,7 +737,7 @@ function renderNotRegisteredPanel(){
       ? `<div style="font-size:12px;color:var(--muted-2);">Aucune liste importée pour le moment.</div>`
       : !notRegistered.length
         ? `<div style="font-size:12px;color:var(--success);">Tout le monde est inscrit 🎉</div>`
-        : `<div class="gm-not-registered-list">${notRegistered.map(m => `<div class="gm-not-registered-item">${esc(m.nick || m.username)}</div>`).join('')}</div>`
+        : `<div class="gm-not-registered-list">${notRegistered.map(m => `<div class="gm-not-registered-item">${esc(m.nick || m.globalName || m.username)}</div>`).join('')}</div>`
     }
   </div>`;
 }
