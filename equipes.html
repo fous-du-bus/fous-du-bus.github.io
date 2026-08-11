@@ -242,7 +242,7 @@ const I18N = {
     'players.filter.all_classes': 'Toutes les classes', 'players.filter.all_status': 'Tous les statuts',
     'players.filter.new': 'Nouveau joueur', 'players.filter.experienced': 'Joueur expérimenté',
     'players.no_match': 'Aucun joueur ne correspond à ces filtres.',
-    'players.edit': '✎ Modifier',
+    'players.edit': 'Modifier',
     'notreg.title': 'Pas encore inscrits', 'notreg.subtitle': 'Membres Discord avec le rôle Aion 2',
     'notreg.imported_suffix': ', liste importée le {date}',
     'notreg.none_imported': 'Aucune liste importée pour le moment.',
@@ -321,7 +321,7 @@ const I18N = {
     'players.filter.all_classes': 'All classes', 'players.filter.all_status': 'All statuses',
     'players.filter.new': 'New player', 'players.filter.experienced': 'Experienced player',
     'players.no_match': 'No players match these filters.',
-    'players.edit': '✎ Edit',
+    'players.edit': 'Edit',
     'notreg.title': 'Not registered yet', 'notreg.subtitle': 'Discord members with the Aion 2 role',
     'notreg.imported_suffix': ', list imported on {date}',
     'notreg.none_imported': 'No list imported yet.',
@@ -922,7 +922,7 @@ function renderPlayers(){
             </div>
             <div class="gm-player-meta">${classPill(p.classId)}</div>
             <div class="gm-player-actions">
-              <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="edit-player" data-id="${p.id}" style="flex:1;">${t('players.edit')}</button>
+              <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="edit-player" data-id="${p.id}" style="padding:5px 12px;font-size:11.5px;">${t('players.edit')}</button>
               ${isAdminView() ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-player" data-id="${p.id}">✕</button>` : ''}
             </div>
           </div>
