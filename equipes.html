@@ -457,7 +457,6 @@ function saveClassForm(){
   MODAL = null; saveTeams(); render();
 }
 function requestDeleteClass(classId){
-  if (!IS_ADMIN) { toast('Action réservée aux administrateurs.', 'danger'); return; }
   MODAL = { type: 'confirm', title: 'Supprimer cette classe ?',
     message: "Les joueurs assignés conserveront la référence mais elle n'apparaîtra plus dans les listes.",
     onConfirm: () => { CLASSES = CLASSES.filter(c => c.id !== classId); toast('Classe supprimée.', 'danger'); MODAL = null; saveTeams(); render(); }
@@ -583,10 +582,10 @@ function renderSidebar(){
   const items = [
     { id: 'dashboard', label: 'Tableau de bord', icon: '◈' },
     { id: 'players', label: 'Joueurs', icon: '☰' },
-    { id: 'classes', label: 'Classes', icon: '◆' },
+    { id: 'classes', label: 'Classes', icon: '◆', adminOnly: true },
     { id: 'pve', label: 'PvE', icon: '⚔' },
     { id: 'pvp', label: 'PvP', icon: '⚡' },
-  ];
+  ].filter(i => !i.adminOnly || IS_ADMIN);
   return `
     <div class="gm-sidebar ${MOBILE_NAV_OPEN ? 'open' : ''}">
       <div class="gm-brand">
@@ -633,7 +632,7 @@ function renderTopbar(){
           <div class="gm-search"><input type="text" placeholder="Rechercher un pseudo…" value="${esc(PLAYER_FILTERS.search)}" data-action="filter-search" /></div>
         </div>
       ` : ''}
-      ${ACTIVE_TAB==='classes' ? `<button class="gm-btn gm-btn-primary" data-action="open-class-modal">+ Nouvelle classe</button>` : ''}
+      ${ACTIVE_TAB==='classes' && IS_ADMIN ? `<button class="gm-btn gm-btn-primary" data-action="open-class-modal">+ Nouvelle classe</button>` : ''}
       ${(ACTIVE_TAB==='pve'||ACTIVE_TAB==='pvp') ? `<button class="gm-btn gm-btn-primary" data-action="create-group" data-type="${ACTIVE_TAB}">+ Nouveau groupe</button>` : ''}
     </div>
   `;
@@ -642,7 +641,7 @@ function renderTopbar(){
 function renderTabContent(){
   if (ACTIVE_TAB === 'dashboard') return renderDashboard();
   if (ACTIVE_TAB === 'players') return renderPlayers();
-  if (ACTIVE_TAB === 'classes') return renderClasses();
+  if (ACTIVE_TAB === 'classes') return IS_ADMIN ? renderClasses() : `<div class="gm-empty">Accès réservé aux administrateurs.</div>`;
   if (ACTIVE_TAB === 'pve') return renderGroupsTab('pve');
   if (ACTIVE_TAB === 'pvp') return renderGroupsTab('pvp');
   return '';
@@ -786,7 +785,7 @@ function renderClasses(){
               <td>${count}</td>
               <td style="text-align:right;">
                 <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="edit-class" data-id="${c.id}">✎</button>
-                ${IS_ADMIN ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-class" data-id="${c.id}">✕</button>` : ''}
+                <button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-class" data-id="${c.id}">✕</button>
               </td>
             </tr>`;
           }).join('')}
