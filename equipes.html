@@ -70,6 +70,11 @@ html, body { margin: 0; padding: 0; }
 .gm-nav-badge { margin-left: auto; background: var(--danger); color: #fff; font-size: 10.5px; font-weight: 700; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
 .gm-nav-item.active { background: rgba(139,107,255,0.14); border-color: var(--border-strong); color: var(--text); box-shadow: inset 2px 0 0 var(--violet); }
 .gm-nav-icon { width: 16px; text-align:center; opacity: 0.9; }
+.gm-nav-chevron { margin-left: auto; font-size: 11px; opacity: 0.6; }
+.gm-nav-item.expanded { color: var(--text); }
+.gm-nav-subitem { display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 30px; border-radius: 10px; color: var(--muted); font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all .15s ease; user-select: none; }
+.gm-nav-subitem:hover { background: rgba(139,107,255,0.08); color: var(--text); }
+.gm-nav-subitem.active { background: rgba(139,107,255,0.14); border-color: var(--border-strong); color: var(--text); box-shadow: inset 2px 0 0 var(--violet); }
 .gm-role-box { margin-top: auto; background: var(--panel-solid); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
 .gm-role-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
 .gm-discord-account { display: flex; align-items: center; gap: 8px; }
@@ -308,6 +313,7 @@ let EVENTS_VIEW = 'calendar';
 let CALENDAR_YM = null;
 let SELECTED_CAL_DAY = null;
 let MOBILE_NAV_OPEN = false;
+let GROUP_NAV_EXPANDED = false;
 
 const GUILD_ID = '1355632831333798200';
 const REQUIRED_ROLE_ID = '1443636744267501618';
@@ -323,7 +329,7 @@ let LANG = localStorage.getItem('equipes-lang') || 'fr';
 const I18N = {
   fr: {
     'nav.dashboard': 'Tableau de bord', 'nav.players': 'Joueurs', 'nav.classes': 'Classes',
-    'nav.pve': 'PvE', 'nav.pvp': 'PvP', 'nav.dailies': 'Dailies',
+    'nav.pve': 'PvE', 'nav.pvp': 'PvP', 'nav.dailies': 'Dailies', 'nav.groupe': 'Groupe',
     'badge.new': 'Nouveau',
     'brand.subtitle': 'Gestion des groupes',
     'role.connected': 'Connecté', 'role.logout_title': 'Se déconnecter',
@@ -465,7 +471,7 @@ const I18N = {
   },
   en: {
     'nav.dashboard': 'Dashboard', 'nav.players': 'Players', 'nav.classes': 'Classes',
-    'nav.pve': 'PvE', 'nav.pvp': 'PvP', 'nav.dailies': 'Dailies',
+    'nav.pve': 'PvE', 'nav.pvp': 'PvP', 'nav.dailies': 'Dailies', 'nav.groupe': 'Group',
     'badge.new': 'New',
     'brand.subtitle': 'Group Management',
     'role.connected': 'Connected', 'role.logout_title': 'Log out',
@@ -1281,17 +1287,19 @@ function renderSidebar(){
   const upcomingCount = EVENTS.filter(e => e.date && (new Date(e.date + 'T' + (e.time || '00:00')).getTime() >= Date.now())).length;
   const myGroupEventCount = myUpcomingGroupEvents().length;
   const openGroupsCount = GROUPS.filter(g => g.open).length;
-  const items = [
+  const groupExpanded = GROUP_NAV_EXPANDED || ACTIVE_TAB === 'pve' || ACTIVE_TAB === 'pvp';
+  const itemsBefore = [
     { id: 'dashboard', label: t('nav.dashboard'), icon: '◈', badge: upcomingCount + myGroupEventCount },
     { id: 'players', label: t('nav.players'), icon: '☰' },
     { id: 'classes', label: t('nav.classes'), icon: '◆', adminOnly: true },
-    { id: 'pve', label: t('nav.pve'), icon: '⚔' },
-    { id: 'pvp', label: t('nav.pvp'), icon: '⚡\uFE0E' },
+  ].filter(i => !i.adminOnly || isAdminView());
+  const itemsAfter = [
     { id: 'opengroups', label: t('nav.opengroups'), icon: '🔓', badge: openGroupsCount },
     { id: 'mygroup', label: t('nav.mygroup'), icon: '⚇', badge: myGroupEventCount },
     { id: 'events', label: t('nav.events'), icon: '🗓' },
     { id: 'auditlog', label: t('nav.auditlog'), icon: '⏱', adminOnly: true },
   ].filter(i => !i.adminOnly || isAdminView());
+  const navItemHtml = i => `<div class="gm-nav-item ${ACTIVE_TAB===i.id?'active':''}" data-action="nav" data-tab="${i.id}"><span class="gm-nav-icon">${i.icon}</span>${esc(i.label)}${i.badge ? `<span class="gm-nav-badge">${i.badge}</span>` : ''}</div>`;
   return `
     <div class="gm-sidebar ${MOBILE_NAV_OPEN ? 'open' : ''}">
       <div class="gm-brand">
@@ -1300,7 +1308,16 @@ function renderSidebar(){
       </div>
       <a class="gm-nav-item" href="./index.html"><span class="gm-nav-icon">⌂</span>${t('nav.dailies')}</a>
       <div class="gm-nav">
-        ${items.map(i => `<div class="gm-nav-item ${ACTIVE_TAB===i.id?'active':''}" data-action="nav" data-tab="${i.id}"><span class="gm-nav-icon">${i.icon}</span>${esc(i.label)}${i.badge ? `<span class="gm-nav-badge">${i.badge}</span>` : ''}</div>`).join('')}
+        ${itemsBefore.map(navItemHtml).join('')}
+        <div class="gm-nav-item ${groupExpanded?'expanded':''}" data-action="toggle-group-nav">
+          <span class="gm-nav-icon">⚔</span>${t('nav.groupe')}
+          <span class="gm-nav-chevron">${groupExpanded ? '▾' : '▸'}</span>
+        </div>
+        ${groupExpanded ? `
+          <div class="gm-nav-subitem ${ACTIVE_TAB==='pve'?'active':''}" data-action="nav" data-tab="pve"><span class="gm-nav-icon">⚔</span>${t('nav.pve')}</div>
+          <div class="gm-nav-subitem ${ACTIVE_TAB==='pvp'?'active':''}" data-action="nav" data-tab="pvp"><span class="gm-nav-icon">⚡\uFE0E</span>${t('nav.pvp')}</div>
+        ` : ''}
+        ${itemsAfter.map(navItemHtml).join('')}
       </div>
       <div class="gm-role-box">
         ${discordUser ? `
@@ -1996,6 +2013,8 @@ function bindEvents(){
 
     if (action === 'nav'){
       el.addEventListener('click', () => { ACTIVE_TAB = el.dataset.tab; MOBILE_NAV_OPEN = false; render(); });
+    } else if (action === 'toggle-group-nav'){
+      el.addEventListener('click', () => { GROUP_NAV_EXPANDED = !GROUP_NAV_EXPANDED; render(); });
     } else if (action === 'toggle-mobile-nav'){
       el.addEventListener('click', () => { MOBILE_NAV_OPEN = !MOBILE_NAV_OPEN; render(); });
     } else if (action === 'discord-login'){
