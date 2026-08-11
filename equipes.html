@@ -276,6 +276,7 @@ const I18N = {
     'error.event_date_required': 'La date et l\'heure sont obligatoires.',
     'dashboard.next_event': 'Prochain événement',
     'dashboard.no_upcoming_event': 'Aucun événement à venir.',
+    'dashboard.my_group_events': 'Événement(s) de ton groupe',
     'access.admin_only': 'Accès réservé aux administrateurs.',
     'dash.stat.players': 'Joueurs inscrits', 'dash.stat.pve_groups': 'Groupes PvE',
     'dash.stat.pvp_groups': 'Groupes PvP', 'dash.stat.new_players': 'Nouveaux joueurs',
@@ -389,6 +390,7 @@ const I18N = {
     'error.event_date_required': 'Date and time are required.',
     'dashboard.next_event': 'Next event',
     'dashboard.no_upcoming_event': 'No upcoming event.',
+    'dashboard.my_group_events': 'Your group event(s)',
     'access.admin_only': 'Access restricted to administrators.',
     'dash.stat.players': 'Registered players', 'dash.stat.pve_groups': 'PvE groups',
     'dash.stat.pvp_groups': 'PvP groups', 'dash.stat.new_players': 'New players',
@@ -925,6 +927,13 @@ function publishGroupToDiscord(groupId, opts){
   const g = GROUPS.find(x => x.id === groupId);
   if (!g) return;
   if (!DISCORD_LFG_WEBHOOK_URL) { toast(t('groups.lfg_not_configured'), 'danger'); return; }
+  g.event = {
+    title: (opts && opts.title && opts.title.trim()) ? opts.title.trim() : g.name,
+    date: opts ? opts.date : '', time: opts ? opts.time : '',
+    type: opts && opts.type ? opts.type : g.type,
+    createdAt: Date.now(),
+  };
+  saveTeams(); render();
   const roleOrder = ['Tank', 'Heal', 'DPS', 'Flex'];
   const mentionIds = [];
   const filled = g.slots.filter(s => s.playerId).map(s => {
@@ -998,13 +1007,14 @@ function renderShell(){
 
 function renderSidebar(){
   const upcomingCount = EVENTS.filter(e => e.date && (new Date(e.date + 'T' + (e.time || '00:00')).getTime() >= Date.now())).length;
+  const myGroupEventCount = myUpcomingGroupEvents().length;
   const items = [
     { id: 'dashboard', label: t('nav.dashboard'), icon: '◈', badge: upcomingCount },
     { id: 'players', label: t('nav.players'), icon: '☰' },
     { id: 'classes', label: t('nav.classes'), icon: '◆', adminOnly: true },
     { id: 'pve', label: t('nav.pve'), icon: '⚔' },
     { id: 'pvp', label: t('nav.pvp'), icon: '⚡' },
-    { id: 'mygroup', label: t('nav.mygroup'), icon: '👥' },
+    { id: 'mygroup', label: t('nav.mygroup'), icon: '👥', badge: myGroupEventCount },
     { id: 'events', label: t('nav.events'), icon: '🗓' },
   ].filter(i => !i.adminOnly || isAdminView());
   return `
@@ -1105,6 +1115,7 @@ function renderDashboard(){
   const upcoming = EVENTS.filter(e => e.date && (new Date(e.date + 'T' + (e.time || '00:00')).getTime() >= now))
     .sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
   const nextEvent = upcoming[0] || null;
+  const myGroupEvents = myUpcomingGroupEvents();
 
   return `
     <div class="gm-stat-grid">
@@ -1129,6 +1140,13 @@ function renderDashboard(){
         ${nextEvent ? renderEventCard(nextEvent) : `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_upcoming_event')}</div>`}
       </div>
     </div>
+    ${myGroupEvents.length ? `
+    <div class="gm-panel gm-dashboard-event-card" style="margin-top:16px;">
+      <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.my_group_events')}</h3>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;">
+        ${myGroupEvents.map(g => renderGroupEventCard(g)).join('')}
+      </div>
+    </div>` : ''}
   `;
 }
 
@@ -1304,6 +1322,31 @@ function renderGroupCard(g, showPublish){
 }
 
 /* ---- My group ---- */
+function myUpcomingGroupEvents(){
+  if (!discordUser) return [];
+  const myPlayer = PLAYERS.find(p => p.discordId === discordUser.id);
+  if (!myPlayer) return [];
+  const now = Date.now();
+  return GROUPS.filter(g =>
+    g.event && g.event.date &&
+    (new Date(g.event.date + 'T' + (g.event.time || '00:00')).getTime() >= now) &&
+    (g.slots.some(s => s.playerId === myPlayer.id) || g.substitutes.includes(myPlayer.id))
+  );
+}
+function renderGroupEventCard(g){
+  const ev = g.event;
+  const dateObj = ev.date ? new Date(ev.date + 'T' + (ev.time || '00:00')) : null;
+  const dateLabel = dateObj ? dateObj.toLocaleDateString(LANG==='en'?'en-GB':'fr-FR', { weekday:'short', day:'2-digit', month:'short' }) : '';
+  const typeColor = { pve: 'var(--tank)', pvp: 'var(--dps)', other: 'var(--violet)' }[ev.type] || 'var(--violet)';
+  return `<div class="gm-panel gm-event-card">
+    <div class="gm-event-head">
+      <span class="gm-class-pill" style="border-color:${typeColor}66;background:${typeColor}1c;color:${typeColor}">${esc(eventTypeLabel(ev.type))}</span>
+    </div>
+    <div class="gm-event-title">${esc(ev.title)}</div>
+    <div class="gm-event-datetime">🗓️ ${esc(dateLabel)} · 🕐 ${esc(ev.time || '')}</div>
+    <div class="gm-event-creator">${esc(g.name)}</div>
+  </div>`;
+}
 function renderMyGroupTab(){
   if (!discordUser) return `<div class="gm-empty">${t('mygroup.not_logged')}</div>`;
   const myPlayer = PLAYERS.find(p => p.discordId === discordUser.id);
