@@ -169,7 +169,13 @@ html, body { margin: 0; padding: 0; }
 .gm-rsvp-btn:hover { border-color: var(--border-strong); color: var(--text); }
 .gm-rsvp-btn.gm-rsvp-active-yes { background: rgba(53,210,154,0.16); border-color: var(--success); color: var(--success); }
 .gm-rsvp-btn.gm-rsvp-active-no { background: rgba(239,77,95,0.16); border-color: var(--danger); color: var(--danger); }
-.gm-rsvp-counts { font-size: 11.5px; color: var(--muted); }
+.gm-rsvp-lists { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+.gm-rsvp-list-col { flex: 1; min-width: 120px; }
+.gm-rsvp-list-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+.gm-rsvp-chips { display: flex; flex-direction: column; gap: 4px; }
+.gm-rsvp-chip { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text); }
+.gm-rsvp-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gm-rsvp-empty-note { font-size: 11px; color: var(--muted-2); font-style: italic; }
 .gm-dashboard-event-card { padding: 14px; border-left: 3px solid var(--violet); }
 .gm-group-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
 .gm-group-title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -338,6 +344,7 @@ const I18N = {
     'events.no_event_this_day': 'Aucun événement ce jour-là.',
     'rsvp.present': 'Présent', 'rsvp.absent': 'Absent',
     'rsvp.no_profile': 'Tu dois avoir un profil joueur pour indiquer ta présence.',
+    'rsvp.none_yet': 'Personne pour le moment.',
     'events.type.pve': 'PvE', 'events.type.pvp': 'PvP', 'events.type.other': 'Autre',
     'events.field.title': 'Titre', 'events.field.date': 'Date', 'events.field.time': 'Heure',
     'events.field.type': 'Type', 'events.field.description': 'Description (facultatif)',
@@ -465,6 +472,7 @@ const I18N = {
     'events.no_event_this_day': 'No event on this day.',
     'rsvp.present': 'Present', 'rsvp.absent': 'Absent',
     'rsvp.no_profile': 'You need a player profile to mark your presence.',
+    'rsvp.none_yet': 'No one yet.',
     'events.type.pve': 'PvE', 'events.type.pvp': 'PvP', 'events.type.other': 'Other',
     'events.field.title': 'Title', 'events.field.date': 'Date', 'events.field.time': 'Time',
     'events.field.type': 'Type', 'events.field.description': 'Description (optional)',
@@ -969,15 +977,31 @@ function setGroupEventRsvp(groupId, status){
 function renderRsvpBlock(rsvps, refType, refId){
   const me = myPlayerRecord();
   const mine = me ? (rsvps || {})[me.id] : null;
-  const { yes, no } = rsvpCounts(rsvps);
   const yesAction = refType === 'event' ? 'rsvp-event-yes' : 'rsvp-group-yes';
   const noAction = refType === 'event' ? 'rsvp-event-no' : 'rsvp-group-no';
+  const yesPlayers = [], noPlayers = [];
+  Object.entries(rsvps || {}).forEach(([pid, status]) => {
+    const p = player(pid);
+    if (!p) return;
+    if (status === 'yes') yesPlayers.push(p);
+    else if (status === 'no') noPlayers.push(p);
+  });
+  const chip = p => `<div class="gm-rsvp-chip" title="${esc(p.discordUsername || p.pseudo)}">${avatarHtml(p, 20)}<span>${esc(p.discordUsername || p.pseudo)}</span></div>`;
   return `<div class="gm-rsvp-block">
     <div class="gm-rsvp-buttons">
       <button class="gm-rsvp-btn ${mine==='yes'?'gm-rsvp-active-yes':''}" data-action="${yesAction}" data-id="${refId}">✅ ${t('rsvp.present')}</button>
       <button class="gm-rsvp-btn ${mine==='no'?'gm-rsvp-active-no':''}" data-action="${noAction}" data-id="${refId}">❌ ${t('rsvp.absent')}</button>
     </div>
-    <div class="gm-rsvp-counts">✅ ${yes} · ❌ ${no}</div>
+    <div class="gm-rsvp-lists">
+      <div class="gm-rsvp-list-col">
+        <div class="gm-rsvp-list-label" style="color:var(--success);">✅ ${t('rsvp.present')} (${yesPlayers.length})</div>
+        ${yesPlayers.length ? `<div class="gm-rsvp-chips">${yesPlayers.map(chip).join('')}</div>` : `<div class="gm-rsvp-empty-note">${t('rsvp.none_yet')}</div>`}
+      </div>
+      <div class="gm-rsvp-list-col">
+        <div class="gm-rsvp-list-label" style="color:var(--danger);">❌ ${t('rsvp.absent')} (${noPlayers.length})</div>
+        ${noPlayers.length ? `<div class="gm-rsvp-chips">${noPlayers.map(chip).join('')}</div>` : `<div class="gm-rsvp-empty-note">${t('rsvp.none_yet')}</div>`}
+      </div>
+    </div>
   </div>`;
 }
 function postEventToDiscord(ev){
