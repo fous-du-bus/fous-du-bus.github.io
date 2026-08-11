@@ -1019,8 +1019,8 @@ function renderSidebar(){
     { id: 'players', label: t('nav.players'), icon: '☰' },
     { id: 'classes', label: t('nav.classes'), icon: '◆', adminOnly: true },
     { id: 'pve', label: t('nav.pve'), icon: '⚔' },
-    { id: 'pvp', label: t('nav.pvp'), icon: '⚡' },
-    { id: 'mygroup', label: t('nav.mygroup'), icon: '👥', badge: myGroupEventCount },
+    { id: 'pvp', label: t('nav.pvp'), icon: '⚡\uFE0E' },
+    { id: 'mygroup', label: t('nav.mygroup'), icon: '⚇', badge: myGroupEventCount },
     { id: 'events', label: t('nav.events'), icon: '🗓' },
   ].filter(i => !i.adminOnly || isAdminView());
   return `
@@ -1029,7 +1029,7 @@ function renderSidebar(){
         <img class="gm-brand-crest" src="./logo-lfdb.webp" alt="" />
         <div class="gm-brand-text">Fous du Bus<span>${t('brand.subtitle')}</span></div>
       </div>
-      <a class="gm-nav-item" href="./index.html"><span class="gm-nav-icon">🏠</span>${t('nav.dailies')}</a>
+      <a class="gm-nav-item" href="./index.html"><span class="gm-nav-icon">⌂</span>${t('nav.dailies')}</a>
       <div class="gm-nav">
         ${items.map(i => `<div class="gm-nav-item ${ACTIVE_TAB===i.id?'active':''}" data-action="nav" data-tab="${i.id}"><span class="gm-nav-icon">${i.icon}</span>${esc(i.label)}${i.badge ? `<span class="gm-nav-badge">${i.badge}</span>` : ''}</div>`).join('')}
       </div>
