@@ -84,7 +84,10 @@ html, body { margin: 0; padding: 0; }
 @media (max-width: 900px) { .gm-players-layout { flex-direction: column; } .gm-not-registered { flex: none; width: 100%; position: static; } }
 .gm-player-card { padding: 18px; position: relative; transition: transform .15s ease, border-color .15s ease; overflow: hidden; display: flex; align-items: center; gap: 12px; }
 .gm-player-info { flex: 1; min-width: 0; }
-.gm-player-emblem { width: 108px; height: 108px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4)); align-self: center; margin-top: 14px; }
+.gm-player-emblem { width: 108px; height: 108px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4)); align-self: center; margin-top: 14px; position: relative; z-index: 1; }
+.gm-emblem-glow-wrap { position: relative; flex-shrink: 0; align-self: center; margin-top: 14px; width: 108px; height: 108px; }
+.gm-emblem-glow-wrap .gm-player-emblem { margin-top: 0; position: absolute; inset: 0; }
+.gm-emblem-glow { position: absolute; inset: 8px; border-radius: 50%; filter: blur(22px); opacity: 0.5; z-index: 0; }
 .gm-player-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
 .gm-player-top { display: flex; gap: 10px; align-items: flex-start; }
 .gm-badge-new-ribbon { position: absolute; top: 10px; right: calc(18px + 108px/2); transform: translateX(50%); z-index: 2; }
@@ -206,7 +209,7 @@ const CLASS_EMBLEMS = {
 
 const uid = (p) => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
-let CLASSES = [{"id": "templar", "name": "Templar", "role": "Tank", "color": "#4f9dff", "icon": "data:image/webp;base64,UklGRk4DAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSEUBAAABkLNtmyHZ2mttxra9m25m2/Zmtm0zPI5s2/bJbNvnVL1BT1XXRMQEELXuSTpEq8Zb3jpoQddu4BPFz+1hhlIMAjsPf2JQ/r21GGWuwqxmy/N/EGbfD3d4ieRC8y8K4Bs0b9QRGOXQHxB9bCQwwVH51FhgSs4zkWlJJjzva3J+pPMGIfmGHqdJ1hVdTgV+ytlGuIkUckd5dl8klfB0j8n54c4jPQCOb6ICd9f+AxcNBNz/APeNinm7zeYA1BFB3RsAC87T8JPisPFL4EeQCCljwMt1wCrD1gd4uY0B23WEbO8DeEIR+Qct5/GNAn8iiHg2A+hnTNz43fj7NwWwWU+F/iko2a9/v6D8FkzUhn9WCPYQ1TqlVOighTqis54J3HUiMk238J76E7lGW5iGpz5EtukGxR1/Il+//Qv2OxJt6sTUmhOVAFZQOCDiAQAAEAoAnQEqIAAgAD5tMJNGJCMhoTAYCACADYlmAJ0yhH4i0SFWj9RoFcBKgkID05czvz77An8i/svWS9E39blvjLeoqM/OBHDcjls1H/tOUsxUKVkImnr9XQAA/vnCXOL/H+15B42afAdH1w7YzvNEIXuo12H7Mv/877feLw8y/EkaMkvK8fvU2yzfquaN8a3RVsRMWSPzCCM0fvX4uZ5iflLxwABGPrQImmQfH/riwzc7/f8jmhcj0SUl0HaysmDtY7AZ0WEXSQ71v+KF5WdUcX0jRvGU27gkxTPkXltHK9qB6VLgQhXkXfOZ8JbPt7jRplMmcq8/vsfQREmw6/LDTAJusu0rmbxG4eSFwKHyAvznfi3PMBXxy+rFeBQPHpN3wBJHcClXG0nqK1ivrb/iTRuOp/9LYEc3CH62kIXx5+sSA9TrV6XPz06Yz/MkeVwO5NZm+a8ZGhzfcr/n9E5Ysvr//CU/9NXPorMg1J+wVb3PWfCuePH6RBAG+qHjDJFSwzx2mWC4dclqv8Sm6tKDLe5SciQh9idDYAlnj7RQTz+0OoXhKlJFMiKDNi7Z2m8Q0Bg2vZvP5U0o+Oa4vG9KISW8c1LNAAgmGqXe2bifwsHOwwA9vr2zYSuvcb+tWzAAAAA="}, {"id": "gladiator", "name": "Gladiator", "role": "DPS", "color": "#ff6b7a", "icon": "data:image/webp;base64,UklGRkYEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSAQCAAABkG3btiFJJyLbtm1br9WPtm3btm3btm3bttNGZKxGZFbmH0TEBEhii1WR+Cqb9yrxKeZwVY5PZ13vEZ9NsCUmyWunFFEG5pOtsEOyTUkqkqJ5iigybb2WUcR0boRRp+9pRNKe2JY2gjLjV34RSfPugLofDimzrDlFJOuHFapR/t87RUQ6hM+YjsAJdTHDFRHZ4qlo1JD1IklaOFiX9BxcSToRd89kIqtpZ1Rb3yopdgRg+hYf+A8O19HOpJcNtDbKZ79pyvATQi4MXUGw5lAv+8oYqfucxfJ9wIl/swVsG938wl6qgP1qciNpyJu3mHcwKI8N3IXaaXvf8/U+3SViNjM/mDXDnLmSDtRI+WVVb37iLBCppCX83VW4gzehFkD9yq7hWX+8D7tqRlDar13P+wvzPN/2/7fnUXDFucccmjhOMep7/GKIQ5vDRBneMhPtzompRo2e6jAr2RIdvOADViQfCLzqaCTpV+scT5ruvI4GGlzJatoIe3NI5JR30Q5WyPoKw9fZym7S+JxDom0RBufM/KPNYBmbb5Qd9F4SdaoFPzGHp5o2wzZ1TOAbjuXpoxPJNPQbnn69oU8XNz9G5ZYYFjrB6x7Q9TZni0lsM5zzT4Ihv29nllgneJfDIk8jiXkehxcCrlKxS9Y3BNrAFLETta3D2TepxHXjHkXiW6CSJBZWUDggHAIAADALAJ0BKiAAIAA+ZSqSRaQioZgGAEAGRLEAWIZVeEDeZqwB0GfoL13yAFcC6H/8BqFP1a9VvMs7j+4T/Fv6x/yfVu9e/ogfrkmTOrwgkWUbStVCEU2Q1GFVqA2H32F5+OQAAP7+zWu1G5nGrbzNRD0LlkLBKt8Yfos3tpGRgYvEv9y/agIPJ25Fu6/lUazr0wafJNrAfNil76XesHv0EURiP+KN3fiQX2jnM8tu3XeCaQuRG5T5oVfsPb7F/KrrqcLMsVIJIQoWAyiFxHE9QT7Lo/ATX6LqNfaQR5CB9xPyQR5+o7cuNiUnaVxFIxLscp7gsEq2oVBR30FfA8i3WYFZN1uOLiGkH+9jQfHuomLC2zSpz0Ohw3l2ZlkTX2fTuqHYGktzknLQDiXM5zXSmD/diLNZ9HTtNK2DyP2VZgZg3TxPyalhgnZvxOu/8PGqdJTCQNVNH/gdi7QkMvwQkRXE0FvlPg8U8Xiygy7VY0jZRedRq1yLXSs5M64iJ4qHkHpj+K1C7r8fT/W9NsbUB59PuRzIu1E+qxr/9TmEq30MJR64C+YUGyeOcehWGT/KPA721iO30Wsmz7tUwrtRtjWxT7h06vwMzMAxf+n4AfFvip4NESi983wAep0lh009dhX9v9crAXOY17EIE/K+dVGqklpIkyDnPnBm13LFvS4aAXtjV3or7hMtgDFm2T3Y9eNBqkLujQyAyAAAAA=="}, {"id": "assassin", "name": "Assassin", "role": "DPS", "color": "#ff6bd0", "icon": "data:image/webp;base64,UklGRggEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSNABAAABkCvbtmlbY+vy2bZt2zYj25ltv8i2bdu2bb9jnzWCrdp/EBETALv5qsDhufudWvVCtiW36zM7u1nhH6E2ZlKDFo3SAeqlGOuZJOwnX2Y1SfkY85UEUj+RR1KNBsRIrlYMpBFkrDqgLflFsVoF5CKFv5NkuG1uFZB6+Rl9XwkAcu9hdIKCTF9fkP7/5Of3eSEPCPJ9k0QYpu4XkZ2FEu+RF0vl2B3nv2x5NgT5thTM0x8mL5f6wlfZgeTT9FY/Tl7NC6sF/pGuOE9KY5piC4WLdFWBxWb50/f4TZJrS77+2GABSbq6pM/dQTGSl7u/Pgzr1r0l3y3RRR5+/X880QipS0M0vDHm699uR3VkdFN6mCutbxswfOKph4ZPe2uwKI14bcSQn8a/ZyRamuo2sejfls4KUPo7Rehd3CjsYbidBJujRewvTb1/uE+B3YyPadldGrZTL1l7ncmWNC6ui94/G9GJZZKdch6SdDVT5MrPSDLY0Ia8hfTeEDyWPd20CO//J69p1or6xYXaqdfJ9y/I3/mKHxPhatZGhGalANVcJBkbCCQO88+w1r6fDECaojuqAZB69rJmmvYa+b0onKzii/SFsxvfqA4tPASHq7S0BVZQOCASAgAA8AoAnQEqIAAgAD5tKJFFpCIhmAwGAEAGxLGATplB5FFgVIB8nxfGiCnOf4z/r+TL6H/5/93+AL9Tv+F2B/R3/WAtzCsm6PdQTvz4zqByudpDaKieocrwbT8D5qtSSpQAAP7781fYHzYtB4Y8Cl6bN0qMis7cEa6AbyAD94nMYw9Pcbuv7IMq/HFFT/a8w1lNnQlZgcI3pr4r+3BaSzoo3HaGIu8TfXsvAubAzA/kkF+Yf17D+h7NMAs04Rx9EQzvWvasrjyHdMthuCHrb+St+5No+K+zZxRBNnGU+mGm7/zKy9idH5VD0BoMGiEWtKkkhdfG5jb0yxVmAcq7ILefP/4fUOa/+P5EZTE3swh81uhJ5IhaUebivuoMgCyzdYu/J7REXBP1QzNil6Tyeb2faSV0EWEcP4cpN55ZOhsvfiYwlIBH9Tf7P/BJhWJ2UO48oWwP7q2Rawc70AfAtJehx65KFNredJ8zYtIBWtgV7nwt1xhypln/6uerNw5aQUiso9+FXWvRtKMLRA+RgO1FHxO2S6/o6exXytNign4PXuBy6RIqTRorZrCVUVBXAcGJTJUd47xVFbvHFcFEy8/r5Lu7/6I2K/xQBonnH+Grtx/Lh2AlPgoW06gxm7jxA+o2Am2iret7okf+U8bgfAChtPMNmPHF0o2b7qNcmkW2O3t5YkaGKlLTFgqeWRHcUg27IAA="}, {"id": "ranger", "name": "Ranger", "role": "DPS", "color": "#ff8f6b", "icon": "data:image/webp;base64,UklGRgIEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSP4BAAABkG3btulK66hs27Zt27Zt27Zt27Zt23WNEycHez5EO38QERNAwYoKhbjHuVShSfDOqBgKiTLFYTIJIq8cx1O0ZTgtjhnCq5TW8DCgFny6UeCT9i76/AMw5Y+9nsBBbvqRWSt28uBUrgNQl2QKKscRHVC/Rxuw//8J4GNdIbDa/+FtWACPC96OSUoAct1Y+Hy21MC5fboXzKUZBD+j3QCgxQP2eOMe4LLB+096P60AaCcrZer5FwBz7yyefUQYgA2yn2Ju4G0CpVqyshYAK+ViOWgbgLHktzFgDKL8lofVLgHxjZc7J1LJMOCg5Es5DfxISUIf9qmaysbtw9XkRPMAZxlf/TQ8LE9EGVXMOqW1taEHEeVZDlxL6JUnSsOrvERStj8RL2PY9/9m/SRE8izYMVYgSn4eLkfY1z6prkZq8Q7AiMC/L40r7Hf/ZrBXpUT7TOhry/x2tlp6MSz+JWB7zG7s6f6QTaypAt8KFf35Y0EFmbq+s7QWtnsmRpmLvkZkynrDsjgz5R7yIqyHkDgReSffb+1f9IvOoDk6FHj6s5FARKQkkch/0h32GcUeALbepb68y0c8xZHuVTV07GgV/SgD8RWH2a/b2HnroRTEW2ymAbiQlPi3AoBLEj9hn5ealV+y715mZ34J+w+MY2uGVeVHROO+p6bQJspIwQJWUDgg3gEAAPAJAJ0BKiAAIAA+bS6URyQiIiEoCqiADYlAGd9EAR599A5+NUG9EeiGpHf7P9u8x30j7AX6tdW70KFpzs/atSx5dXynWJHqnMhMw47WTtGV2Bjpk4+eGAAA/v+dcevkCFI/4IM/q7jtsTVTWiUfXPsBrysn+Zvob3Tx/qjuHX340jYOkjc/ibx8815MPzZg2PAZbtWgLTqg0HUMsqAuXHdDvtELlqju/sUBvf0m0aQ9tB3Sj9O03XjnrPOujz5nzRZwAdjCQgEPSNNB5e4PqqLJbs9tBHu9zQLThgF/Jqz1HHJ7M8zKYEVLPEKWt3toJ34fyN6tneBhKAr5+YWJ2mOf469W38HOblJdbTaH7SG0+KxX9KwH3ZN+FH8FyMyqy6QHznuSZvvx1F8t/4pbZHe6WREEHFmUqO0kmrwRSkYFlNGB+UnsiN/AtIoGVEQqS34m3QsxEspN7zoV0nl/jVYZlceM1hJ/ToNSO/Lo47yd1rIG7F6PPLiEIw1np/8Xnnw8f+i0GvsESGZN2h0Qx2hlwQ1nSbHyZUzyyCnYLhma9emsF+48Swj5N01/znb6yhLzPI2NAamt5z7vI/mXsZ3XWqxrN8t5p8x6hKfn5MfP/FtqTqFDNXWIcALKYAA="}, {"id": "sorcerer", "name": "Sorcerer", "role": "DPS", "color": "#c56bff", "icon": "data:image/webp;base64,UklGRnoEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSC4CAAABkHXbmiHJ+iOqxrZt27Zt27Zt2zbebNtWcdTunlYh2RH3oVIdERNAzGavRFK5/wOaOhkeiQ1Shc4H3ueyKP/QkLkpeJXbon6O9ISQCgGssVlj2yFUJ7T4R0AYlsaS2gG8aXPmLwAIr9YVpuayPsd/BfoxUzObsh8A5x6mESaBP2+dwZhtloIPg5ZD83Pz2xzq85yG+im++IRWf4FgOMCmp5ssAAuMFA2D44SzJxDoWegFcJHQCTL+5NGzXQTny/edga9bvmJ5niGqKrEdAB+hVyheuuoosIphBV3vLFrOB1dlUiQGp6nOKDxu/+8DkFx0toA3I48D8Wf6bERkJi16DEuL3FEAV30RUGdPAfBnWFsmVdBK84H1blKuhxdy58o31dFZXkDcXrpNjSA6a6V3cYeaNLfKHXwtXnxv1nWI79z0DY8Q0F8r7UseA/Cn9W7hY4n0q1Piu60IAskGyjugGT3+D8LuMnXpbQbNxWk0tolgEgD4DgkA7r8EAFUBc+QPyXaFQQgLQfAtEO9BaGIMeHgrQoh9C4wKMpJg1FWUkMJ+FuJzOWMZtAW3M0IjuIyQNBXPvkxW+fb0afKt1fpWOa19dAr3ea/3zU1C0+TpnahMs5OMm/9x+C7WJLS7nx/Ll4ESg92S5fV5aJqO/7EjF829KsBv5CLGaYcwRJ2aJaqx/NLBMC7tyUBMFz8UBMBlAOxNVxuxkJZb+8GncsFzoXtaYnWaQj03F89CjANWUDggJgIAANAKAJ0BKiAAIAA+bS6SRiQioaEwGAgAgA2JQBOl9hKA3jE0oTGP7vUgfLm1BTDfFl88/7r+zfAH+o//D4En9mVtztPVMzqDhjqrewaR66xyLbfuGKzGcae6iOxZ5qwAAP7/0cztBmprrzd7rs7x/qsm/wD3ua/+6T0k4jeGqNf0K/W4IFZQd8w+QOE967/tZt/3z9/Dr/cg/+343GRlyJI/XdG67+VwyCpeQH+XOmL9MYjkARxRZiG/lbfNzT894P/iV7+wdV7/wnEjl4eP501RKiqMKzVljqG+q6K2ghnMw8mC/d8hB+tUlSzAYexpH42FoI6/xAgayO9oLi7bLgl2Q9naj+T1JeRU8Whw5Y72/fqk56Dhe3Wa0eQXgFL6Kkd8xne1IGAS/D8KZQrvDwt04joLA9x+gG456F+8WXL2daWHMxfUPZvSOErhs29k+6oPbazD/0VAf1xu5+Qm1CrzZMyydux7MhKbE3GwrMBlusBqxd3E5/RQbEKd1ARbVbaSVvR8oY68uL7/P/x6DSFMCcoNbbJ/uhDe5WW70/gxED2bom5AO+IqZBG/OfmYp5euyDOqxjpWi+l3mSUQHhpUHVOPNTSBuHda7RbkZqyOAGkvJ4JbSUWX6tv9U1fANM6EYFNPTyXhbsL/rcL1kelFrDjDkDW+uxzFLm+U9zyqJC1uyK2Hl2hB25KCznfQjajeB3J5wMzIDvDhOGzasClxU4bgAAA="}, {"id": "spiritmaster", "name": "Spiritmaster", "role": "Flex", "color": "#f6c552", "icon": "data:image/webp;base64,UklGRpwDAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSKMBAAABkHRrmyHJ4qPHtm1jZ8+sbdvYzpm1Z2nbtm3bbdsoZkbEs0hVRcQECK8j54kon3xbKTo1k0pbR2ewEZwbjcrtD8C9XjUi1WDNuxCAil3fPBIxo35oHHXKjCqeKq0rxbXaXtVDzNQwZKbaZcdq5MbK7oYUoz4l4pj3TBKe5Cam5l14nqH/mxb1Rxbc1fxr6GLSMU3qe/691Ba+pql/31E7JjtUvpkMT2T2CzCkMuBrAq8Vvt+17BpllVOWgAJKSs1cQJGTiy+7q13/wjxME9BpAAUGoAyUHGc3WklslWHROC+yqXfcCNoRtPiV05s+lrGGkshCS76lUAI+H6DnWypfB3QFIQX5ReE0IECFBP7Vs4gBPiDPV3gXxw8JRgFgzhK2lXYC+Utj0+8rm7uFFWtTgKfV7US7/CC8HRRbbBPKrph7XoM5RjgvN4FXCyuwNTZcAvT+GBfVzwCUJdoVFwF8bCDcNvmC59guwn2rZ9qd/tRFeK29vdyNua+hiGDnnUnSogqOjhCRjak3YrXUW8c0iRGRrxlX0kpE9/C7mCiNGi+8AgBWUDgg0gEAALAJAJ0BKiAAIAA+bSqTRqQiIaEwGAgAgA2JYgCdLzkkGFBwAEe+evY9TRBTHfFN9O+wN5Onrk/Yz2AFqzsM8Wz25m2CmS+S5yp5MoAiOoRkj4lV1IpAAP7/ubU5sxLp9QRHSrFE+jdZbqPANE0sPTPICdSIew6g/L6H6qfrnjuGNRyt3Xcrbu4W6nTMVJk5HgfYTzw+7+GfRw9nafnycDJjPJhUtrII3H1/bOXUs6QbdzQqbkRl5xuDOfCgIDhjzyquldMu4MWV9cfq/prMMcbIv+ZskS31zN7jVj9JohzaYdLxAYvz9S5dpZfUqARqUpYZI9B1If79Ii9+JfT/5uw84zwqxHxSQ8HR+YCtNt5fMl7GhPzhWRx592H/lIcciuomHx5nwDo36acrQb9ac9FixqpB96DZVygCqZHtzYVJ27hrNjrDPmgTMMHb6d/7NM3ON3eAKTUUS23PdsfOYZ3zcn/yWsn1rx+VdXXxPhoryVgbaBt4t7CcAd3zDeUSxKXA1R6OFk2l849mJKaC40vgRYi3lJ9AFIgVuPi/25LFYJb5MkyfY2vEkWbLjQvzgX1S5BnEPCwFa89daHxk6+RNbd7Ugyku5L+RmFn2qNgAAAA="}, {"id": "cleric", "name": "Cleric", "role": "Heal", "color": "#35d29a", "icon": "data:image/webp;base64,UklGRoYEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSB4CAAABkCzJtmlbc+veZ9u2bdu27ZZt22jZtm2/d23bd++zcbRG4/gPImICyFO/cuTjXq857/ECEc3JLEPEiZ40q0FUZ9Obz1PESik4y1W78vvUdH/iuhRyViX+LLVPAmAZU/gLm1noFQDb1ULF4444m6/06BQDx8B+R00jNgFmAzhb71BGGSc7YBhgOgAwO2xw1MFMdq2GkxFmALawxBAD+g8WDsSnBKcDwBvJibAg0QAyK1TLhf1c+lvgVtElAHKfVSWXvXWw01xnAB8zE4HfUs0o4JVArtcBv4vTNvYEW6NSrbmZ1WmagdyyrriPyO5CxaP+zUAkWMh02yoSdgIzndWb0DaWzSNabg/IsWYp7wL8byeXozIR2DtyZCGiVmnQzEnFqWM+9JdKlD0ogB/Brom0DHmM3ZZoGwDcpgK3kTW+l3LV/jZAGJKpjaDmBmBNKklLwMx4zm+y2Wb691DWZFwPqCEzxNdtJNs0I7oolT1xcAdMPZ7BmnB3gHI8/WpAbR2wTL6I/JUPZ5HjGiBqpQ7IU5VL8ueks7lAwGkL5Krk/DoAKwNShisXGYOjlQFqAxfDLXD6p5/pBdz9XNQFt8hwYv0At4MqkWt+ZoaDh+/qk9vtn+e4x77vKUwe8o0j3LGdLsiR5xVu2lzEzZDIq+KgjwyAfKIceb1Stt2Myxx5v2RKznGcIR8Kj5jFOtMX1C4Ll0Sf0GGtPvm2xR7OE1ZQOCBCAgAAsAoAnQEqIAAgAD5pKJFFpCKhmAYAQAaEoAnTNktmfPh+ND868z3TWMrtWuFj6RGZP5z/7fuB/qt1h/RL/ZUdqepgWrBm09QOV5hdpB9ME7NVm0zSYI3Dac01blx8AAD+8rGds35TX0zF5pBc7yFzS8ma67y/mC/n55vgjddEW8RZ/Fau8N749FxPZpa8BsMyDNGyxIsV5GVtRZ31D3/R6etmbviS3NqfjVvIXm9w4GCoX/91qlf6/4frTCMuv530uIQEw9XNJ1kf4yMaYBLPp8oTzq88xZIzKEv3vhn9aNgUs/g56M6PUfwyYNE0l467FOGj5yrcid2SHcfM7c6fS1urH52bckAO//4xCAmiELeQ8DXNwDdaYHADAIrni5D2/AKImeozbAt/IqLA+mLiK/HzJUYkZh4aF4pVo8y2Jyi8N2QTeoDnkbANFIf4Lh/pRb7n2oO+SZvyNFaWXkAOeKwyKvUSUtRYJSrHUGqByew72d/+/Jpm/uKYpXM8VjKbmCeaqrn/8DlS0WrGZH8brfKE02Q8jGdhRLxWEP0T22dBL9PFtmpn/7YbWMvRwuZ5xJCNuck2dPAVYp7XYg40be1ChuwGO3+hdOj9uL0nh/xTaSPoXXjV47vNJNxjleL0wO2drMnS6SSZ/T/8vJVa8f07+311XFaTSsPIlSrU/biOClFvvUIVE8uSOX4oMWGWhSn6jqaQN1vdZy8KOntgcvBDbFAE5+fgCezOten7xGCirS9oW6aMS130KVD+XvflAAA="}, {"id": "chanter", "name": "Chanter", "role": "Flex", "color": "#5fe0b0", "icon": "data:image/webp;base64,UklGRuwDAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSJsBAAABkCvbtmlb6+g+27bt9zLbtjIzs21bkW3btm1762j3YK+tP4iICRBu05QOCH8H/irqT9H3HMroR+g4MNKPunHgfSYvco+ZUE0IMQtrByEiHaeMiDjq+guliwiekAwQ4TXJxOtsjoJtQel17b/k/cmxcf6WFs77A+OSyD/vAbo7y/wY2P7Z5uZtYGfISWAjwLtjnySP9v8HYp2cdE9Y1M0NNOBHnbtxgJ/l7bK+w7ry95IYoN19cd3C3pDNIKw/6z81kR4fFbf8LWCz3HK12ifzexKI/+NIkx8AA2XBi8CvMmtZX/AWMLvsJXr3s8yUpXkFXFqsYBhJIKbHeT/xI7BIlva1ASZuTTAXyyJPkSd2mMDPoybS2DyZOKpE4fzYBB8sisbnwU8gzlRZYCMK/Lv5AvvrjxIQY4KscQyv74Qk6bsfNiRv534GHq3RJOrK5sI23PCyhRiAmQAwNpYOCKehFtdxnFhfMyDc1v7i6HQq4WFb04FWSHgZrrzCkCijiguPg+3+QfJ2qYDwPu9dNqUWvvb9mVf4W3BwyA0AVlA4ICoCAABwDACdASogACAAPm0skkakIiGhMBgIAIANiWYArDKEdF+7RIDbV3ZzHgVT57NjsfIA9BniBiy/+P9qvss+b/+Z7gX8k/qX+v6+H7Hexh+uy2539Yr5EhmOfD4xJkd970eOu5Y4dleKZ71I3gAA/v9wdVPLbFgei8VYNpXJZ0BOagFMDEAz583LJ4WqC/e8j5f+1Epn3LX3bO77ePEx1s4SxdTGxPvFGOd8Z55W2C2B+DUuokljH3WqPyrHCvyy/9P37b2ON0Bf2MR8xe+JlTvldOtvjDyq1B32wpgE8sr3SBamWEHNPK0+GPxxLiZFY7PypN/E/kmrUrWHm5wr9WRzo3M7/zcf/14NWCJo8jaX5j8TG1mUtryX8ncDYrJUws1t4ZSx5iNYmqha5+qtmVUvs39vZsEjBEwMY5tb6bU16ry40NXiag44HcRBRR8xPGSfSi4mjHA18LQxX9b8bnfMeCCSF2dthG9S4MKPc5uXy6YFhupzeFo1VR6HtwPBbb33XzYXmxqX5zBwARUP4WldgNl/ubC3WvGD/yhyzS2EU+e9h0M3o2JgMv3xeFphlIVY/FtWz5foICskqh2naZllZeKq2bog37iqprCfH+igrNJd1R0T0TANCzaIdXEigqI4+D8vzdPMek3l1GBQBmtEPvGk6l808s0vBx8GE1McLS294D75n82IEOYGbCBZCxcvemQc2REKzp6ATSHNcKlxhCrHGt1KH26AAA=="}];
+let CLASSES = [{"id": "templar", "name": "Templar", "role": "Tank", "color": "#5870a8", "icon": "data:image/webp;base64,UklGRk4DAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSEUBAAABkLNtmyHZ2mttxra9m25m2/Zmtm0zPI5s2/bJbNvnVL1BT1XXRMQEELXuSTpEq8Zb3jpoQddu4BPFz+1hhlIMAjsPf2JQ/r21GGWuwqxmy/N/EGbfD3d4ieRC8y8K4Bs0b9QRGOXQHxB9bCQwwVH51FhgSs4zkWlJJjzva3J+pPMGIfmGHqdJ1hVdTgV+ytlGuIkUckd5dl8klfB0j8n54c4jPQCOb6ICd9f+AxcNBNz/APeNinm7zeYA1BFB3RsAC87T8JPisPFL4EeQCCljwMt1wCrD1gd4uY0B23WEbO8DeEIR+Qct5/GNAn8iiHg2A+hnTNz43fj7NwWwWU+F/iko2a9/v6D8FkzUhn9WCPYQ1TqlVOighTqis54J3HUiMk238J76E7lGW5iGpz5EtukGxR1/Il+//Qv2OxJt6sTUmhOVAFZQOCDiAQAAEAoAnQEqIAAgAD5tMJNGJCMhoTAYCACADYlmAJ0yhH4i0SFWj9RoFcBKgkID05czvz77An8i/svWS9E39blvjLeoqM/OBHDcjls1H/tOUsxUKVkImnr9XQAA/vnCXOL/H+15B42afAdH1w7YzvNEIXuo12H7Mv/877feLw8y/EkaMkvK8fvU2yzfquaN8a3RVsRMWSPzCCM0fvX4uZ5iflLxwABGPrQImmQfH/riwzc7/f8jmhcj0SUl0HaysmDtY7AZ0WEXSQ71v+KF5WdUcX0jRvGU27gkxTPkXltHK9qB6VLgQhXkXfOZ8JbPt7jRplMmcq8/vsfQREmw6/LDTAJusu0rmbxG4eSFwKHyAvznfi3PMBXxy+rFeBQPHpN3wBJHcClXG0nqK1ivrb/iTRuOp/9LYEc3CH62kIXx5+sSA9TrV6XPz06Yz/MkeVwO5NZm+a8ZGhzfcr/n9E5Ysvr//CU/9NXPorMg1J+wVb3PWfCuePH6RBAG+qHjDJFSwzx2mWC4dclqv8Sm6tKDLe5SciQh9idDYAlnj7RQTz+0OoXhKlJFMiKDNi7Z2m8Q0Bg2vZvP5U0o+Oa4vG9KISW8c1LNAAgmGqXe2bifwsHOwwA9vr2zYSuvcb+tWzAAAAA="}, {"id": "gladiator", "name": "Gladiator", "role": "DPS", "color": "#305058", "icon": "data:image/webp;base64,UklGRkYEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSAQCAAABkG3btiFJJyLbtm1br9WPtm3btm3btm3bttNGZKxGZFbmH0TEBEhii1WR+Cqb9yrxKeZwVY5PZ13vEZ9NsCUmyWunFFEG5pOtsEOyTUkqkqJ5iigybb2WUcR0boRRp+9pRNKe2JY2gjLjV34RSfPugLofDimzrDlFJOuHFapR/t87RUQ6hM+YjsAJdTHDFRHZ4qlo1JD1IklaOFiX9BxcSToRd89kIqtpZ1Rb3yopdgRg+hYf+A8O19HOpJcNtDbKZ79pyvATQi4MXUGw5lAv+8oYqfucxfJ9wIl/swVsG938wl6qgP1qciNpyJu3mHcwKI8N3IXaaXvf8/U+3SViNjM/mDXDnLmSDtRI+WVVb37iLBCppCX83VW4gzehFkD9yq7hWX+8D7tqRlDar13P+wvzPN/2/7fnUXDFucccmjhOMep7/GKIQ5vDRBneMhPtzompRo2e6jAr2RIdvOADViQfCLzqaCTpV+scT5ruvI4GGlzJatoIe3NI5JR30Q5WyPoKw9fZym7S+JxDom0RBufM/KPNYBmbb5Qd9F4SdaoFPzGHp5o2wzZ1TOAbjuXpoxPJNPQbnn69oU8XNz9G5ZYYFjrB6x7Q9TZni0lsM5zzT4Ihv29nllgneJfDIk8jiXkehxcCrlKxS9Y3BNrAFLETta3D2TepxHXjHkXiW6CSJBZWUDggHAIAADALAJ0BKiAAIAA+ZSqSRaQioZgGAEAGRLEAWIZVeEDeZqwB0GfoL13yAFcC6H/8BqFP1a9VvMs7j+4T/Fv6x/yfVu9e/ogfrkmTOrwgkWUbStVCEU2Q1GFVqA2H32F5+OQAAP7+zWu1G5nGrbzNRD0LlkLBKt8Yfos3tpGRgYvEv9y/agIPJ25Fu6/lUazr0wafJNrAfNil76XesHv0EURiP+KN3fiQX2jnM8tu3XeCaQuRG5T5oVfsPb7F/KrrqcLMsVIJIQoWAyiFxHE9QT7Lo/ATX6LqNfaQR5CB9xPyQR5+o7cuNiUnaVxFIxLscp7gsEq2oVBR30FfA8i3WYFZN1uOLiGkH+9jQfHuomLC2zSpz0Ohw3l2ZlkTX2fTuqHYGktzknLQDiXM5zXSmD/diLNZ9HTtNK2DyP2VZgZg3TxPyalhgnZvxOu/8PGqdJTCQNVNH/gdi7QkMvwQkRXE0FvlPg8U8Xiygy7VY0jZRedRq1yLXSs5M64iJ4qHkHpj+K1C7r8fT/W9NsbUB59PuRzIu1E+qxr/9TmEq30MJR64C+YUGyeOcehWGT/KPA721iO30Wsmz7tUwrtRtjWxT7h06vwMzMAxf+n4AfFvip4NESi983wAep0lh009dhX9v9crAXOY17EIE/K+dVGqklpIkyDnPnBm13LFvS4aAXtjV3or7hMtgDFm2T3Y9eNBqkLujQyAyAAAAA=="}, {"id": "assassin", "name": "Assassin", "role": "DPS", "color": "#709870", "icon": "data:image/webp;base64,UklGRggEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSNABAAABkCvbtmlbY+vy2bZt2zYj25ltv8i2bdu2bb9jnzWCrdp/EBETALv5qsDhufudWvVCtiW36zM7u1nhH6E2ZlKDFo3SAeqlGOuZJOwnX2Y1SfkY85UEUj+RR1KNBsRIrlYMpBFkrDqgLflFsVoF5CKFv5NkuG1uFZB6+Rl9XwkAcu9hdIKCTF9fkP7/5Of3eSEPCPJ9k0QYpu4XkZ2FEu+RF0vl2B3nv2x5NgT5thTM0x8mL5f6wlfZgeTT9FY/Tl7NC6sF/pGuOE9KY5piC4WLdFWBxWb50/f4TZJrS77+2GABSbq6pM/dQTGSl7u/Pgzr1r0l3y3RRR5+/X880QipS0M0vDHm699uR3VkdFN6mCutbxswfOKph4ZPe2uwKI14bcSQn8a/ZyRamuo2sejfls4KUPo7Rehd3CjsYbidBJujRewvTb1/uE+B3YyPadldGrZTL1l7ncmWNC6ui94/G9GJZZKdch6SdDVT5MrPSDLY0Ia8hfTeEDyWPd20CO//J69p1or6xYXaqdfJ9y/I3/mKHxPhatZGhGalANVcJBkbCCQO88+w1r6fDECaojuqAZB69rJmmvYa+b0onKzii/SFsxvfqA4tPASHq7S0BVZQOCASAgAA8AoAnQEqIAAgAD5tKJFFpCIhmAwGAEAGxLGATplB5FFgVIB8nxfGiCnOf4z/r+TL6H/5/93+AL9Tv+F2B/R3/WAtzCsm6PdQTvz4zqByudpDaKieocrwbT8D5qtSSpQAAP7781fYHzYtB4Y8Cl6bN0qMis7cEa6AbyAD94nMYw9Pcbuv7IMq/HFFT/a8w1lNnQlZgcI3pr4r+3BaSzoo3HaGIu8TfXsvAubAzA/kkF+Yf17D+h7NMAs04Rx9EQzvWvasrjyHdMthuCHrb+St+5No+K+zZxRBNnGU+mGm7/zKy9idH5VD0BoMGiEWtKkkhdfG5jb0yxVmAcq7ILefP/4fUOa/+P5EZTE3swh81uhJ5IhaUebivuoMgCyzdYu/J7REXBP1QzNil6Tyeb2faSV0EWEcP4cpN55ZOhsvfiYwlIBH9Tf7P/BJhWJ2UO48oWwP7q2Rawc70AfAtJehx65KFNredJ8zYtIBWtgV7nwt1xhypln/6uerNw5aQUiso9+FXWvRtKMLRA+RgO1FHxO2S6/o6exXytNign4PXuBy6RIqTRorZrCVUVBXAcGJTJUd47xVFbvHFcFEy8/r5Lu7/6I2K/xQBonnH+Grtx/Lh2AlPgoW06gxm7jxA+o2Am2iret7okf+U8bgfAChtPMNmPHF0o2b7qNcmkW2O3t5YkaGKlLTFgqeWRHcUg27IAA="}, {"id": "ranger", "name": "Ranger", "role": "DPS", "color": "#305848", "icon": "data:image/webp;base64,UklGRgIEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSP4BAAABkG3btulK66hs27Zt27Zt27Zt27Zt23WNEycHez5EO38QERNAwYoKhbjHuVShSfDOqBgKiTLFYTIJIq8cx1O0ZTgtjhnCq5TW8DCgFny6UeCT9i76/AMw5Y+9nsBBbvqRWSt28uBUrgNQl2QKKscRHVC/Rxuw//8J4GNdIbDa/+FtWACPC96OSUoAct1Y+Hy21MC5fboXzKUZBD+j3QCgxQP2eOMe4LLB+096P60AaCcrZer5FwBz7yyefUQYgA2yn2Ju4G0CpVqyshYAK+ViOWgbgLHktzFgDKL8lofVLgHxjZc7J1LJMOCg5Es5DfxISUIf9qmaysbtw9XkRPMAZxlf/TQ8LE9EGVXMOqW1taEHEeVZDlxL6JUnSsOrvERStj8RL2PY9/9m/SRE8izYMVYgSn4eLkfY1z6prkZq8Q7AiMC/L40r7Hf/ZrBXpUT7TOhry/x2tlp6MSz+JWB7zG7s6f6QTaypAt8KFf35Y0EFmbq+s7QWtnsmRpmLvkZkynrDsjgz5R7yIqyHkDgReSffb+1f9IvOoDk6FHj6s5FARKQkkch/0h32GcUeALbepb68y0c8xZHuVTV07GgV/SgD8RWH2a/b2HnroRTEW2ymAbiQlPi3AoBLEj9hn5ealV+y715mZ34J+w+MY2uGVeVHROO+p6bQJspIwQJWUDgg3gEAAPAJAJ0BKiAAIAA+bS6URyQiIiEoCqiADYlAGd9EAR599A5+NUG9EeiGpHf7P9u8x30j7AX6tdW70KFpzs/atSx5dXynWJHqnMhMw47WTtGV2Bjpk4+eGAAA/v+dcevkCFI/4IM/q7jtsTVTWiUfXPsBrysn+Zvob3Tx/qjuHX340jYOkjc/ibx8815MPzZg2PAZbtWgLTqg0HUMsqAuXHdDvtELlqju/sUBvf0m0aQ9tB3Sj9O03XjnrPOujz5nzRZwAdjCQgEPSNNB5e4PqqLJbs9tBHu9zQLThgF/Jqz1HHJ7M8zKYEVLPEKWt3toJ34fyN6tneBhKAr5+YWJ2mOf469W38HOblJdbTaH7SG0+KxX9KwH3ZN+FH8FyMyqy6QHznuSZvvx1F8t/4pbZHe6WREEHFmUqO0kmrwRSkYFlNGB+UnsiN/AtIoGVEQqS34m3QsxEspN7zoV0nl/jVYZlceM1hJ/ToNSO/Lo47yd1rIG7F6PPLiEIw1np/8Xnnw8f+i0GvsESGZN2h0Qx2hlwQ1nSbHyZUzyyCnYLhma9emsF+48Swj5N01/znb6yhLzPI2NAamt5z7vI/mXsZ3XWqxrN8t5p8x6hKfn5MfP/FtqTqFDNXWIcALKYAA="}, {"id": "sorcerer", "name": "Sorcerer", "role": "DPS", "color": "#584878", "icon": "data:image/webp;base64,UklGRnoEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSC4CAAABkHXbmiHJ+iOqxrZt27Zt27Zt2zbebNtWcdTunlYh2RH3oVIdERNAzGavRFK5/wOaOhkeiQ1Shc4H3ueyKP/QkLkpeJXbon6O9ISQCgGssVlj2yFUJ7T4R0AYlsaS2gG8aXPmLwAIr9YVpuayPsd/BfoxUzObsh8A5x6mESaBP2+dwZhtloIPg5ZD83Pz2xzq85yG+im++IRWf4FgOMCmp5ssAAuMFA2D44SzJxDoWegFcJHQCTL+5NGzXQTny/edga9bvmJ5niGqKrEdAB+hVyheuuoosIphBV3vLFrOB1dlUiQGp6nOKDxu/+8DkFx0toA3I48D8Wf6bERkJi16DEuL3FEAV30RUGdPAfBnWFsmVdBK84H1blKuhxdy58o31dFZXkDcXrpNjSA6a6V3cYeaNLfKHXwtXnxv1nWI79z0DY8Q0F8r7UseA/Cn9W7hY4n0q1Piu60IAskGyjugGT3+D8LuMnXpbQbNxWk0tolgEgD4DgkA7r8EAFUBc+QPyXaFQQgLQfAtEO9BaGIMeHgrQoh9C4wKMpJg1FWUkMJ+FuJzOWMZtAW3M0IjuIyQNBXPvkxW+fb0afKt1fpWOa19dAr3ea/3zU1C0+TpnahMs5OMm/9x+C7WJLS7nx/Ll4ESg92S5fV5aJqO/7EjF829KsBv5CLGaYcwRJ2aJaqx/NLBMC7tyUBMFz8UBMBlAOxNVxuxkJZb+8GncsFzoXtaYnWaQj03F89CjANWUDggJgIAANAKAJ0BKiAAIAA+bS6SRiQioaEwGAgAgA2JQBOl9hKA3jE0oTGP7vUgfLm1BTDfFl88/7r+zfAH+o//D4En9mVtztPVMzqDhjqrewaR66xyLbfuGKzGcae6iOxZ5qwAAP7/0cztBmprrzd7rs7x/qsm/wD3ua/+6T0k4jeGqNf0K/W4IFZQd8w+QOE967/tZt/3z9/Dr/cg/+343GRlyJI/XdG67+VwyCpeQH+XOmL9MYjkARxRZiG/lbfNzT894P/iV7+wdV7/wnEjl4eP501RKiqMKzVljqG+q6K2ghnMw8mC/d8hB+tUlSzAYexpH42FoI6/xAgayO9oLi7bLgl2Q9naj+T1JeRU8Whw5Y72/fqk56Dhe3Wa0eQXgFL6Kkd8xne1IGAS/D8KZQrvDwt04joLA9x+gG456F+8WXL2daWHMxfUPZvSOErhs29k+6oPbazD/0VAf1xu5+Qm1CrzZMyydux7MhKbE3GwrMBlusBqxd3E5/RQbEKd1ARbVbaSVvR8oY68uL7/P/x6DSFMCcoNbbJ/uhDe5WW70/gxED2bom5AO+IqZBG/OfmYp5euyDOqxjpWi+l3mSUQHhpUHVOPNTSBuHda7RbkZqyOAGkvJ4JbSUWX6tv9U1fANM6EYFNPTyXhbsL/rcL1kelFrDjDkDW+uxzFLm+U9zyqJC1uyK2Hl2hB25KCznfQjajeB3J5wMzIDvDhOGzasClxU4bgAAA="}, {"id": "spiritmaster", "name": "Spiritmaster", "role": "Flex", "color": "#603860", "icon": "data:image/webp;base64,UklGRpwDAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSKMBAAABkHRrmyHJ4qPHtm1jZ8+sbdvYzpm1Z2nbtm3bbdsoZkbEs0hVRcQECK8j54kon3xbKTo1k0pbR2ewEZwbjcrtD8C9XjUi1WDNuxCAil3fPBIxo35oHHXKjCqeKq0rxbXaXtVDzNQwZKbaZcdq5MbK7oYUoz4l4pj3TBKe5Cam5l14nqH/mxb1Rxbc1fxr6GLSMU3qe/691Ba+pql/31E7JjtUvpkMT2T2CzCkMuBrAq8Vvt+17BpllVOWgAJKSs1cQJGTiy+7q13/wjxME9BpAAUGoAyUHGc3WklslWHROC+yqXfcCNoRtPiV05s+lrGGkshCS76lUAI+H6DnWypfB3QFIQX5ReE0IECFBP7Vs4gBPiDPV3gXxw8JRgFgzhK2lXYC+Utj0+8rm7uFFWtTgKfV7US7/CC8HRRbbBPKrph7XoM5RjgvN4FXCyuwNTZcAvT+GBfVzwCUJdoVFwF8bCDcNvmC59guwn2rZ9qd/tRFeK29vdyNua+hiGDnnUnSogqOjhCRjak3YrXUW8c0iRGRrxlX0kpE9/C7mCiNGi+8AgBWUDgg0gEAALAJAJ0BKiAAIAA+bSqTRqQiIaEwGAgAgA2JYgCdLzkkGFBwAEe+evY9TRBTHfFN9O+wN5Onrk/Yz2AFqzsM8Wz25m2CmS+S5yp5MoAiOoRkj4lV1IpAAP7/ubU5sxLp9QRHSrFE+jdZbqPANE0sPTPICdSIew6g/L6H6qfrnjuGNRyt3Xcrbu4W6nTMVJk5HgfYTzw+7+GfRw9nafnycDJjPJhUtrII3H1/bOXUs6QbdzQqbkRl5xuDOfCgIDhjzyquldMu4MWV9cfq/prMMcbIv+ZskS31zN7jVj9JohzaYdLxAYvz9S5dpZfUqARqUpYZI9B1If79Ii9+JfT/5uw84zwqxHxSQ8HR+YCtNt5fMl7GhPzhWRx592H/lIcciuomHx5nwDo36acrQb9ac9FixqpB96DZVygCqZHtzYVJ27hrNjrDPmgTMMHb6d/7NM3ON3eAKTUUS23PdsfOYZ3zcn/yWsn1rx+VdXXxPhoryVgbaBt4t7CcAd3zDeUSxKXA1R6OFk2l849mJKaC40vgRYi3lJ9AFIgVuPi/25LFYJb5MkyfY2vEkWbLjQvzgX1S5BnEPCwFa89daHxk6+RNbd7Ugyku5L+RmFn2qNgAAAA="}, {"id": "cleric", "name": "Cleric", "role": "Heal", "color": "#a09870", "icon": "data:image/webp;base64,UklGRoYEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSB4CAAABkCzJtmlbc+veZ9u2bdu27ZZt22jZtm2/d23bd++zcbRG4/gPImICyFO/cuTjXq857/ECEc3JLEPEiZ40q0FUZ9Obz1PESik4y1W78vvUdH/iuhRyViX+LLVPAmAZU/gLm1noFQDb1ULF4444m6/06BQDx8B+R00jNgFmAzhb71BGGSc7YBhgOgAwO2xw1MFMdq2GkxFmALawxBAD+g8WDsSnBKcDwBvJibAg0QAyK1TLhf1c+lvgVtElAHKfVSWXvXWw01xnAB8zE4HfUs0o4JVArtcBv4vTNvYEW6NSrbmZ1WmagdyyrriPyO5CxaP+zUAkWMh02yoSdgIzndWb0DaWzSNabg/IsWYp7wL8byeXozIR2DtyZCGiVmnQzEnFqWM+9JdKlD0ogB/Brom0DHmM3ZZoGwDcpgK3kTW+l3LV/jZAGJKpjaDmBmBNKklLwMx4zm+y2Wb691DWZFwPqCEzxNdtJNs0I7oolT1xcAdMPZ7BmnB3gHI8/WpAbR2wTL6I/JUPZ5HjGiBqpQ7IU5VL8ueks7lAwGkL5Krk/DoAKwNShisXGYOjlQFqAxfDLXD6p5/pBdz9XNQFt8hwYv0At4MqkWt+ZoaDh+/qk9vtn+e4x77vKUwe8o0j3LGdLsiR5xVu2lzEzZDIq+KgjwyAfKIceb1Stt2Myxx5v2RKznGcIR8Kj5jFOtMX1C4Ll0Sf0GGtPvm2xR7OE1ZQOCBCAgAAsAoAnQEqIAAgAD5pKJFFpCKhmAYAQAaEoAnTNktmfPh+ND868z3TWMrtWuFj6RGZP5z/7fuB/qt1h/RL/ZUdqepgWrBm09QOV5hdpB9ME7NVm0zSYI3Dac01blx8AAD+8rGds35TX0zF5pBc7yFzS8ma67y/mC/n55vgjddEW8RZ/Fau8N749FxPZpa8BsMyDNGyxIsV5GVtRZ31D3/R6etmbviS3NqfjVvIXm9w4GCoX/91qlf6/4frTCMuv530uIQEw9XNJ1kf4yMaYBLPp8oTzq88xZIzKEv3vhn9aNgUs/g56M6PUfwyYNE0l467FOGj5yrcid2SHcfM7c6fS1urH52bckAO//4xCAmiELeQ8DXNwDdaYHADAIrni5D2/AKImeozbAt/IqLA+mLiK/HzJUYkZh4aF4pVo8y2Jyi8N2QTeoDnkbANFIf4Lh/pRb7n2oO+SZvyNFaWXkAOeKwyKvUSUtRYJSrHUGqByew72d/+/Jpm/uKYpXM8VjKbmCeaqrn/8DlS0WrGZH8brfKE02Q8jGdhRLxWEP0T22dBL9PFtmpn/7YbWMvRwuZ5xJCNuck2dPAVYp7XYg40be1ChuwGO3+hdOj9uL0nh/xTaSPoXXjV47vNJNxjleL0wO2drMnS6SSZ/T/8vJVa8f07+311XFaTSsPIlSrU/biOClFvvUIVE8uSOX4oMWGWhSn6jqaQN1vdZy8KOntgcvBDbFAE5+fgCezOten7xGCirS9oW6aMS130KVD+XvflAAA="}, {"id": "chanter", "name": "Chanter", "role": "Flex", "color": "#685030", "icon": "data:image/webp;base64,UklGRuwDAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSJsBAAABkCvbtmlb6+g+27bt9zLbtjIzs21bkW3btm1762j3YK+tP4iICRBu05QOCH8H/irqT9H3HMroR+g4MNKPunHgfSYvco+ZUE0IMQtrByEiHaeMiDjq+guliwiekAwQ4TXJxOtsjoJtQel17b/k/cmxcf6WFs77A+OSyD/vAbo7y/wY2P7Z5uZtYGfISWAjwLtjnySP9v8HYp2cdE9Y1M0NNOBHnbtxgJ/l7bK+w7ry95IYoN19cd3C3pDNIKw/6z81kR4fFbf8LWCz3HK12ifzexKI/+NIkx8AA2XBi8CvMmtZX/AWMLvsJXr3s8yUpXkFXFqsYBhJIKbHeT/xI7BIlva1ASZuTTAXyyJPkSd2mMDPoybS2DyZOKpE4fzYBB8sisbnwU8gzlRZYCMK/Lv5AvvrjxIQY4KscQyv74Qk6bsfNiRv534GHq3RJOrK5sI23PCyhRiAmQAwNpYOCKehFtdxnFhfMyDc1v7i6HQq4WFb04FWSHgZrrzCkCijiguPg+3+QfJ2qYDwPu9dNqUWvvb9mVf4W3BwyA0AVlA4ICoCAABwDACdASogACAAPm0skkakIiGhMBgIAIANiWYArDKEdF+7RIDbV3ZzHgVT57NjsfIA9BniBiy/+P9qvss+b/+Z7gX8k/qX+v6+H7Hexh+uy2539Yr5EhmOfD4xJkd970eOu5Y4dleKZ71I3gAA/v9wdVPLbFgei8VYNpXJZ0BOagFMDEAz583LJ4WqC/e8j5f+1Epn3LX3bO77ePEx1s4SxdTGxPvFGOd8Z55W2C2B+DUuokljH3WqPyrHCvyy/9P37b2ON0Bf2MR8xe+JlTvldOtvjDyq1B32wpgE8sr3SBamWEHNPK0+GPxxLiZFY7PypN/E/kmrUrWHm5wr9WRzo3M7/zcf/14NWCJo8jaX5j8TG1mUtryX8ncDYrJUws1t4ZSx5iNYmqha5+qtmVUvs39vZsEjBEwMY5tb6bU16ry40NXiag44HcRBRR8xPGSfSi4mjHA18LQxX9b8bnfMeCCSF2dthG9S4MKPc5uXy6YFhupzeFo1VR6HtwPBbb33XzYXmxqX5zBwARUP4WldgNl/ubC3WvGD/yhyzS2EU+e9h0M3o2JgMv3xeFphlIVY/FtWz5foICskqh2naZllZeKq2bog37iqprCfH+igrNJd1R0T0TANCzaIdXEigqI4+D8vzdPMek3l1GBQBmtEPvGk6l808s0vBx8GE1McLS294D75n82IEOYGbCBZCxcvemQc2REKzp6ATSHNcKlxhCrHGt1KH26AAA=="}];
 let PLAYERS = [];
 let GROUPS = [];
 let EVENTS = [];
@@ -221,6 +224,7 @@ const GUILD_ID = '1355632831333798200';
 const REQUIRED_ROLE_ID = '1443636744267501618';
 const ADMIN_ROLE_ID = '1397018334590926929';
 const DISCORD_ANNOUNCE_WEBHOOK_URL = 'https://discord.com/api/webhooks/1536673660251668574/AyuydDHDwmxBfpsdu0ZATHAPB7b0VIAbWNLr0onaFBMjgsdyrPC5i3_C2tqIhe887VgP';
+const DISCORD_LFG_WEBHOOK_URL = ''; // A configurer: URL du webhook Discord du salon looking-for-group
 let IS_ADMIN = false;
 let PREVIEW_AS_MEMBER = false;
 function isAdminView(){ return IS_ADMIN && !PREVIEW_AS_MEMBER; }
@@ -238,7 +242,7 @@ const I18N = {
     'role.preview_active': 'Mode aperçu actif', 'role.login': 'Se connecter',
     'role.login_note': 'Ton profil se crée et se synchronise automatiquement.',
     'mobile.menu': '☰ Menu',
-    'topbar.dashboard.title': 'Tableau de bord', 'topbar.dashboard.sub': "Vue d'ensemble de la guilde",
+    'topbar.dashboard.title': 'Tableau de bord', 'topbar.dashboard.sub': "Vue d'ensemble",
     'topbar.players.title': 'Joueurs', 'topbar.players.sub': 'Gérer les membres et leurs disponibilités',
     'topbar.classes.title': 'Classes', 'topbar.classes.sub': 'Configurer les classes disponibles',
     'topbar.pve.title': 'PvE', 'topbar.pve.sub': 'Composer les groupes pour les activités PvE',
@@ -286,6 +290,11 @@ const I18N = {
     'groups.choose_player': '-- Choisir un joueur --',
     'groups.duplicate_in_other': '⚠ Déjà dans un autre groupe',
     'groups.remove_title': 'Retirer', 'groups.reset': '↺ Réinitialiser', 'groups.delete': 'Supprimer',
+    'groups.publish_discord': 'Publier sur Discord',
+    'groups.lfg_not_configured': "Webhook 'looking-for-group' non configuré.",
+    'groups.lfg_posted': 'Groupe publié sur Discord.',
+    'groups.lfg_error': "Erreur lors de la publication sur Discord.",
+    'groups.lfg_empty': 'Aucun joueur assigné pour le moment.',
     'groups.substitutes': 'Remplaçants', 'groups.registered': 'inscrits',
     'modal.cancel': 'Annuler', 'modal.confirm': 'Confirmer',
     'modal.delete_player_title': 'Supprimer ce joueur ?',
@@ -338,7 +347,7 @@ const I18N = {
     'role.preview_active': 'Preview mode active', 'role.login': 'Log in',
     'role.login_note': 'Your profile is created and synced automatically.',
     'mobile.menu': '☰ Menu',
-    'topbar.dashboard.title': 'Dashboard', 'topbar.dashboard.sub': 'Guild overview',
+    'topbar.dashboard.title': 'Dashboard', 'topbar.dashboard.sub': 'Overview',
     'topbar.players.title': 'Players', 'topbar.players.sub': 'Manage members and their availability',
     'topbar.classes.title': 'Classes', 'topbar.classes.sub': 'Configure available classes',
     'topbar.pve.title': 'PvE', 'topbar.pve.sub': 'Build groups for PvE activities',
@@ -386,6 +395,11 @@ const I18N = {
     'groups.choose_player': '-- Choose a player --',
     'groups.duplicate_in_other': '⚠ Already in another group',
     'groups.remove_title': 'Remove', 'groups.reset': '↺ Reset', 'groups.delete': 'Delete',
+    'groups.publish_discord': 'Post to Discord',
+    'groups.lfg_not_configured': "'Looking-for-group' webhook not configured.",
+    'groups.lfg_posted': 'Group posted to Discord.',
+    'groups.lfg_error': 'Error posting to Discord.',
+    'groups.lfg_empty': 'No player assigned yet.',
     'groups.substitutes': 'Substitutes', 'groups.registered': 'registered',
     'modal.cancel': 'Cancel', 'modal.confirm': 'Confirm',
     'modal.delete_player_title': 'Delete this player?',
@@ -483,6 +497,7 @@ function classPill(classId, overrideName){
 
 function renderPlayerCard(p, actionsHtml, noteHtml){
   const emblem = CLASS_EMBLEMS[p.classId];
+  const classColor = (cls(p.classId) || {}).color || '#8b6bff';
   return `<div class="gm-panel gm-player-card">
     ${p.isNewPlayer ? `<span class="gm-badge-new gm-badge-new-ribbon"><img src="data:image/webp;base64,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" alt="" />${t('badge.new')}</span>` : ''}
     <div class="gm-player-info">
@@ -497,7 +512,7 @@ function renderPlayerCard(p, actionsHtml, noteHtml){
       ${noteHtml || ''}
       <div class="gm-player-actions">${actionsHtml}</div>
     </div>
-    ${emblem ? `<img class="gm-player-emblem" src="${emblem}" alt="" />` : ''}
+    ${emblem ? `<div class="gm-emblem-glow-wrap"><div class="gm-emblem-glow" style="background:${classColor};"></div><img class="gm-player-emblem" src="${emblem}" alt="" /></div>` : ''}
   </div>`;
 }
 
@@ -646,6 +661,8 @@ function saveTeams(){ scheduleSave(); }
 /* ---------- Players actions ---------- */
 function openPlayerModal(playerId){
   const existing = playerId ? player(playerId) : null;
+  const canEdit = isAdminView() || (existing && discordUser && existing.discordId === discordUser.id) || !existing;
+  if (!canEdit) { toast(t('toast.admin_only'), 'danger'); return; }
   MODAL = {
     type: 'player', editingId: playerId || null,
     form: existing ? { ...existing } : { pseudo: '', classId: CLASSES[0] ? CLASSES[0].id : '', secondaryClassId: '', isNewPlayer: true, pve: true, pvp: true },
@@ -872,6 +889,38 @@ function fallbackCopy(text, cb){
   document.body.removeChild(ta); cb();
 }
 
+function publishGroupToDiscord(groupId){
+  const g = GROUPS.find(x => x.id === groupId);
+  if (!g) return;
+  if (!DISCORD_LFG_WEBHOOK_URL) { toast(t('groups.lfg_not_configured'), 'danger'); return; }
+  const roleOrder = ['Tank', 'Heal', 'DPS', 'Flex'];
+  const filled = g.slots.filter(s => s.playerId).map(s => {
+    const p = player(s.playerId);
+    const c = p ? cls(p.classId) : null;
+    return { pseudo: p ? p.pseudo : '?', className: c ? c.name : '?', role: c ? c.role : '' };
+  });
+  const lines = [];
+  roleOrder.forEach(role => {
+    filled.filter(f => f.role === role).forEach(f => lines.push(`**${role}** — ${f.pseudo} (${f.className})`));
+  });
+  filled.filter(f => !roleOrder.includes(f.role)).forEach(f => lines.push(`**${f.role || '?'}** — ${f.pseudo} (${f.className})`));
+  const filledCount = filled.length;
+  const payload = {
+    content: `📣 @${g.name}`,
+    embeds: [{
+      title: `${g.type === 'pve' ? 'PvE' : 'PvP'} — ${g.name}`,
+      description: (lines.join('\n') || t('groups.lfg_empty')) + `\n\n${filledCount}/5 ${t('groups.registered')}`,
+      color: g.type === 'pve' ? 0x4f9dff : 0xff6b7a,
+    }],
+  };
+  fetch(DISCORD_LFG_WEBHOOK_URL, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+  }).then(r => {
+    if (r.ok) toast(t('groups.lfg_posted'));
+    else toast(t('groups.lfg_error'), 'danger');
+  }).catch(() => toast(t('groups.lfg_error'), 'danger'));
+}
+
 /* =========================================================
    RENDER
 ========================================================= */
@@ -1016,20 +1065,15 @@ function renderDashboard(){
       <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${pvpGroups}</div><div class="gm-stat-label">${t('dash.stat.pvp_groups')}</div></div>
       <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${newCount}</div><div class="gm-stat-label">${t('dash.stat.new_players')}</div></div>
     </div>
-    <div class="gm-panel">
-      <h3 style="font-size:14px;margin:0 0 12px;">${t('dash.class_breakdown')}</h3>
+    <div class="gm-panel" style="max-width:50%;">
+      <h3 style="font-size:11px;margin:0 0 8px;">${t('dash.class_breakdown')}</h3>
         ${CLASSES.map(c => `
-          <div class="gm-bar-row">
-            <div class="gm-bar-label" style="display:flex;align-items:center;gap:5px;"><img src="${c.icon}" style="width:14px;height:14px;border-radius:3px;" alt="" />${c.name}</div>
-            <div class="gm-bar-track"><div class="gm-bar-fill" style="width:${(classCounts[c.id]/maxClass)*100}%;background:${c.color};"></div></div>
-            <div class="gm-bar-value">${classCounts[c.id]}</div>
+          <div class="gm-bar-row" style="gap:6px;margin-bottom:4px;">
+            <div class="gm-bar-label" style="display:flex;align-items:center;gap:3px;font-size:10px;width:70px;"><img src="${c.icon}" style="width:9px;height:9px;border-radius:2px;" alt="" />${c.name}</div>
+            <div class="gm-bar-track" style="height:6px;"><div class="gm-bar-fill" style="width:${(classCounts[c.id]/maxClass)*100}%;background:${c.color};"></div></div>
+            <div class="gm-bar-value" style="font-size:10px;">${classCounts[c.id]}</div>
           </div>
         `).join('')}
-    </div>
-    <div class="gm-panel" style="margin-top:16px;">
-      <h3 style="font-size:14px;margin:0 0 12px;">${t('dash.availability')}</h3>
-      <div class="gm-bar-row"><div class="gm-bar-label">${t('nav.pve')}</div><div class="gm-bar-track"><div class="gm-bar-fill" style="width:${totalPlayers?(pveCount/totalPlayers)*100:0}%;background:var(--blue);"></div></div><div class="gm-bar-value">${pveCount}</div></div>
-      <div class="gm-bar-row"><div class="gm-bar-label">${t('nav.pvp')}</div><div class="gm-bar-track"><div class="gm-bar-fill" style="width:${totalPlayers?(pvpCount/totalPlayers)*100:0}%;background:var(--dps);"></div></div><div class="gm-bar-value">${pvpCount}</div></div>
     </div>
   `;
 }
@@ -1061,7 +1105,8 @@ function renderPlayers(){
     ${!list.length ? `<div class="gm-empty">${t('players.no_match')}</div>` : `
     <div class="gm-players-grid">
       ${list.map(p => {
-        const actions = `<button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="edit-player" data-id="${p.id}" style="padding:7px 16px;font-size:12.5px;">${t('players.edit')}</button>${isAdminView() ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-player" data-id="${p.id}">✕</button>` : ''}`;
+        const canEdit = isAdminView() || (discordUser && p.discordId === discordUser.id);
+        const actions = `${canEdit ? `<button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="edit-player" data-id="${p.id}" style="padding:7px 16px;font-size:12.5px;">${t('players.edit')}</button>` : ''}${isAdminView() ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-player" data-id="${p.id}">✕</button>` : ''}`;
         return renderPlayerCard(p, actions);
       }).join('')}
     </div>`}
@@ -1165,12 +1210,11 @@ function renderGroupCard(g){
       const dupWarning = groupsContainingPlayer(p.id, g.type, g.id).length > 0;
       const actions = `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="remove-slot-player" data-group="${g.id}" data-slot="${i}" style="padding:7px 16px;font-size:12.5px;">${t('groups.remove_title')}</button>`;
       const note = dupWarning ? `<div class="gm-slot-warning">${t('groups.duplicate_in_other')}</div>` : '';
-      return `<div class="gm-slot-wrapper"><div class="gm-slot-num">#${i+1}</div>${renderPlayerCard(p, actions, note)}</div>`;
+      return `<div class="gm-slot-wrapper">${renderPlayerCard(p, actions, note)}</div>`;
     }
     const usedIds = new Set(g.slots.filter((s,si) => si !== i && s.playerId).map(s => s.playerId));
     const options = eligiblePlayers.filter(p => !usedIds.has(p.id));
     return `<div class="gm-slot">
-      <div class="gm-slot-num">#${i+1}</div>
       <div class="gm-slot-empty">
         <select data-action="set-slot-player" data-group="${g.id}" data-slot="${i}">
           <option value="">${t('groups.choose_player')}</option>
@@ -1193,6 +1237,7 @@ function renderGroupCard(g){
         <input class="gm-group-name" value="${esc(g.name).replace(/"/g,'&quot;')}" data-action="update-group-name" data-group="${g.id}" />
       </div>
       <div class="gm-group-actions">
+        <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="publish-group-discord" data-group="${g.id}" style="background:#5865F2;border-color:#5865F2;color:#fff;">${t('groups.publish_discord')}</button>
         <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="reset-group" data-group="${g.id}">${t('groups.reset')}</button>
         ${isAdminView() ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-group" data-group="${g.id}">${t('groups.delete')}</button>` : ''}
       </div>
@@ -1391,6 +1436,8 @@ function bindEvents(){
       el.addEventListener('click', () => copyGroupToClipboard(el.dataset.group));
     } else if (action === 'duplicate-group'){
       el.addEventListener('click', () => duplicateGroup(el.dataset.group));
+    } else if (action === 'publish-group-discord'){
+      el.addEventListener('click', () => publishGroupToDiscord(el.dataset.group));
     } else if (action === 'reset-group'){
       el.addEventListener('click', () => resetGroup(el.dataset.group));
     } else if (action === 'delete-group'){
