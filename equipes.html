@@ -9,6 +9,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
+* { scrollbar-width: thin; scrollbar-color: #8b6bff rgba(20,26,46,0.6); }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: rgba(20,26,46,0.6); border-radius: 10px; }
+*::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #8b6bff, #45c1ff); border-radius: 10px; border: 2px solid rgba(20,26,46,0.6); }
+*::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #a08bff, #6bd1ff); }
+*::-webkit-scrollbar-corner { background: transparent; }
 .gm-root {
   --bg: #090c16; --bg-2: #0d1220; --panel: rgba(24, 30, 51, 0.62); --panel-solid: #141a2e;
   --border: rgba(139, 130, 255, 0.16); --border-strong: rgba(139, 130, 255, 0.32);
