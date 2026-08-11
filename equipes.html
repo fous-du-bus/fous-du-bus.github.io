@@ -938,6 +938,7 @@ function requestDeleteClass(classId){
 function createGroup(type){
   const count = GROUPS.filter(g => g.type === type).length;
   const g = { id: uid('g'), type, name: 'Groupe ' + (count + 1), activity: '', date: '', time: '', open: false,
+    createdById: discordUser ? discordUser.id : null,
     slots: [0,1,2,3,4].map(() => ({ playerId: null })), substitutes: [] };
   const me = myPlayerRecord();
   if (me && (type === 'pve' ? me.pve : me.pvp)) g.slots[0].playerId = me.id;
@@ -947,6 +948,7 @@ function createGroup(type){
 function createOpenGroup(type){
   const count = GROUPS.filter(g => g.type === type).length;
   const g = { id: uid('g'), type, name: 'Groupe ' + (count + 1), activity: '', date: '', time: '', open: true,
+    createdById: discordUser ? discordUser.id : null,
     slots: [0,1,2,3,4].map(() => ({ playerId: null })), substitutes: [] };
   const me = myPlayerRecord();
   if (me && (type === 'pve' ? me.pve : me.pvp)) g.slots[0].playerId = me.id;
@@ -975,9 +977,12 @@ function resetGroup(groupId){
   };
   render();
 }
+function canManageGroup(g){
+  return isAdminView() || (discordUser && g.createdById === discordUser.id);
+}
 function deleteGroup(groupId){
-  if (!isAdminView()) { toast(t('toast.admin_only'), 'danger'); return; }
   const g = GROUPS.find(x => x.id === groupId);
+  if (!g || !canManageGroup(g)) { toast(t('toast.admin_only'), 'danger'); return; }
   MODAL = { type: 'confirm', title: t('modal.delete_group_title'), message: t('modal.delete_group_msg').replace('{name}', esc(g.name)),
     onConfirm: () => { GROUPS = GROUPS.filter(x => x.id !== groupId); logAudit('group_deleted', g.name); toast(t('toast.group_deleted'), 'danger'); MODAL = null; saveTeams(); render(); }
   };
@@ -1679,7 +1684,7 @@ function renderGroupCard(g, showPublish, showOpenControls){
         ${showOpenControls ? `<button class="gm-btn gm-btn-sm ${g.open ? 'gm-btn-primary' : 'gm-btn-ghost'}" data-action="toggle-group-open" data-group="${g.id}">${g.open ? t('groups.close_group') : t('groups.open_group')}</button>` : ''}
         ${showPublish ? `<button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="publish-group-discord" data-group="${g.id}" style="background:#5865F2;border-color:#5865F2;color:#fff;">${t('groups.publish_discord')}</button>` : ''}
         ${isAdminView() ? `<button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="reset-group" data-group="${g.id}">${t('groups.reset')}</button>` : ''}
-        ${isAdminView() ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-group" data-group="${g.id}">${t('groups.delete')}</button>` : ''}
+        ${canManageGroup(g) ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-group" data-group="${g.id}">${t('groups.delete')}</button>` : ''}
       </div>
     </div>
     ${showOpenControls && g.open && neededRoles.length ? `
