@@ -1094,25 +1094,27 @@ function renderDashboard(){
   const nextEvent = upcoming[0] || null;
 
   return `
-    <div class="gm-panel gm-dashboard-event-card" style="margin-bottom:16px;">
-      <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.next_event')}</h3>
-      ${nextEvent ? renderEventCard(nextEvent) : `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_upcoming_event')}</div>`}
-    </div>
     <div class="gm-stat-grid">
       <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${totalPlayers}</div><div class="gm-stat-label">${t('dash.stat.players')}</div></div>
       <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${pveGroups}</div><div class="gm-stat-label">${t('dash.stat.pve_groups')}</div></div>
       <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${pvpGroups}</div><div class="gm-stat-label">${t('dash.stat.pvp_groups')}</div></div>
       <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${newCount}</div><div class="gm-stat-label">${t('dash.stat.new_players')}</div></div>
     </div>
-    <div class="gm-panel" style="max-width:50%;">
-      <h3 style="font-size:11px;margin:0 0 8px;">${t('dash.class_breakdown')}</h3>
-        ${CLASSES.map(c => `
-          <div class="gm-bar-row" style="gap:6px;margin-bottom:4px;">
-            <div class="gm-bar-label" style="display:flex;align-items:center;gap:3px;font-size:10px;width:70px;"><img src="${c.icon}" style="width:9px;height:9px;border-radius:2px;" alt="" />${c.name}</div>
-            <div class="gm-bar-track" style="height:6px;"><div class="gm-bar-fill" style="width:${(classCounts[c.id]/maxClass)*100}%;background:${c.color};"></div></div>
-            <div class="gm-bar-value" style="font-size:10px;">${classCounts[c.id]}</div>
-          </div>
-        `).join('')}
+    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+      <div class="gm-panel" style="max-width:50%;flex:1;min-width:280px;">
+        <h3 style="font-size:14px;margin:0 0 12px;">${t('dash.class_breakdown')}</h3>
+          ${CLASSES.map(c => `
+            <div class="gm-bar-row" style="gap:8px;margin-bottom:8px;">
+              <div class="gm-bar-label" style="display:flex;align-items:center;gap:6px;font-size:13px;width:100px;"><img src="${c.icon}" style="width:16px;height:16px;border-radius:3px;" alt="" />${c.name}</div>
+              <div class="gm-bar-track" style="height:10px;"><div class="gm-bar-fill" style="width:${(classCounts[c.id]/maxClass)*100}%;background:${c.color};"></div></div>
+              <div class="gm-bar-value" style="font-size:13px;">${classCounts[c.id]}</div>
+            </div>
+          `).join('')}
+      </div>
+      <div class="gm-panel gm-dashboard-event-card" style="flex:1;min-width:280px;">
+        <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.next_event')}</h3>
+        ${nextEvent ? renderEventCard(nextEvent) : `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_upcoming_event')}</div>`}
+      </div>
     </div>
   `;
 }
