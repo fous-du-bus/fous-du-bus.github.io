@@ -1728,6 +1728,7 @@ function myUpcomingGroupEvents(){
   if (!myPlayer) return [];
   const now = Date.now();
   return GROUPS.filter(g =>
+    !g.open &&
     g.event && g.event.date &&
     (new Date(g.event.date + 'T' + (g.event.time || '00:00')).getTime() >= now) &&
     (g.slots.some(s => s.playerId === myPlayer.id) || g.substitutes.includes(myPlayer.id))
