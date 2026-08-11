@@ -931,7 +931,13 @@ function bindEvents(){
     } else if (action === 'delete-player'){
       el.addEventListener('click', () => requestDeletePlayer(el.dataset.id));
     } else if (action === 'filter-search'){
-      el.addEventListener('input', () => { PLAYER_FILTERS.search = el.value; render(); });
+      el.addEventListener('input', () => {
+        PLAYER_FILTERS.search = el.value;
+        const cursorPos = el.selectionStart;
+        render();
+        const newEl = document.querySelector('[data-action="filter-search"]');
+        if (newEl) { newEl.focus(); newEl.setSelectionRange(cursorPos, cursorPos); }
+      });
     } else if (action === 'filter-class'){
       el.addEventListener('change', () => { PLAYER_FILTERS.classId = el.value; render(); });
     } else if (action === 'filter-status'){
