@@ -776,6 +776,7 @@ function updateGroupField(groupId, field, value){
 
 /* ---- Events ---- */
 function openEventModal(eventId){
+  if (!isAdminView()) { toast(t('toast.admin_only'), 'danger'); return; }
   const existing = eventId ? EVENTS.find(e => e.id === eventId) : null;
   MODAL = {
     type: 'event', editingId: eventId || null,
@@ -834,6 +835,7 @@ function saveEventForm(){
   }
 }
 function requestDeleteEvent(eventId){
+  if (!isAdminView()) { toast(t('toast.admin_only'), 'danger'); return; }
   const ev = EVENTS.find(e => e.id === eventId);
   MODAL = { type: 'confirm', title: t('modal.delete_event_title'), message: t('modal.delete_event_msg').replace('{title}', esc(ev.title)),
     onConfirm: () => { EVENTS = EVENTS.filter(e => e.id !== eventId); toast(t('toast.group_deleted'), 'danger'); MODAL = null; saveTeams(); render(); }
@@ -965,7 +967,7 @@ function renderTopbar(){
       ` : ''}
       ${ACTIVE_TAB==='classes' && isAdminView() ? `<button class="gm-btn gm-btn-primary" data-action="open-class-modal">${t('topbar.new_class')}</button>` : ''}
       ${(ACTIVE_TAB==='pve'||ACTIVE_TAB==='pvp') ? `<button class="gm-btn gm-btn-primary" data-action="create-group" data-type="${ACTIVE_TAB}">${t('topbar.new_group')}</button>` : ''}
-      ${ACTIVE_TAB==='events' ? `<button class="gm-btn gm-btn-primary" data-action="open-event-modal">${t('topbar.new_event')}</button>` : ''}
+      ${ACTIVE_TAB==='events' && isAdminView() ? `<button class="gm-btn gm-btn-primary" data-action="open-event-modal">${t('topbar.new_event')}</button>` : ''}
     </div>
   `;
 }
@@ -1120,7 +1122,7 @@ function renderClasses(){
 function renderEvents(){
   const sorted = EVENTS.slice().sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
   if (!sorted.length){
-    return `<div class="gm-empty"><div class="gm-empty-crest"></div>${t('events.empty')}<br><br><button class="gm-btn gm-btn-primary" data-action="open-event-modal">${t('events.create_first')}</button></div>`;
+    return `<div class="gm-empty"><div class="gm-empty-crest"></div>${t('events.empty')}${isAdminView() ? `<br><br><button class="gm-btn gm-btn-primary" data-action="open-event-modal">${t('events.create_first')}</button>` : ''}</div>`;
   }
   return `<div class="gm-events-grid">${sorted.map(ev => renderEventCard(ev)).join('')}</div>`;
 }
@@ -1131,10 +1133,10 @@ function renderEventCard(ev){
   return `<div class="gm-panel gm-event-card">
     <div class="gm-event-head">
       <span class="gm-class-pill" style="border-color:${typeColor}66;background:${typeColor}1c;color:${typeColor}">${esc(eventTypeLabel(ev.type))}</span>
-      <div class="gm-event-actions">
+      ${isAdminView() ? `<div class="gm-event-actions">
         <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="edit-event" data-id="${ev.id}">${t('players.edit')}</button>
         <button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-event" data-id="${ev.id}">✕</button>
-      </div>
+      </div>` : ''}
     </div>
     <div class="gm-event-title">${esc(ev.title)}</div>
     <div class="gm-event-datetime">🗓️ ${esc(dateLabel)} · 🕐 ${esc(ev.time || '')}</div>
