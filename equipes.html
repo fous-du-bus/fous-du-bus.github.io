@@ -101,6 +101,7 @@ html, body { margin: 0; padding: 0; }
 .gm-player-avail { display: flex; gap: 12px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
 .gm-player-actions { display: flex; gap: 6px; margin-top: 10px; }
 .gm-group-card { padding: 16px; margin-bottom: 18px; }
+.gm-mygroup-section-title { font-family: 'Cinzel'; font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
 .gm-events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
 .gm-event-card { padding: 16px; }
 .gm-event-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
@@ -1355,7 +1356,18 @@ function renderMyGroupTab(){
   if (!myGroups.length){
     return `<div class="gm-empty"><div class="gm-empty-crest"></div>${t('mygroup.empty')}</div>`;
   }
-  return myGroups.map(g => renderGroupCard(g, true)).join('');
+  const pveGroups = myGroups.filter(g => g.type === 'pve');
+  const pvpGroups = myGroups.filter(g => g.type === 'pvp');
+  let html = '';
+  if (pveGroups.length){
+    html += `<div class="gm-mygroup-section-title" style="color:var(--blue);">⚔ ${t('nav.pve')}</div>`;
+    html += pveGroups.map(g => renderGroupCard(g, true)).join('');
+  }
+  if (pvpGroups.length){
+    html += `<div class="gm-mygroup-section-title" style="color:var(--dps);margin-top:${pveGroups.length?'20px':'0'};">⚡ ${t('nav.pvp')}</div>`;
+    html += pvpGroups.map(g => renderGroupCard(g, true)).join('');
+  }
+  return html;
 }
 
 /* ---- Modal ---- */
