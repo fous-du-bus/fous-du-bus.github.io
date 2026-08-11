@@ -101,6 +101,10 @@ html, body { margin: 0; padding: 0; }
 .gm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .gm-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(6px); }
 .gm-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 14px; margin-bottom: 20px; }
+.gm-dash-columns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; align-items: start; }
+.gm-dash-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+@media (max-width: 1100px) { .gm-dash-columns { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .gm-dash-columns { grid-template-columns: 1fr; } }
 .gm-stat-card { padding: 16px; }
 .gm-stat-value { font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 600; background: linear-gradient(135deg, #fff, var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .gm-stat-label { color: var(--muted); font-size: 12px; margin-top: 4px; }
@@ -1463,14 +1467,9 @@ function renderDashboard(){
   const myGroupEvents = myUpcomingGroupEvents();
 
   return `
-    <div class="gm-stat-grid">
-      <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${totalPlayers}</div><div class="gm-stat-label">${t('dash.stat.players')}</div></div>
-      <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${pveGroups}</div><div class="gm-stat-label">${t('dash.stat.pve_groups')}</div></div>
-      <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${pvpGroups}</div><div class="gm-stat-label">${t('dash.stat.pvp_groups')}</div></div>
-      <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${newCount}</div><div class="gm-stat-label">${t('dash.stat.new_players')}</div></div>
-    </div>
-    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
-      <div style="flex:1;min-width:280px;max-width:50%;display:flex;flex-direction:column;gap:16px;">
+    <div class="gm-dash-columns">
+      <div class="gm-dash-col">
+        <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${totalPlayers}</div><div class="gm-stat-label">${t('dash.stat.players')}</div></div>
         <div class="gm-panel">
           <h3 style="font-size:14px;margin:0 0 12px;">${t('dash.class_breakdown')}</h3>
             ${CLASSES.map(c => `
@@ -1481,6 +1480,26 @@ function renderDashboard(){
               </div>
             `).join('')}
         </div>
+      </div>
+      <div class="gm-dash-col">
+        <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${pveGroups}</div><div class="gm-stat-label">${t('dash.stat.pve_groups')}</div></div>
+        <div class="gm-panel gm-dashboard-event-card">
+          <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.next_event')}</h3>
+          ${nextEvent ? renderEventCard(nextEvent) : `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_upcoming_event')}</div>`}
+        </div>
+      </div>
+      <div class="gm-dash-col">
+        <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${pvpGroups}</div><div class="gm-stat-label">${t('dash.stat.pvp_groups')}</div></div>
+        ${myGroupEvents.length ? `
+        <div class="gm-panel gm-dashboard-event-card">
+          <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.my_group_events')}</h3>
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            ${myGroupEvents.map(g => renderGroupEventCard(g)).join('')}
+          </div>
+        </div>` : ''}
+      </div>
+      <div class="gm-dash-col">
+        <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${newCount}</div><div class="gm-stat-label">${t('dash.stat.new_players')}</div></div>
         ${(() => {
           const openGroups = GROUPS.filter(g => g.open && g.event);
           if (!openGroups.length) return '';
@@ -1505,19 +1524,6 @@ function renderDashboard(){
             </div>
           </div>`;
         })()}
-      </div>
-      <div style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:16px;">
-        <div class="gm-panel gm-dashboard-event-card">
-          <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.next_event')}</h3>
-          ${nextEvent ? renderEventCard(nextEvent) : `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_upcoming_event')}</div>`}
-        </div>
-        ${myGroupEvents.length ? `
-        <div class="gm-panel gm-dashboard-event-card">
-          <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.my_group_events')}</h3>
-          <div style="display:flex;gap:14px;flex-wrap:wrap;">
-            ${myGroupEvents.map(g => renderGroupEventCard(g)).join('')}
-          </div>
-        </div>` : ''}
       </div>
     </div>
   `;
