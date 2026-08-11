@@ -1296,8 +1296,8 @@ function renderSidebar(){
   const itemsAfter = [
     { id: 'opengroups', label: t('nav.opengroups'), icon: '🔓', badge: openGroupsCount },
     { id: 'mygroup', label: t('nav.mygroup'), icon: '⚇', badge: myGroupEventCount },
-    { id: 'events', label: t('nav.events'), icon: '🗓' },
-    { id: 'auditlog', label: t('nav.auditlog'), icon: '⏱', adminOnly: true },
+    { id: 'events', label: t('nav.events'), icon: '🗓️' },
+    { id: 'auditlog', label: t('nav.auditlog'), icon: '📋', adminOnly: true },
   ].filter(i => !i.adminOnly || isAdminView());
   const navItemHtml = i => `<div class="gm-nav-item ${ACTIVE_TAB===i.id?'active':''}" data-action="nav" data-tab="${i.id}"><span class="gm-nav-icon">${i.icon}</span>${esc(i.label)}${i.badge ? `<span class="gm-nav-badge">${i.badge}</span>` : ''}</div>`;
   return `
