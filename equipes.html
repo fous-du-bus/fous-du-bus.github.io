@@ -798,7 +798,10 @@ function setSlotPlayer(groupId, slotIdx, playerId){
   saveTeams(); render();
 }
 function removeSlotPlayer(groupId, slotIdx){
-  if (!isAdminView()) { toast(t('toast.admin_only'), 'danger'); return; }
+  const g = GROUPS.find(x => x.id === groupId);
+  const slotPlayer = g && g.slots[slotIdx] ? player(g.slots[slotIdx].playerId) : null;
+  const isSelf = slotPlayer && discordUser && slotPlayer.discordId === discordUser.id;
+  if (!isAdminView() && !isSelf) { toast(t('toast.admin_only'), 'danger'); return; }
   setSlotPlayer(groupId, slotIdx, null); toast(t('toast.player_removed_slot'));
 }
 function addSubstitute(groupId, playerId){
@@ -1286,7 +1289,8 @@ function renderGroupCard(g, showPublish){
     const p = slot.playerId ? player(slot.playerId) : null;
     if (p){
       const dupWarning = groupsContainingPlayer(p.id, g.type, g.id).length > 0;
-      const actions = isAdminView() ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="remove-slot-player" data-group="${g.id}" data-slot="${i}" style="padding:7px 16px;font-size:12.5px;">${t('groups.remove_title')}</button>` : '';
+      const canRemove = isAdminView() || (discordUser && p.discordId === discordUser.id);
+      const actions = canRemove ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="remove-slot-player" data-group="${g.id}" data-slot="${i}" style="padding:7px 16px;font-size:12.5px;">${t('groups.remove_title')}</button>` : '';
       const note = dupWarning ? `<div class="gm-slot-warning">${t('groups.duplicate_in_other')}</div>` : '';
       return `<div class="gm-slot-wrapper">${renderPlayerCard(p, actions, note)}</div>`;
     }
