@@ -32,6 +32,7 @@ html, body { margin: 0; padding: 0; }
 .gm-nav { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
 .gm-nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: var(--muted); font-size: 13.5px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all .15s ease; user-select: none; text-decoration: none; }
 .gm-nav-item:hover { background: rgba(139,107,255,0.08); color: var(--text); }
+.gm-nav-badge { margin-left: auto; background: var(--danger); color: #fff; font-size: 10.5px; font-weight: 700; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
 .gm-nav-item.active { background: rgba(139,107,255,0.14); border-color: var(--border-strong); color: var(--text); box-shadow: inset 2px 0 0 var(--violet); }
 .gm-nav-icon { width: 16px; text-align:center; opacity: 0.9; }
 .gm-role-box { margin-top: auto; background: var(--panel-solid); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
@@ -986,8 +987,9 @@ function renderShell(){
 }
 
 function renderSidebar(){
+  const upcomingCount = EVENTS.filter(e => e.date && (new Date(e.date + 'T' + (e.time || '00:00')).getTime() >= Date.now())).length;
   const items = [
-    { id: 'dashboard', label: t('nav.dashboard'), icon: '◈' },
+    { id: 'dashboard', label: t('nav.dashboard'), icon: '◈', badge: upcomingCount },
     { id: 'players', label: t('nav.players'), icon: '☰' },
     { id: 'classes', label: t('nav.classes'), icon: '◆', adminOnly: true },
     { id: 'pve', label: t('nav.pve'), icon: '⚔' },
@@ -1002,7 +1004,7 @@ function renderSidebar(){
       </div>
       <a class="gm-nav-item" href="./index.html"><span class="gm-nav-icon">🏠</span>${t('nav.dailies')}</a>
       <div class="gm-nav">
-        ${items.map(i => `<div class="gm-nav-item ${ACTIVE_TAB===i.id?'active':''}" data-action="nav" data-tab="${i.id}"><span class="gm-nav-icon">${i.icon}</span>${esc(i.label)}</div>`).join('')}
+        ${items.map(i => `<div class="gm-nav-item ${ACTIVE_TAB===i.id?'active':''}" data-action="nav" data-tab="${i.id}"><span class="gm-nav-icon">${i.icon}</span>${esc(i.label)}${i.badge ? `<span class="gm-nav-badge">${i.badge}</span>` : ''}</div>`).join('')}
       </div>
       <div class="gm-role-box">
         ${discordUser ? `
