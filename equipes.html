@@ -26,6 +26,35 @@ html, body { margin: 0; padding: 0; }
               radial-gradient(1000px 700px at 100% 10%, rgba(69,193,255,0.08), transparent 55%), var(--bg);
   color: var(--text); min-height: 100vh; width: 100%; position: relative;
 }
+
+.gm-bg-layer { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.gm-bg-nebula {
+  position: absolute; inset: -10%; opacity: 0.5;
+  background:
+    radial-gradient(700px 500px at 20% 20%, rgba(139,107,255,0.16), transparent 60%),
+    radial-gradient(600px 450px at 80% 70%, rgba(69,193,255,0.13), transparent 60%),
+    radial-gradient(500px 400px at 50% 100%, rgba(139,107,255,0.10), transparent 60%);
+  animation: gm-nebula-drift 40s ease-in-out infinite alternate;
+}
+@keyframes gm-nebula-drift {
+  0% { transform: translate(-2%, -1%) scale(1); }
+  50% { transform: translate(2%, 2%) scale(1.06); }
+  100% { transform: translate(-1%, 3%) scale(1); }
+}
+.gm-bg-stars-small {
+  position: absolute; inset: 0; width: 2px; height: 2px; border-radius: 50%;
+  box-shadow: 1309px 228px #fff, 51px 563px #fff, 501px 457px #fff, 285px 209px #fff, 1385px 178px #fff, 1209px 864px #fff, 65px 61px #fff, 191px 447px #fff, 476px 1034px #fff, 1232px 54px #fff, 1149px 407px #fff, 1466px 859px #fff, 451px 919px #fff, 1206px 569px #fff, 1657px 13px #fff, 1554px 326px #fff, 1429px 865px #fff, 696px 569px #fff, 318px 440px #fff, 1563px 689px #fff, 209px 189px #fff, 778px 198px #fff, 735px 704px #fff, 1236px 541px #fff, 1652px 88px #fff, 1494px 940px #fff, 1098px 255px #fff, 1888px 775px #fff, 161px 600px #fff, 1698px 740px #fff, 1182px 393px #fff, 1442px 142px #fff, 93px 466px #fff, 1583px 592px #fff, 163px 476px #fff, 1774px 206px #fff, 778px 569px #fff, 928px 747px #fff, 333px 758px #fff, 727px 429px #fff, 1372px 546px #fff, 1437px 146px #fff, 1247px 350px #fff, 1093px 501px #fff, 334px 946px #fff, 777px 552px #fff, 1895px 449px #fff, 1402px 664px #fff, 1726px 114px #fff, 469px 65px #fff, 1648px 646px #fff, 821px 548px #fff, 135px 432px #fff, 1870px 644px #fff, 435px 1022px #fff, 810px 939px #fff, 292px 542px #fff, 285px 505px #fff, 1525px 538px #fff, 1529px 877px #fff, 1838px 817px #fff, 741px 449px #fff, 283px 1043px #fff, 1010px 186px #fff, 1547px 96px #fff, 1763px 224px #fff, 313px 327px #fff, 1622px 864px #fff, 1221px 130px #fff, 788px 781px #fff;
+  opacity: 0.35; animation: gm-twinkle-a 6s ease-in-out infinite;
+}
+.gm-bg-stars-big {
+  position: absolute; inset: 0; width: 2.5px; height: 2.5px; border-radius: 50%;
+  box-shadow: 1220px 958px #a8c8ff, 1083px 514px #a8c8ff, 1133px 23px #a8c8ff, 1393px 234px #a8c8ff, 1396px 546px #a8c8ff, 1574px 696px #a8c8ff, 228px 601px #a8c8ff, 890px 323px #a8c8ff, 929px 6px #a8c8ff, 1478px 539px #a8c8ff, 1025px 365px #a8c8ff, 1039px 217px #a8c8ff, 1782px 611px #a8c8ff, 1723px 1039px #a8c8ff, 1247px 407px #a8c8ff, 313px 765px #a8c8ff, 1561px 330px #a8c8ff, 1104px 1px #a8c8ff, 1226px 663px #a8c8ff, 1000px 39px #a8c8ff, 229px 743px #a8c8ff, 1799px 629px #a8c8ff, 490px 118px #a8c8ff, 493px 161px #a8c8ff, 175px 995px #a8c8ff, 1671px 141px #a8c8ff, 1557px 257px #a8c8ff, 262px 973px #a8c8ff, 1125px 338px #a8c8ff, 542px 1080px #a8c8ff, 1786px 866px #a8c8ff, 433px 411px #a8c8ff, 1460px 638px #a8c8ff, 817px 764px #a8c8ff, 897px 1059px #a8c8ff;
+  opacity: 0.25; animation: gm-twinkle-b 8s ease-in-out infinite;
+}
+@keyframes gm-twinkle-a { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.55; } }
+@keyframes gm-twinkle-b { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.15; } }
+.gm-root > *:not(.gm-bg-layer) { position: relative; z-index: 1; }
+
 .gm-root *, .gm-root *:before, .gm-root *:after { box-sizing: border-box; }
 .gm-root h1, .gm-root h2, .gm-root h3, .gm-root .gm-font-display { font-family: 'Cinzel', serif; letter-spacing: 0.02em; }
 .gm-mono { font-family: 'JetBrains Mono', monospace; }
@@ -1001,6 +1030,11 @@ function render(){
 
 function renderShell(){
   return `
+    <div class="gm-bg-layer">
+      <div class="gm-bg-nebula"></div>
+      <div class="gm-bg-stars-small"></div>
+      <div class="gm-bg-stars-big"></div>
+    </div>
     <div class="gm-mobile-topbar">
       <div class="gm-brand"><img class="gm-brand-crest" src="./logo-lfdb.webp" alt="" /><div class="gm-brand-text">Fous du Bus</div></div>
       <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="toggle-mobile-nav">${t('mobile.menu')}</button>
