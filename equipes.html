@@ -756,6 +756,7 @@ function duplicateGroup(groupId){
   toast(t('toast.group_duplicated')); saveTeams(); render();
 }
 function resetGroup(groupId){
+  if (!isAdminView()) { toast(t('toast.admin_only'), 'danger'); return; }
   MODAL = { type: 'confirm', title: t('modal.reset_group_title'), message: t('modal.reset_group_msg'),
     onConfirm: () => {
       const g = GROUPS.find(x => x.id === groupId);
@@ -779,7 +780,10 @@ function setSlotPlayer(groupId, slotIdx, playerId){
   g.slots[slotIdx].playerId = playerId || null;
   saveTeams(); render();
 }
-function removeSlotPlayer(groupId, slotIdx){ setSlotPlayer(groupId, slotIdx, null); toast(t('toast.player_removed_slot')); }
+function removeSlotPlayer(groupId, slotIdx){
+  if (!isAdminView()) { toast(t('toast.admin_only'), 'danger'); return; }
+  setSlotPlayer(groupId, slotIdx, null); toast(t('toast.player_removed_slot'));
+}
 function addSubstitute(groupId, playerId){
   if (!playerId) return;
   const g = GROUPS.find(x => x.id === groupId);
@@ -1241,7 +1245,7 @@ function renderGroupCard(g){
     const p = slot.playerId ? player(slot.playerId) : null;
     if (p){
       const dupWarning = groupsContainingPlayer(p.id, g.type, g.id).length > 0;
-      const actions = `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="remove-slot-player" data-group="${g.id}" data-slot="${i}" style="padding:7px 16px;font-size:12.5px;">${t('groups.remove_title')}</button>`;
+      const actions = isAdminView() ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="remove-slot-player" data-group="${g.id}" data-slot="${i}" style="padding:7px 16px;font-size:12.5px;">${t('groups.remove_title')}</button>` : '';
       const note = dupWarning ? `<div class="gm-slot-warning">${t('groups.duplicate_in_other')}</div>` : '';
       return `<div class="gm-slot-wrapper">${renderPlayerCard(p, actions, note)}</div>`;
     }
@@ -1271,7 +1275,7 @@ function renderGroupCard(g){
       </div>
       <div class="gm-group-actions">
         <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="publish-group-discord" data-group="${g.id}" style="background:#5865F2;border-color:#5865F2;color:#fff;">${t('groups.publish_discord')}</button>
-        <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="reset-group" data-group="${g.id}">${t('groups.reset')}</button>
+        ${isAdminView() ? `<button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="reset-group" data-group="${g.id}">${t('groups.reset')}</button>` : ''}
         ${isAdminView() ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-group" data-group="${g.id}">${t('groups.delete')}</button>` : ''}
       </div>
     </div>
