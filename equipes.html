@@ -339,6 +339,9 @@ const I18N = {
     'topbar.new_class': '+ Nouvelle classe', 'topbar.new_group': '+ Nouveau groupe',
     'nav.events': 'Événement de guilde',
     'nav.mygroup': 'Mon groupe',
+    'nav.opengroups': 'Groupe ouvert',
+    'topbar.opengroups.title': 'Groupe ouvert', 'topbar.opengroups.sub': 'Tous les groupes PvE et PvP activement en recherche de joueurs',
+    'opengroups.empty': "Aucun groupe ouvert pour le moment.",
     'nav.auditlog': 'Journal',
     'topbar.auditlog.title': 'Journal d\'activité', 'topbar.auditlog.sub': 'Historique des suppressions et modifications effectuées par les admins',
     'audit.empty': 'Aucune activité enregistrée pour le moment.',
@@ -477,6 +480,9 @@ const I18N = {
     'topbar.new_class': '+ New class', 'topbar.new_group': '+ New group',
     'nav.events': 'Guild event',
     'nav.mygroup': 'My group',
+    'nav.opengroups': 'Open groups',
+    'topbar.opengroups.title': 'Open groups', 'topbar.opengroups.sub': 'All PvE and PvP groups actively looking for players',
+    'opengroups.empty': 'No open group at the moment.',
     'nav.auditlog': 'Log',
     'topbar.auditlog.title': 'Activity log', 'topbar.auditlog.sub': 'History of deletions and changes made by admins',
     'audit.empty': 'No activity recorded yet.',
@@ -1260,12 +1266,14 @@ function renderShell(){
 function renderSidebar(){
   const upcomingCount = EVENTS.filter(e => e.date && (new Date(e.date + 'T' + (e.time || '00:00')).getTime() >= Date.now())).length;
   const myGroupEventCount = myUpcomingGroupEvents().length;
+  const openGroupsCount = GROUPS.filter(g => g.open).length;
   const items = [
     { id: 'dashboard', label: t('nav.dashboard'), icon: '◈', badge: upcomingCount + myGroupEventCount },
     { id: 'players', label: t('nav.players'), icon: '☰' },
     { id: 'classes', label: t('nav.classes'), icon: '◆', adminOnly: true },
     { id: 'pve', label: t('nav.pve'), icon: '⚔' },
     { id: 'pvp', label: t('nav.pvp'), icon: '⚡\uFE0E' },
+    { id: 'opengroups', label: t('nav.opengroups'), icon: '🔓', badge: openGroupsCount },
     { id: 'mygroup', label: t('nav.mygroup'), icon: '⚇', badge: myGroupEventCount },
     { id: 'events', label: t('nav.events'), icon: '🗓' },
     { id: 'auditlog', label: t('nav.auditlog'), icon: '⏱', adminOnly: true },
@@ -1318,6 +1326,7 @@ function renderTopbar(){
     pvp: [t('topbar.pvp.title'), t('topbar.pvp.sub')],
     events: [t('topbar.events.title'), t('topbar.events.sub')],
     mygroup: [t('topbar.mygroup.title'), t('topbar.mygroup.sub')],
+    opengroups: [t('topbar.opengroups.title'), t('topbar.opengroups.sub')],
     auditlog: [t('topbar.auditlog.title'), t('topbar.auditlog.sub')],
   };
   const [title, sub] = titles[ACTIVE_TAB] || ['', ''];
@@ -1344,6 +1353,7 @@ function renderTabContent(){
   if (ACTIVE_TAB === 'pvp') return renderGroupsTab('pvp');
   if (ACTIVE_TAB === 'events') return renderEvents();
   if (ACTIVE_TAB === 'mygroup') return renderMyGroupTab();
+  if (ACTIVE_TAB === 'opengroups') return renderOpenGroupsTab();
   if (ACTIVE_TAB === 'auditlog') return isAdminView() ? renderAuditLog() : `<div class="gm-empty">${t('access.admin_only')}</div>`;
   return '';
 }
@@ -1722,6 +1732,24 @@ function renderMyGroupTab(){
   if (pvpGroups.length){
     html += `<div class="gm-mygroup-section-title" style="color:var(--dps);margin-top:${pveGroups.length?'20px':'0'};">⚡ ${t('nav.pvp')}</div>`;
     html += pvpGroups.map(g => groupEventBanner(g) + renderGroupCard(g, true)).join('');
+  }
+  return html;
+}
+function renderOpenGroupsTab(){
+  const openGroups = GROUPS.filter(g => g.open);
+  if (!openGroups.length){
+    return `<div class="gm-empty"><div class="gm-empty-crest"></div>${t('opengroups.empty')}</div>`;
+  }
+  const pveGroups = openGroups.filter(g => g.type === 'pve');
+  const pvpGroups = openGroups.filter(g => g.type === 'pvp');
+  let html = '';
+  if (pveGroups.length){
+    html += `<div class="gm-mygroup-section-title" style="color:var(--blue);">⚔ ${t('nav.pve')}</div>`;
+    html += pveGroups.map(g => renderGroupCard(g, true)).join('');
+  }
+  if (pvpGroups.length){
+    html += `<div class="gm-mygroup-section-title" style="color:var(--dps);margin-top:${pveGroups.length?'20px':'0'};">⚡ ${t('nav.pvp')}</div>`;
+    html += pvpGroups.map(g => renderGroupCard(g, true)).join('');
   }
   return html;
 }
