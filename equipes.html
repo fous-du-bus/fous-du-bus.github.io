@@ -1486,14 +1486,15 @@ function renderDashboard(){
             <div style="display:flex;flex-direction:column;gap:10px;">
               ${openGroups.map(g => {
                 const neededRoles = computeNeededRoles(g);
+                const creator = g.createdById ? PLAYERS.find(p => p.discordId === g.createdById) : null;
                 return `<div class="gm-open-group-mini">
                 <span class="gm-class-pill" style="border-color:${g.type==='pve'?'var(--tank)':'var(--dps)'}66;background:${g.type==='pve'?'var(--tank)':'var(--dps)'}1c;color:${g.type==='pve'?'var(--tank)':'var(--dps)'}">${g.type.toUpperCase()}</span>
                 <div style="flex:1;min-width:0;">
                   <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
                     <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(g.event.title || g.name)}</div>
-                    ${neededRoles.length ? `<div style="display:flex;gap:4px;flex-shrink:0;">${neededRoles.map(role => `<span class="gm-role-pill" style="font-size:9.5px;padding:2px 7px;border-color:${roleColor(role)}66;background:${roleColor(role)}1c;color:${roleColor(role)}">${role}</span>`).join('')}</div>` : ''}
+                    ${neededRoles.length ? `<div style="display:flex;gap:4px;flex-shrink:0;">${neededRoles.map(role => `<button class="gm-role-pill gm-role-pill-clickable" data-action="quick-join-role" data-group="${g.id}" data-role="${role}" style="font-size:9.5px;padding:2px 7px;border-color:${roleColor(role)}66;background:${roleColor(role)}1c;color:${roleColor(role)}">${role} +</button>`).join('')}</div>` : ''}
                   </div>
-                  <div style="font-size:11px;color:var(--muted);">${esc(g.name)} · ${g.slots.filter(s=>s.playerId).length}/5</div>
+                  <div style="font-size:11px;color:var(--muted);">${esc(g.name)} · ${g.slots.filter(s=>s.playerId).length}/5${creator ? ` · ${t('groups.created_by')}: ${esc(creator.discordUsername || creator.pseudo)}` : ''}</div>
                 </div>
               </div>`;
               }).join('')}
