@@ -205,6 +205,8 @@ const GUILD_ID = '1355632831333798200';
 const REQUIRED_ROLE_ID = '1443636744267501618';
 const ADMIN_ROLE_ID = '1397018334590926929';
 let IS_ADMIN = false;
+let PREVIEW_AS_MEMBER = false;
+function isAdminView(){ return IS_ADMIN && !PREVIEW_AS_MEMBER; }
 
 let discordSession = JSON.parse(localStorage.getItem('equipes-discord-session') || 'null');
 let discordUser = discordSession ? { id: discordSession.id, username: discordSession.username, avatar: discordSession.avatar } : null;
@@ -419,7 +421,7 @@ function savePlayerForm(){
   MODAL = null; saveTeams(); render();
 }
 function requestDeletePlayer(playerId){
-  if (!IS_ADMIN) { toast('Action réservée aux administrateurs.', 'danger'); return; }
+  if (!isAdminView()) { toast('Action réservée aux administrateurs.', 'danger'); return; }
   const p = player(playerId);
   MODAL = { type: 'confirm', title: 'Supprimer ce joueur ?',
     message: `« ${esc(p.pseudo)} » sera retiré de la liste et de tous les groupes. Cette action est irréversible.`,
@@ -492,7 +494,7 @@ function resetGroup(groupId){
   render();
 }
 function deleteGroup(groupId){
-  if (!IS_ADMIN) { toast('Action réservée aux administrateurs.', 'danger'); return; }
+  if (!isAdminView()) { toast('Action réservée aux administrateurs.', 'danger'); return; }
   const g = GROUPS.find(x => x.id === groupId);
   MODAL = { type: 'confirm', title: 'Supprimer ce groupe ?', message: `« ${esc(g.name)} » sera définitivement supprimé.`,
     onConfirm: () => { GROUPS = GROUPS.filter(x => x.id !== groupId); toast('Groupe supprimé.', 'danger'); MODAL = null; saveTeams(); render(); }
@@ -585,7 +587,7 @@ function renderSidebar(){
     { id: 'classes', label: 'Classes', icon: '◆', adminOnly: true },
     { id: 'pve', label: 'PvE', icon: '⚔' },
     { id: 'pvp', label: 'PvP', icon: '⚡' },
-  ].filter(i => !i.adminOnly || IS_ADMIN);
+  ].filter(i => !i.adminOnly || isAdminView());
   return `
     <div class="gm-sidebar ${MOBILE_NAV_OPEN ? 'open' : ''}">
       <div class="gm-brand">
@@ -606,6 +608,12 @@ function renderSidebar(){
             </div>
             <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="discord-logout" title="Se déconnecter">⏻</button>
           </div>
+          ${IS_ADMIN ? `
+            <button class="gm-btn gm-btn-sm ${PREVIEW_AS_MEMBER ? 'gm-btn-primary' : 'gm-btn-ghost'}" style="width:100%;margin-top:10px;" data-action="toggle-preview">
+              ${PREVIEW_AS_MEMBER ? '◈ Revenir en vue admin' : '◎ Voir en tant que membre'}
+            </button>
+            ${PREVIEW_AS_MEMBER ? `<div class="gm-note" style="text-align:center;color:var(--new);">Mode aperçu actif</div>` : ''}
+          ` : ''}
         ` : `
           <button class="gm-btn gm-btn-sm" style="width:100%;background:#5865F2;border-color:#5865F2;color:#fff;" data-action="discord-login">${DISCORD_LOGO} Se connecter</button>
           <div class="gm-note" style="text-align:center;">Ton profil se crée et se synchronise automatiquement.</div>
@@ -632,7 +640,7 @@ function renderTopbar(){
           <div class="gm-search"><input type="text" placeholder="Rechercher un pseudo…" value="${esc(PLAYER_FILTERS.search)}" data-action="filter-search" /></div>
         </div>
       ` : ''}
-      ${ACTIVE_TAB==='classes' && IS_ADMIN ? `<button class="gm-btn gm-btn-primary" data-action="open-class-modal">+ Nouvelle classe</button>` : ''}
+      ${ACTIVE_TAB==='classes' && isAdminView() ? `<button class="gm-btn gm-btn-primary" data-action="open-class-modal">+ Nouvelle classe</button>` : ''}
       ${(ACTIVE_TAB==='pve'||ACTIVE_TAB==='pvp') ? `<button class="gm-btn gm-btn-primary" data-action="create-group" data-type="${ACTIVE_TAB}">+ Nouveau groupe</button>` : ''}
     </div>
   `;
@@ -641,7 +649,7 @@ function renderTopbar(){
 function renderTabContent(){
   if (ACTIVE_TAB === 'dashboard') return renderDashboard();
   if (ACTIVE_TAB === 'players') return renderPlayers();
-  if (ACTIVE_TAB === 'classes') return IS_ADMIN ? renderClasses() : `<div class="gm-empty">Accès réservé aux administrateurs.</div>`;
+  if (ACTIVE_TAB === 'classes') return isAdminView() ? renderClasses() : `<div class="gm-empty">Accès réservé aux administrateurs.</div>`;
   if (ACTIVE_TAB === 'pve') return renderGroupsTab('pve');
   if (ACTIVE_TAB === 'pvp') return renderGroupsTab('pvp');
   return '';
@@ -735,7 +743,7 @@ function renderPlayers(){
             </div>
             <div class="gm-player-actions">
               <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="edit-player" data-id="${p.id}" style="flex:1;">✎ Modifier</button>
-              ${IS_ADMIN ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-player" data-id="${p.id}">✕</button>` : ''}
+              ${isAdminView() ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-player" data-id="${p.id}">✕</button>` : ''}
             </div>
           </div>
           ${emblem ? `<img class="gm-player-emblem" src="${emblem}" alt="" />` : ''}
@@ -853,7 +861,7 @@ function renderGroupCard(g){
       </div>
       <div class="gm-group-actions">
         <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="reset-group" data-group="${g.id}">↺ Réinitialiser</button>
-        ${IS_ADMIN ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-group" data-group="${g.id}">Supprimer</button>` : ''}
+        ${isAdminView() ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-group" data-group="${g.id}">Supprimer</button>` : ''}
       </div>
     </div>
     <div class="gm-slots">${slotsHtml}</div>
@@ -951,6 +959,13 @@ function bindEvents(){
       el.addEventListener('click', loginWithDiscord);
     } else if (action === 'discord-logout'){
       el.addEventListener('click', logoutDiscord);
+    } else if (action === 'toggle-preview'){
+      el.addEventListener('click', () => {
+        PREVIEW_AS_MEMBER = !PREVIEW_AS_MEMBER;
+        if (PREVIEW_AS_MEMBER && ACTIVE_TAB === 'classes') ACTIVE_TAB = 'dashboard';
+        toast(PREVIEW_AS_MEMBER ? 'Aperçu membre activé.' : 'Retour à la vue admin.');
+        render();
+      });
     } else if (action === 'edit-player'){
       el.addEventListener('click', () => openPlayerModal(el.dataset.id));
     } else if (action === 'delete-player'){
