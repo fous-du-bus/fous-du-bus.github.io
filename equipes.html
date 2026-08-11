@@ -296,6 +296,8 @@ const I18N = {
     'groups.lfg_error': "Erreur lors de la publication sur Discord.",
     'groups.lfg_empty': 'Aucun joueur assigné pour le moment.',
     'groups.lfg_react_prompt': '✅ Disponible · ❌ Indisponible — réagissez pour indiquer votre dispo !',
+    'groups.publish_title_label': "Intitulé de l'événement",
+    'groups.publish_title_placeholder': 'Ex : Boss Kroban, Sortie donjon...',
     'groups.substitutes': 'Remplaçants', 'groups.registered': 'inscrits',
     'modal.cancel': 'Annuler', 'modal.confirm': 'Confirmer',
     'modal.delete_player_title': 'Supprimer ce joueur ?',
@@ -402,6 +404,8 @@ const I18N = {
     'groups.lfg_error': 'Error posting to Discord.',
     'groups.lfg_empty': 'No player assigned yet.',
     'groups.lfg_react_prompt': '✅ Available · ❌ Not available — react to let us know!',
+    'groups.publish_title_label': 'Event title',
+    'groups.publish_title_placeholder': 'E.g. Kroban boss, dungeon run...',
     'groups.substitutes': 'Substitutes', 'groups.registered': 'registered',
     'modal.cancel': 'Cancel', 'modal.confirm': 'Confirm',
     'modal.delete_player_title': 'Delete this player?',
@@ -897,7 +901,7 @@ function openPublishGroupModal(groupId){
   if (!DISCORD_LFG_WEBHOOK_URL) { toast(t('groups.lfg_not_configured'), 'danger'); return; }
   MODAL = {
     type: 'publish-group', groupId,
-    form: { type: g.type, date: '', time: '' },
+    form: { title: '', type: g.type, date: '', time: '' },
     error: '',
   };
   render();
@@ -937,7 +941,7 @@ function publishGroupToDiscord(groupId, opts){
     content,
     allowed_mentions: { parse: ['users'] },
     embeds: [{
-      title: `${g.type === 'pve' ? 'PvE' : 'PvP'} — ${g.name}`,
+      title: (opts && opts.title && opts.title.trim()) ? esc(opts.title.trim()) : `${g.type === 'pve' ? 'PvE' : 'PvP'} — ${g.name}`,
       description: descParts.join('\n'),
       color: g.type === 'pve' ? 0x4f9dff : 0xff6b7a,
     }],
@@ -1404,6 +1408,10 @@ function renderPublishGroupModal(){
   return `<div class="gm-modal-overlay" data-action="close-modal-overlay">
     <div class="gm-modal" data-action="stop-propagation">
       <h3>${t('groups.publish_discord')}</h3>
+      <div class="gm-form-row">
+        <label>${t('groups.publish_title_label')}</label>
+        <input type="text" id="pg-title" value="${esc(f.title).replace(/"/g,'&quot;')}" placeholder="${t('groups.publish_title_placeholder')}" maxlength="80" />
+      </div>
       <div class="gm-form-row gm-form-2col">
         <div>
           <label>${t('events.field.date')}</label>
@@ -1503,6 +1511,7 @@ function bindEvents(){
     } else if (action === 'confirm-publish-group'){
       el.addEventListener('click', () => {
         const opts = {
+          title: document.getElementById('pg-title').value,
           date: document.getElementById('pg-date').value,
           time: document.getElementById('pg-time').value,
           type: document.getElementById('pg-type').value,
