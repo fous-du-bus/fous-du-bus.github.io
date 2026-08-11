@@ -157,7 +157,7 @@ html, body { margin: 0; padding: 0; }
 .gm-cal-day-detail { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
 @media (max-width: 700px) { .gm-cal-daynum { font-size: 10px; } .gm-cal-cell { padding: 3px; } .gm-cal-grid, .gm-cal-weekdays { max-width: 100%; } }
 .gm-event-card { padding: 16px; }
-.gm-event-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.gm-event-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
 .gm-event-actions { display: flex; gap: 6px; }
 .gm-event-title { font-family: 'Cinzel'; font-size: 16px; font-weight: 600; margin-bottom: 6px; }
 .gm-event-datetime { font-size: 12.5px; color: var(--muted); margin-bottom: 8px; }
@@ -336,6 +336,12 @@ const I18N = {
     'mygroup.no_profile': 'Aucun profil joueur associé à ton compte.',
     'mygroup.empty': "Tu ne fais partie d'aucun groupe pour le moment.",
     'mygroup.event_request_banner': "Une demande d'événement {type} a été créée pour ton groupe — réponds sur Discord pour indiquer ta disponibilité !",
+    'mygroup.event_request_banner_seeking': "Ton groupe cherche un second groupe de 5 pour un contenu {type} à 10 joueurs (ex: Sanctuaire) — réponds sur Discord !",
+    'groups.publish_seeking_label': 'Rechercher un second groupe (contenu à 10 joueurs, ex : Sanctuaire)',
+    'groups.publish_seeking_hint': "L'annonce Discord précisera clairement que vous cherchez un second groupe de 5 pour compléter à 10.",
+    'groups.seeking_badge': 'Cherche x2',
+    'groups.lfg_seeking_banner': 'Ce groupe cherche un SECOND groupe de 5 (10 joueurs au total) !',
+    'groups.lfg_seeking_short': 'Recherche de second groupe (10 joueurs)',
     'topbar.events.title': 'Événements', 'topbar.events.sub': 'Planifier et annoncer les événements de guilde',
     'topbar.new_event': '+ Nouvel événement',
     'events.empty': 'Aucun événement prévu pour le moment.',
@@ -464,6 +470,12 @@ const I18N = {
     'mygroup.no_profile': 'No player profile linked to your account.',
     'mygroup.empty': "You're not part of any group yet.",
     'mygroup.event_request_banner': 'A {type} event request has been created for your group — reply on Discord to indicate your availability!',
+    'mygroup.event_request_banner_seeking': 'Your group is looking for a second group of 5 for 10-player {type} content (e.g. Sanctuary) — reply on Discord!',
+    'groups.publish_seeking_label': 'Looking for a second group (10-player content, e.g. Sanctuary)',
+    'groups.publish_seeking_hint': 'The Discord announcement will clearly state you are looking for a second group of 5 to reach 10.',
+    'groups.seeking_badge': 'Seeking x2',
+    'groups.lfg_seeking_banner': 'This group is looking for a SECOND group of 5 (10 players total)!',
+    'groups.lfg_seeking_short': 'Looking for a second group (10 players)',
     'topbar.events.title': 'Events', 'topbar.events.sub': 'Plan and announce guild events',
     'topbar.new_event': '+ New event',
     'events.empty': 'No event planned yet.',
@@ -1096,7 +1108,7 @@ function openPublishGroupModal(groupId){
   if (!DISCORD_LFG_WEBHOOK_URL) { toast(t('groups.lfg_not_configured'), 'danger'); return; }
   MODAL = {
     type: 'publish-group', groupId,
-    form: { title: '', type: g.type, date: '', time: '' },
+    form: { title: '', type: g.type, date: '', time: '', seekingSecondGroup: false },
     error: '',
   };
   render();
@@ -1109,6 +1121,7 @@ function publishGroupToDiscord(groupId, opts){
     title: (opts && opts.title && opts.title.trim()) ? opts.title.trim() : g.name,
     date: opts ? opts.date : '', time: opts ? opts.time : '',
     type: opts && opts.type ? opts.type : g.type,
+    seekingSecondGroup: !!(opts && opts.seekingSecondGroup),
     createdAt: Date.now(),
   };
   saveTeams(); render();
@@ -1129,7 +1142,9 @@ function publishGroupToDiscord(groupId, opts){
   const filledCount = filled.length;
   const dateLabel = (opts && opts.date) ? new Date(opts.date + 'T' + (opts.time || '00:00')).toLocaleString(LANG==='en'?'en-GB':'fr-FR', { weekday:'long', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
   const typeLabel = eventTypeLabel(opts && opts.type ? opts.type : g.type);
+  const seeking = !!(opts && opts.seekingSecondGroup);
   const descParts = [];
+  if (seeking) descParts.push(`🔍 **${t('groups.lfg_seeking_banner')}**`, '');
   if (dateLabel) descParts.push(`🗓️ ${dateLabel}`);
   descParts.push(`🏷️ ${typeLabel}`);
   descParts.push('');
@@ -1138,14 +1153,16 @@ function publishGroupToDiscord(groupId, opts){
   descParts.push(`${filledCount}/5 ${t('groups.registered')}`);
   descParts.push('');
   descParts.push(t('groups.lfg_react_prompt'));
-  const content = mentionIds.length ? mentionIds.map(id => `<@${id}>`).join(' ') : `📣 ${g.name}`;
+  const titlePrefix = seeking ? '🔍 [x2] ' : '';
+  const contentPrefix = seeking ? `📣 **${t('groups.lfg_seeking_short')}**\n` : '';
+  const content = contentPrefix + (mentionIds.length ? mentionIds.map(id => `<@${id}>`).join(' ') : `📣 ${g.name}`);
   const payload = {
     content,
     allowed_mentions: { parse: ['users'] },
     embeds: [{
-      title: (opts && opts.title && opts.title.trim()) ? esc(opts.title.trim()) : `${g.type === 'pve' ? 'PvE' : 'PvP'} — ${g.name}`,
+      title: titlePrefix + ((opts && opts.title && opts.title.trim()) ? esc(opts.title.trim()) : `${g.type === 'pve' ? 'PvE' : 'PvP'} — ${g.name}`),
       description: descParts.join('\n'),
-      color: g.type === 'pve' ? 0x4f9dff : 0xff6b7a,
+      color: seeking ? 0xffb84f : (g.type === 'pve' ? 0x4f9dff : 0xff6b7a),
     }],
   };
   fetch(DISCORD_LFG_WEBHOOK_URL, {
@@ -1598,6 +1615,7 @@ function renderGroupEventCard(g){
   return `<div class="gm-panel gm-event-card">
     <div class="gm-event-head">
       <span class="gm-class-pill" style="border-color:${typeColor}66;background:${typeColor}1c;color:${typeColor}">${esc(eventTypeLabel(ev.type))}</span>
+      ${ev.seekingSecondGroup ? `<span class="gm-class-pill" style="border-color:#ffb84f66;background:#ffb84f1c;color:var(--new);">🔍 ${t('groups.seeking_badge')}</span>` : ''}
     </div>
     <div class="gm-event-title">${esc(ev.title)}</div>
     <div class="gm-event-datetime">🗓️ ${esc(dateLabel)} · 🕐 ${esc(ev.time || '')}</div>
@@ -1610,7 +1628,9 @@ function groupEventBanner(g){
   const isUpcoming = new Date(g.event.date + 'T' + (g.event.time || '00:00')).getTime() >= Date.now();
   if (!isUpcoming) return '';
   const typeLabel = eventTypeLabel(g.event.type || g.type);
-  const msg = t('mygroup.event_request_banner').replace('{type}', typeLabel);
+  const msg = g.event.seekingSecondGroup
+    ? t('mygroup.event_request_banner_seeking').replace('{type}', typeLabel)
+    : t('mygroup.event_request_banner').replace('{type}', typeLabel);
   return `<div class="gm-event-request-banner">📢 ${esc(msg)}${renderRsvpBlock(g.event.rsvps, 'group', g.id)}</div>`;
 }
 function renderMyGroupTab(){
@@ -1828,6 +1848,13 @@ function renderPublishGroupModal(){
           <option value="other" ${f.type==='other'?'selected':''}>${t('events.type.other')}</option>
         </select>
       </div>
+      <div class="gm-form-row">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="pg-seeking" ${f.seekingSecondGroup?'checked':''} />
+          <span>🔍 ${t('groups.publish_seeking_label')}</span>
+        </label>
+        <div class="gm-note" style="margin-top:6px;">${t('groups.publish_seeking_hint')}</div>
+      </div>
       <div class="gm-note">${t('groups.lfg_react_prompt')}</div>
       ${MODAL.error ? `<div class="gm-form-error">${esc(MODAL.error)}</div>` : ''}
       <div class="gm-modal-actions">
@@ -1914,6 +1941,7 @@ function bindEvents(){
           date: document.getElementById('pg-date').value,
           time: document.getElementById('pg-time').value,
           type: document.getElementById('pg-type').value,
+          seekingSecondGroup: document.getElementById('pg-seeking').checked,
         };
         if (!opts.date || !opts.time) { MODAL.error = t('error.event_date_required'); render(); return; }
         const groupId = MODAL.groupId;
