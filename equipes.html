@@ -1320,7 +1320,7 @@ function renderSidebar(){
         </div>
         ${groupExpanded ? `
           <div class="gm-nav-subitem ${ACTIVE_TAB==='pve'?'active':''}" data-action="nav" data-tab="pve"><span class="gm-nav-icon">⚔️</span>${t('nav.pve')}</div>
-          <div class="gm-nav-subitem ${ACTIVE_TAB==='pvp'?'active':''}" data-action="nav" data-tab="pvp"><span class="gm-nav-icon">🆚</span>${t('nav.pvp')}</div>
+          <div class="gm-nav-subitem ${ACTIVE_TAB==='pvp'?'active':''}" data-action="nav" data-tab="pvp"><span class="gm-nav-icon">⚡</span>${t('nav.pvp')}</div>
         ` : ''}
         ${itemsAfter.map(navItemHtml).join('')}
       </div>
