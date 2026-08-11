@@ -139,6 +139,23 @@ html, body { margin: 0; padding: 0; }
 .gm-mygroup-section-title { font-family: 'Cinzel'; font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
 .gm-event-request-banner { background: rgba(255,184,79,0.14); border: 1px solid rgba(255,184,79,0.4); color: var(--new); font-size: 13px; padding: 10px 14px; border-radius: 10px; margin-bottom: 10px; }
 .gm-events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.gm-view-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+.gm-cal-header { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 14px; }
+.gm-cal-month-label { font-size: 17px; text-transform: capitalize; min-width: 180px; text-align: center; }
+.gm-cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }
+.gm-cal-weekdays div { text-align: center; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.gm-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.gm-cal-cell { aspect-ratio: 1 / 0.85; border-radius: 10px; border: 1px solid var(--border); background: var(--panel); padding: 6px; cursor: pointer; transition: all .15s ease; display: flex; flex-direction: column; }
+.gm-cal-cell:hover { border-color: var(--border-strong); background: rgba(139,107,255,0.08); }
+.gm-cal-cell.gm-cal-empty { background: transparent; border: none; cursor: default; }
+.gm-cal-cell.gm-cal-today { border-color: var(--violet); box-shadow: inset 0 0 0 1px var(--violet); }
+.gm-cal-cell.gm-cal-selected { background: rgba(139,107,255,0.16); border-color: var(--violet); }
+.gm-cal-daynum { font-size: 12.5px; font-weight: 600; color: var(--text); }
+.gm-cal-dots { display: flex; gap: 3px; align-items: center; margin-top: auto; flex-wrap: wrap; }
+.gm-cal-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.gm-cal-more { font-size: 9px; color: var(--muted); }
+.gm-cal-day-detail { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+@media (max-width: 700px) { .gm-cal-daynum { font-size: 11px; } .gm-cal-cell { padding: 4px; } }
 .gm-event-card { padding: 16px; }
 .gm-event-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
 .gm-event-actions { display: flex; gap: 6px; }
@@ -251,11 +268,15 @@ let CLASSES = [{"id": "templar", "name": "Templar", "role": "Tank", "color": "#5
 let PLAYERS = [];
 let GROUPS = [];
 let EVENTS = [];
+let AUDIT_LOG = [];
 
 let ACTIVE_TAB = 'dashboard';
 let TOASTS = [];
 let MODAL = null;
 let PLAYER_FILTERS = { search: '', classId: '', status: '' };
+let EVENTS_VIEW = 'calendar';
+let CALENDAR_YM = null;
+let SELECTED_CAL_DAY = null;
 let MOBILE_NAV_OPEN = false;
 
 const GUILD_ID = '1355632831333798200';
@@ -289,6 +310,14 @@ const I18N = {
     'topbar.new_class': '+ Nouvelle classe', 'topbar.new_group': '+ Nouveau groupe',
     'nav.events': 'Événement de guilde',
     'nav.mygroup': 'Mon groupe',
+    'nav.auditlog': 'Journal',
+    'topbar.auditlog.title': 'Journal d\'activité', 'topbar.auditlog.sub': 'Historique des suppressions et modifications effectuées par les admins',
+    'audit.empty': 'Aucune activité enregistrée pour le moment.',
+    'audit.col_action': 'Action', 'audit.col_target': 'Concerne', 'audit.col_actor': 'Par', 'audit.col_when': 'Quand',
+    'audit.player_deleted': 'Joueur supprimé',
+    'audit.class_created': 'Classe créée', 'audit.class_updated': 'Classe modifiée', 'audit.class_deleted': 'Classe supprimée',
+    'audit.group_reset': 'Groupe réinitialisé', 'audit.group_deleted': 'Groupe supprimé',
+    'audit.event_created': 'Événement créé', 'audit.event_updated': 'Événement modifié', 'audit.event_deleted': 'Événement supprimé',
     'topbar.mygroup.title': 'Mon groupe', 'topbar.mygroup.sub': "Cet espace permet de créer un événement avec ton groupe PvE ou PvP, relié directement au salon Discord looking-for-group. Si l'envoi échoue, mets le site en liste blanche sur ton bloqueur de requêtes (uBlock, Brave Shields, etc.).",
     'mygroup.not_logged': 'Connecte-toi avec Discord pour voir ton groupe.',
     'mygroup.no_profile': 'Aucun profil joueur associé à ton compte.',
@@ -298,6 +327,8 @@ const I18N = {
     'topbar.new_event': '+ Nouvel événement',
     'events.empty': 'Aucun événement prévu pour le moment.',
     'events.create_first': '+ Créer le premier événement',
+    'events.view_calendar': '🗓 Calendrier', 'events.view_list': '☰ Liste',
+    'events.no_event_this_day': 'Aucun événement ce jour-là.',
     'events.type.pve': 'PvE', 'events.type.pvp': 'PvP', 'events.type.other': 'Autre',
     'events.field.title': 'Titre', 'events.field.date': 'Date', 'events.field.time': 'Heure',
     'events.field.type': 'Type', 'events.field.description': 'Description (facultatif)',
@@ -404,6 +435,14 @@ const I18N = {
     'topbar.new_class': '+ New class', 'topbar.new_group': '+ New group',
     'nav.events': 'Guild event',
     'nav.mygroup': 'My group',
+    'nav.auditlog': 'Log',
+    'topbar.auditlog.title': 'Activity log', 'topbar.auditlog.sub': 'History of deletions and changes made by admins',
+    'audit.empty': 'No activity recorded yet.',
+    'audit.col_action': 'Action', 'audit.col_target': 'Target', 'audit.col_actor': 'By', 'audit.col_when': 'When',
+    'audit.player_deleted': 'Player deleted',
+    'audit.class_created': 'Class created', 'audit.class_updated': 'Class updated', 'audit.class_deleted': 'Class deleted',
+    'audit.group_reset': 'Group reset', 'audit.group_deleted': 'Group deleted',
+    'audit.event_created': 'Event created', 'audit.event_updated': 'Event updated', 'audit.event_deleted': 'Event deleted',
     'topbar.mygroup.title': 'My group', 'topbar.mygroup.sub': "This space lets you create an event with your PvE or PvP group, posted directly to the looking-for-group Discord channel. If the post fails to send, whitelist the site in your request blocker (uBlock, Brave Shields, etc.).",
     'mygroup.not_logged': 'Sign in with Discord to see your group.',
     'mygroup.no_profile': 'No player profile linked to your account.',
@@ -413,6 +452,8 @@ const I18N = {
     'topbar.new_event': '+ New event',
     'events.empty': 'No event planned yet.',
     'events.create_first': '+ Create the first event',
+    'events.view_calendar': '🗓 Calendar', 'events.view_list': '☰ List',
+    'events.no_event_this_day': 'No event on this day.',
     'events.type.pve': 'PvE', 'events.type.pvp': 'PvP', 'events.type.other': 'Other',
     'events.field.title': 'Title', 'events.field.date': 'Date', 'events.field.time': 'Time',
     'events.field.type': 'Type', 'events.field.description': 'Description (optional)',
@@ -530,7 +571,7 @@ let SAVE_TIMER = null;
 function scheduleSave(){
   clearTimeout(SAVE_TIMER);
   SAVE_TIMER = setTimeout(() => {
-    docRef.set({ players: PLAYERS, classes: CLASSES, groups: GROUPS, events: EVENTS }).catch(err => console.error('save error', err));
+    docRef.set({ players: PLAYERS, classes: CLASSES, groups: GROUPS, events: EVENTS, auditLog: AUDIT_LOG }).catch(err => console.error('save error', err));
   }, 500);
 }
 
@@ -662,9 +703,10 @@ function verifyRoleAndProceed(isNewLogin){
               if (d.classes && d.classes.length) CLASSES = d.classes;
               if (d.groups) GROUPS = d.groups;
               if (d.events) EVENTS = d.events;
+              if (d.auditLog) AUDIT_LOG = d.auditLog;
             }
             syncOwnPlayerFromDiscord();
-            docRef.set({ players: PLAYERS, classes: CLASSES, groups: GROUPS, events: EVENTS }).catch(err => console.error('save error', err))
+            docRef.set({ players: PLAYERS, classes: CLASSES, groups: GROUPS, events: EVENTS, auditLog: AUDIT_LOG }).catch(err => console.error('save error', err))
               .then(() => startApp());
           }).catch(() => startApp());
         } else {
@@ -714,6 +756,12 @@ function uniquePseudo(base){
 }
 
 function saveTeams(){ scheduleSave(); }
+function logAudit(actionKey, targetLabel){
+  const actor = discordUser ? discordUser.username : 'System';
+  AUDIT_LOG.unshift({ id: uid('log'), actionKey, targetLabel, actor, at: Date.now() });
+  if (AUDIT_LOG.length > 300) AUDIT_LOG.length = 300;
+  scheduleSave();
+}
 
 /* ---------- Players actions ---------- */
 function openPlayerModal(playerId){
@@ -755,6 +803,7 @@ function requestDeletePlayer(playerId){
         g.slots.forEach(s => { if (s.playerId === playerId) s.playerId = null; });
         g.substitutes = g.substitutes.filter(id => id !== playerId);
       });
+      logAudit('player_deleted', p.pseudo);
       toast(t('toast.player_deleted'), 'danger');
       MODAL = null; saveTeams(); render();
     }
@@ -775,17 +824,20 @@ function saveClassForm(){
   if (MODAL.editingId) {
     const idx = CLASSES.findIndex(c => c.id === MODAL.editingId);
     CLASSES[idx] = { ...CLASSES[idx], ...f };
+    logAudit('class_updated', f.name);
     toast(t('toast.class_updated'));
   } else {
     CLASSES.push({ id: uid('c'), ...f });
+    logAudit('class_created', f.name);
     toast(t('toast.class_created'));
   }
   MODAL = null; saveTeams(); render();
 }
 function requestDeleteClass(classId){
+  const c = cls(classId);
   MODAL = { type: 'confirm', title: t('modal.delete_class_title'),
     message: t('modal.delete_class_msg'),
-    onConfirm: () => { CLASSES = CLASSES.filter(c => c.id !== classId); toast(t('toast.class_deleted'), 'danger'); MODAL = null; saveTeams(); render(); }
+    onConfirm: () => { CLASSES = CLASSES.filter(c => c.id !== classId); logAudit('class_deleted', c ? c.name : classId); toast(t('toast.class_deleted'), 'danger'); MODAL = null; saveTeams(); render(); }
   };
   render();
 }
@@ -808,11 +860,13 @@ function duplicateGroup(groupId){
 }
 function resetGroup(groupId){
   if (!isAdminView()) { toast(t('toast.admin_only'), 'danger'); return; }
+  const gRef = GROUPS.find(x => x.id === groupId);
   MODAL = { type: 'confirm', title: t('modal.reset_group_title'), message: t('modal.reset_group_msg'),
     onConfirm: () => {
       const g = GROUPS.find(x => x.id === groupId);
       g.slots = [0,1,2,3,4].map(() => ({ playerId: null }));
       g.substitutes = [];
+      logAudit('group_reset', gRef ? gRef.name : groupId);
       toast(t('toast.group_reset')); MODAL = null; saveTeams(); render();
     }
   };
@@ -822,7 +876,7 @@ function deleteGroup(groupId){
   if (!isAdminView()) { toast(t('toast.admin_only'), 'danger'); return; }
   const g = GROUPS.find(x => x.id === groupId);
   MODAL = { type: 'confirm', title: t('modal.delete_group_title'), message: t('modal.delete_group_msg').replace('{name}', esc(g.name)),
-    onConfirm: () => { GROUPS = GROUPS.filter(x => x.id !== groupId); toast(t('toast.group_deleted'), 'danger'); MODAL = null; saveTeams(); render(); }
+    onConfirm: () => { GROUPS = GROUPS.filter(x => x.id !== groupId); logAudit('group_deleted', g.name); toast(t('toast.group_deleted'), 'danger'); MODAL = null; saveTeams(); render(); }
   };
   render();
 }
@@ -900,8 +954,10 @@ function saveEventForm(){
   if (MODAL.editingId) {
     const idx = EVENTS.findIndex(e => e.id === MODAL.editingId);
     EVENTS[idx] = { ...EVENTS[idx], ...f, title };
+    logAudit('event_updated', title);
   } else {
     EVENTS.push({ id: uid('ev'), ...f, title, createdBy: discordUser ? discordUser.username : '', createdAt: Date.now() });
+    logAudit('event_created', title);
   }
   MODAL = null; saveTeams(); render();
   if (isNew) {
@@ -919,7 +975,7 @@ function requestDeleteEvent(eventId){
   if (!isAdminView()) { toast(t('toast.admin_only'), 'danger'); return; }
   const ev = EVENTS.find(e => e.id === eventId);
   MODAL = { type: 'confirm', title: t('modal.delete_event_title'), message: t('modal.delete_event_msg').replace('{title}', esc(ev.title)),
-    onConfirm: () => { EVENTS = EVENTS.filter(e => e.id !== eventId); toast(t('toast.group_deleted'), 'danger'); MODAL = null; saveTeams(); render(); }
+    onConfirm: () => { EVENTS = EVENTS.filter(e => e.id !== eventId); logAudit('event_deleted', ev.title); toast(t('toast.group_deleted'), 'danger'); MODAL = null; saveTeams(); render(); }
   };
   render();
 }
@@ -1064,6 +1120,7 @@ function renderSidebar(){
     { id: 'pvp', label: t('nav.pvp'), icon: '⚡\uFE0E' },
     { id: 'mygroup', label: t('nav.mygroup'), icon: '⚇', badge: myGroupEventCount },
     { id: 'events', label: t('nav.events'), icon: '🗓' },
+    { id: 'auditlog', label: t('nav.auditlog'), icon: '⏱', adminOnly: true },
   ].filter(i => !i.adminOnly || isAdminView());
   return `
     <div class="gm-sidebar ${MOBILE_NAV_OPEN ? 'open' : ''}">
@@ -1113,6 +1170,7 @@ function renderTopbar(){
     pvp: [t('topbar.pvp.title'), t('topbar.pvp.sub')],
     events: [t('topbar.events.title'), t('topbar.events.sub')],
     mygroup: [t('topbar.mygroup.title'), t('topbar.mygroup.sub')],
+    auditlog: [t('topbar.auditlog.title'), t('topbar.auditlog.sub')],
   };
   const [title, sub] = titles[ACTIVE_TAB] || ['', ''];
   return `
@@ -1138,6 +1196,7 @@ function renderTabContent(){
   if (ACTIVE_TAB === 'pvp') return renderGroupsTab('pvp');
   if (ACTIVE_TAB === 'events') return renderEvents();
   if (ACTIVE_TAB === 'mygroup') return renderMyGroupTab();
+  if (ACTIVE_TAB === 'auditlog') return isAdminView() ? renderAuditLog() : `<div class="gm-empty">${t('access.admin_only')}</div>`;
   return '';
 }
 
@@ -1287,11 +1346,76 @@ function renderClasses(){
 
 /* ---- Events ---- */
 function renderEvents(){
-  const sorted = EVENTS.slice().sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
-  if (!sorted.length){
-    return `<div class="gm-empty"><div class="gm-empty-crest"></div>${t('events.empty')}${isAdminView() ? `<br><br><button class="gm-btn gm-btn-primary" data-action="open-event-modal">${t('events.create_first')}</button>` : ''}</div>`;
+  const toggle = `<div class="gm-view-toggle">
+    <button class="gm-btn gm-btn-sm ${EVENTS_VIEW==='calendar'?'gm-btn-primary':'gm-btn-ghost'}" data-action="events-view" data-view="calendar">${t('events.view_calendar')}</button>
+    <button class="gm-btn gm-btn-sm ${EVENTS_VIEW==='list'?'gm-btn-primary':'gm-btn-ghost'}" data-action="events-view" data-view="list">${t('events.view_list')}</button>
+  </div>`;
+  if (!EVENTS.length){
+    return `${toggle}<div class="gm-empty"><div class="gm-empty-crest"></div>${t('events.empty')}${isAdminView() ? `<br><br><button class="gm-btn gm-btn-primary" data-action="open-event-modal">${t('events.create_first')}</button>` : ''}</div>`;
   }
-  return `<div class="gm-events-grid">${sorted.map(ev => renderEventCard(ev)).join('')}</div>`;
+  if (EVENTS_VIEW === 'list'){
+    const sorted = EVENTS.slice().sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
+    return `${toggle}<div class="gm-events-grid">${sorted.map(ev => renderEventCard(ev)).join('')}</div>`;
+  }
+  return toggle + renderEventsCalendar();
+}
+function renderEventsCalendar(){
+  if (!CALENDAR_YM) { const now = new Date(); CALENDAR_YM = { y: now.getFullYear(), m: now.getMonth() }; }
+  const { y, m } = CALENDAR_YM;
+  const firstOfMonth = new Date(y, m, 1);
+  const startWeekday = (firstOfMonth.getDay() + 6) % 7; // Monday=0
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  const eventsByDay = {};
+  EVENTS.forEach(ev => {
+    if (!ev.date) return;
+    (eventsByDay[ev.date] = eventsByDay[ev.date] || []).push(ev);
+  });
+
+  const monthLabel = firstOfMonth.toLocaleDateString(LANG==='en'?'en-GB':'fr-FR', { month: 'long', year: 'numeric' });
+  const weekdayLabels = LANG === 'en'
+    ? ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+    : ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+
+  let cells = '';
+  for (let i = 0; i < startWeekday; i++) cells += `<div class="gm-cal-cell gm-cal-empty"></div>`;
+  for (let day = 1; day <= daysInMonth; day++){
+    const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const dayEvents = eventsByDay[dateStr] || [];
+    const isToday = dateStr === todayStr;
+    const isSelected = dateStr === SELECTED_CAL_DAY;
+    cells += `<div class="gm-cal-cell ${isToday ? 'gm-cal-today' : ''} ${isSelected ? 'gm-cal-selected' : ''} ${dayEvents.length ? 'gm-cal-has-events' : ''}" data-action="select-cal-day" data-day="${dateStr}">
+      <div class="gm-cal-daynum">${day}</div>
+      <div class="gm-cal-dots">
+        ${dayEvents.slice(0,3).map(ev => {
+          const color = { pve: 'var(--tank)', pvp: 'var(--dps)', other: 'var(--violet)' }[ev.type] || 'var(--violet)';
+          return `<span class="gm-cal-dot" style="background:${color};" title="${esc(ev.title)}"></span>`;
+        }).join('')}
+        ${dayEvents.length > 3 ? `<span class="gm-cal-more">+${dayEvents.length - 3}</span>` : ''}
+      </div>
+    </div>`;
+  }
+
+  const selectedEvents = SELECTED_CAL_DAY ? (eventsByDay[SELECTED_CAL_DAY] || []) : [];
+
+  return `
+    <div class="gm-cal-header">
+      <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="cal-prev-month">‹</button>
+      <div class="gm-cal-month-label gm-font-display">${esc(monthLabel)}</div>
+      <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="cal-next-month">›</button>
+    </div>
+    <div class="gm-cal-weekdays">${weekdayLabels.map(w => `<div>${w}</div>`).join('')}</div>
+    <div class="gm-cal-grid">${cells}</div>
+    ${SELECTED_CAL_DAY ? `
+      <div class="gm-cal-day-detail">
+        <h3 style="font-size:14px;margin:0 0 12px;">${esc(new Date(SELECTED_CAL_DAY + 'T00:00').toLocaleDateString(LANG==='en'?'en-GB':'fr-FR', { weekday:'long', day:'2-digit', month:'long' }))}</h3>
+        ${selectedEvents.length
+          ? `<div class="gm-events-grid">${selectedEvents.map(ev => renderEventCard(ev)).join('')}</div>`
+          : `<div style="color:var(--muted);font-size:13px;">${t('events.no_event_this_day')}</div>`}
+      </div>
+    ` : ''}
+  `;
 }
 function renderEventCard(ev){
   const dateObj = ev.date ? new Date(ev.date + 'T' + (ev.time || '00:00')) : null;
@@ -1426,6 +1550,51 @@ function renderMyGroupTab(){
     html += pvpGroups.map(g => groupEventBanner(g) + renderGroupCard(g, true)).join('');
   }
   return html;
+}
+
+/* ---- Audit log ---- */
+function auditActionLabel(actionKey){
+  const map = {
+    player_deleted: t('audit.player_deleted'),
+    class_created: t('audit.class_created'),
+    class_updated: t('audit.class_updated'),
+    class_deleted: t('audit.class_deleted'),
+    group_reset: t('audit.group_reset'),
+    group_deleted: t('audit.group_deleted'),
+    event_created: t('audit.event_created'),
+    event_updated: t('audit.event_updated'),
+    event_deleted: t('audit.event_deleted'),
+  };
+  return map[actionKey] || actionKey;
+}
+function auditActionColor(actionKey){
+  if (actionKey.endsWith('_deleted')) return 'var(--danger)';
+  if (actionKey.endsWith('_created')) return 'var(--success)';
+  if (actionKey.endsWith('_reset')) return 'var(--new)';
+  return 'var(--blue)';
+}
+function renderAuditLog(){
+  if (!AUDIT_LOG.length){
+    return `<div class="gm-empty"><div class="gm-empty-crest"></div>${t('audit.empty')}</div>`;
+  }
+  return `<div class="gm-panel" style="padding:0;overflow:hidden;">
+    <table class="gm-table">
+      <thead><tr><th>${t('audit.col_action')}</th><th>${t('audit.col_target')}</th><th>${t('audit.col_actor')}</th><th>${t('audit.col_when')}</th></tr></thead>
+      <tbody>
+        ${AUDIT_LOG.map(entry => {
+          const d = new Date(entry.at);
+          const dateLabel = d.toLocaleString(LANG==='en'?'en-GB':'fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+          const color = auditActionColor(entry.actionKey);
+          return `<tr>
+            <td><span style="color:${color};font-weight:600;font-size:12.5px;">${esc(auditActionLabel(entry.actionKey))}</span></td>
+            <td style="font-size:12.5px;">${esc(entry.targetLabel || '—')}</td>
+            <td style="font-size:12.5px;color:var(--muted);">${esc(entry.actor || '—')}</td>
+            <td style="font-size:11.5px;color:var(--muted-2);white-space:nowrap;">${esc(dateLabel)}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>`;
 }
 
 /* ---- Modal ---- */
@@ -1699,6 +1868,29 @@ function bindEvents(){
       el.addEventListener('click', () => openEventModal(el.dataset.id));
     } else if (action === 'delete-event'){
       el.addEventListener('click', () => requestDeleteEvent(el.dataset.id));
+    } else if (action === 'events-view'){
+      el.addEventListener('click', () => { EVENTS_VIEW = el.dataset.view; render(); });
+    } else if (action === 'select-cal-day'){
+      el.addEventListener('click', () => {
+        SELECTED_CAL_DAY = (SELECTED_CAL_DAY === el.dataset.day) ? null : el.dataset.day;
+        render();
+      });
+    } else if (action === 'cal-prev-month'){
+      el.addEventListener('click', () => {
+        if (!CALENDAR_YM) { const now = new Date(); CALENDAR_YM = { y: now.getFullYear(), m: now.getMonth() }; }
+        CALENDAR_YM.m -= 1;
+        if (CALENDAR_YM.m < 0) { CALENDAR_YM.m = 11; CALENDAR_YM.y -= 1; }
+        SELECTED_CAL_DAY = null;
+        render();
+      });
+    } else if (action === 'cal-next-month'){
+      el.addEventListener('click', () => {
+        if (!CALENDAR_YM) { const now = new Date(); CALENDAR_YM = { y: now.getFullYear(), m: now.getMonth() }; }
+        CALENDAR_YM.m += 1;
+        if (CALENDAR_YM.m > 11) { CALENDAR_YM.m = 0; CALENDAR_YM.y += 1; }
+        SELECTED_CAL_DAY = null;
+        render();
+      });
     } else if (action === 'save-event'){
       el.addEventListener('click', () => {
         MODAL.form.title = document.getElementById('ef-title').value;
@@ -1785,6 +1977,7 @@ function startApp(){
       if (d.classes && d.classes.length) CLASSES = d.classes;
       if (d.groups) GROUPS = d.groups;
       if (d.events) EVENTS = d.events;
+      if (d.auditLog) AUDIT_LOG = d.auditLog;
     } else if (firstLoad){
       scheduleSave();
     }
