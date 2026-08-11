@@ -1662,7 +1662,7 @@ function renderEventCard(ev){
 
 /* ---- PvE / PvP groups ---- */
 function renderGroupsTab(type){
-  const groups = GROUPS.filter(g => g.type === type);
+  const groups = GROUPS.filter(g => g.type === type && !g.open);
   if (!groups.length){
     return `<div class="gm-empty"><div class="gm-empty-crest"></div>${t('groups.none_title').replace('{type}', type.toUpperCase())}<br><br><button class="gm-btn gm-btn-primary" data-action="create-group" data-type="${type}">${t('groups.create_first')}</button></div>`;
   }
