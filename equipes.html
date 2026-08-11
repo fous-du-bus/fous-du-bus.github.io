@@ -87,7 +87,7 @@ html, body { margin: 0; padding: 0; }
 .gm-player-emblem { width: 108px; height: 108px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4)); align-self: center; }
 .gm-player-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
 .gm-player-top { display: flex; gap: 10px; align-items: flex-start; }
-.gm-badge-new-ribbon { position: absolute; top: 12px; right: 12px; z-index: 2; }
+.gm-badge-new-ribbon { position: absolute; top: 10px; right: calc(18px + 108px/2); transform: translateX(50%); z-index: 2; }
 .gm-avatar { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; object-fit: cover; border: 2px solid var(--border-strong); background: #222840; }
 .gm-avatar-fallback { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; display:flex; align-items:center; justify-content:center; background: linear-gradient(135deg, var(--violet), var(--blue)); font-weight: 700; color: #0a0e1a; font-family:'Cinzel'; border: 2px solid var(--border-strong); }
 .gm-player-names { flex: 1; min-width: 0; }
