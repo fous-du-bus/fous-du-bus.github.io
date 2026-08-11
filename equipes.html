@@ -1795,7 +1795,7 @@ function renderMyGroupTab(){
   if (!discordUser) return `<div class="gm-empty">${t('mygroup.not_logged')}</div>`;
   const myPlayer = PLAYERS.find(p => p.discordId === discordUser.id);
   if (!myPlayer) return `<div class="gm-empty">${t('mygroup.no_profile')}</div>`;
-  const myGroups = GROUPS.filter(g => g.slots.some(s => s.playerId === myPlayer.id) || g.substitutes.includes(myPlayer.id));
+  const myGroups = GROUPS.filter(g => !g.open && (g.slots.some(s => s.playerId === myPlayer.id) || g.substitutes.includes(myPlayer.id)));
   if (!myGroups.length){
     return `<div class="gm-empty"><div class="gm-empty-crest"></div>${t('mygroup.empty')}</div>`;
   }
