@@ -203,9 +203,12 @@ let MOBILE_NAV_OPEN = false;
 
 const GUILD_ID = '1355632831333798200';
 const REQUIRED_ROLE_ID = '1443636744267501618';
+const ADMIN_ROLE_ID = '1397018334590926929';
+let IS_ADMIN = false;
 
 let discordSession = JSON.parse(localStorage.getItem('equipes-discord-session') || 'null');
 let discordUser = discordSession ? { id: discordSession.id, username: discordSession.username, avatar: discordSession.avatar } : null;
+if (discordSession && discordSession.isAdmin) IS_ADMIN = true;
 let ACCESS_STATE = 'checking'; // 'checking' | 'gate' | 'denied' | 'granted'
 
 /* ---------- utils ---------- */
@@ -324,7 +327,9 @@ function verifyRoleAndProceed(isNewLogin){
       const roles = member.roles || [];
       if (roles.includes(REQUIRED_ROLE_ID)){
         ACCESS_STATE = 'granted';
+        IS_ADMIN = roles.includes(ADMIN_ROLE_ID);
         discordSession.roleVerifiedAt = Date.now();
+        discordSession.isAdmin = IS_ADMIN;
         localStorage.setItem('equipes-discord-session', JSON.stringify(discordSession));
         if (isNewLogin){
           docRef.get().then(snap => {
@@ -414,6 +419,7 @@ function savePlayerForm(){
   MODAL = null; saveTeams(); render();
 }
 function requestDeletePlayer(playerId){
+  if (!IS_ADMIN) { toast('Action réservée aux administrateurs.', 'danger'); return; }
   const p = player(playerId);
   MODAL = { type: 'confirm', title: 'Supprimer ce joueur ?',
     message: `« ${esc(p.pseudo)} » sera retiré de la liste et de tous les groupes. Cette action est irréversible.`,
@@ -451,6 +457,7 @@ function saveClassForm(){
   MODAL = null; saveTeams(); render();
 }
 function requestDeleteClass(classId){
+  if (!IS_ADMIN) { toast('Action réservée aux administrateurs.', 'danger'); return; }
   MODAL = { type: 'confirm', title: 'Supprimer cette classe ?',
     message: "Les joueurs assignés conserveront la référence mais elle n'apparaîtra plus dans les listes.",
     onConfirm: () => { CLASSES = CLASSES.filter(c => c.id !== classId); toast('Classe supprimée.', 'danger'); MODAL = null; saveTeams(); render(); }
@@ -486,6 +493,7 @@ function resetGroup(groupId){
   render();
 }
 function deleteGroup(groupId){
+  if (!IS_ADMIN) { toast('Action réservée aux administrateurs.', 'danger'); return; }
   const g = GROUPS.find(x => x.id === groupId);
   MODAL = { type: 'confirm', title: 'Supprimer ce groupe ?', message: `« ${esc(g.name)} » sera définitivement supprimé.`,
     onConfirm: () => { GROUPS = GROUPS.filter(x => x.id !== groupId); toast('Groupe supprimé.', 'danger'); MODAL = null; saveTeams(); render(); }
@@ -728,7 +736,7 @@ function renderPlayers(){
             </div>
             <div class="gm-player-actions">
               <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="edit-player" data-id="${p.id}" style="flex:1;">✎ Modifier</button>
-              <button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-player" data-id="${p.id}">✕</button>
+              ${IS_ADMIN ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-player" data-id="${p.id}">✕</button>` : ''}
             </div>
           </div>
           ${emblem ? `<img class="gm-player-emblem" src="${emblem}" alt="" />` : ''}
@@ -778,7 +786,7 @@ function renderClasses(){
               <td>${count}</td>
               <td style="text-align:right;">
                 <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="edit-class" data-id="${c.id}">✎</button>
-                <button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-class" data-id="${c.id}">✕</button>
+                ${IS_ADMIN ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-class" data-id="${c.id}">✕</button>` : ''}
               </td>
             </tr>`;
           }).join('')}
@@ -846,7 +854,7 @@ function renderGroupCard(g){
       </div>
       <div class="gm-group-actions">
         <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="reset-group" data-group="${g.id}">↺ Réinitialiser</button>
-        <button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-group" data-group="${g.id}">Supprimer</button>
+        ${IS_ADMIN ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-group" data-group="${g.id}">Supprimer</button>` : ''}
       </div>
     </div>
     <div class="gm-slots">${slotsHtml}</div>
