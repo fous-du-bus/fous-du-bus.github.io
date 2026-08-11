@@ -190,6 +190,9 @@ html, body { margin: 0; padding: 0; }
 .gm-needed-roles { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 4px 0 14px; }
 .gm-needed-roles-label { font-size: 11.5px; color: var(--muted); font-weight: 600; }
 .gm-role-pill { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; border: 1px solid; text-transform: uppercase; letter-spacing: 0.03em; }
+.gm-role-pill-clickable { cursor: pointer; transition: all .15s ease; }
+.gm-role-pill-clickable:hover { filter: brightness(1.3); transform: translateY(-1px); }
+.gm-group-creator { font-size: 11px; color: var(--muted-2); margin: -4px 0 10px; }
 .gm-group-name { font-family: 'Cinzel'; font-size: 16px; font-weight: 600; background: transparent; border: none; color: var(--text); outline: none; border-bottom: 1px dashed transparent; }
 .gm-group-name:focus { border-bottom: 1px dashed var(--border-strong); }
 .gm-group-meta-inputs { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -427,6 +430,9 @@ const I18N = {
     'groups.lfg_error': "Erreur lors de la publication sur Discord.",
     'groups.lfg_empty': 'Aucun joueur assigné pour le moment.',
     'groups.limit_reached': 'Ce joueur est déjà inscrit dans un groupe de cette catégorie (fixe PvE, fixe PvP ou ouvert).',
+    'groups.created_by': 'Créé par',
+    'groups.role_mismatch': "Ta classe ne correspond pas à ce rôle.",
+    'groups.group_full': 'Ce groupe est déjà complet.',
     'groups.lfg_react_prompt': '✅ Disponible · ❌ Indisponible — réagissez pour indiquer votre dispo !',
     'groups.publish_title_label': "Intitulé de l'événement",
     'groups.publish_title_placeholder': 'Ex : Boss Kroban, Sortie donjon...',
@@ -571,6 +577,9 @@ const I18N = {
     'groups.lfg_error': 'Error posting to Discord.',
     'groups.lfg_empty': 'No player assigned yet.',
     'groups.limit_reached': 'This player is already registered in a group of this category (fixed PvE, fixed PvP, or open).',
+    'groups.created_by': 'Created by',
+    'groups.role_mismatch': 'Your class does not match this role.',
+    'groups.group_full': 'This group is already full.',
     'groups.lfg_react_prompt': '✅ Available · ❌ Not available — react to let us know!',
     'groups.publish_title_label': 'Event title',
     'groups.publish_title_placeholder': 'E.g. Kroban boss, dungeon run...',
@@ -712,6 +721,20 @@ function toggleGroupOpen(groupId){
   const g = GROUPS.find(x => x.id === groupId);
   if (!g) return;
   g.open = !g.open;
+  saveTeams(); render();
+}
+function quickJoinGroupRole(groupId, role){
+  const g = GROUPS.find(x => x.id === groupId);
+  if (!g) return;
+  const me = myPlayerRecord();
+  if (!me) { toast(t('rsvp.no_profile'), 'danger'); return; }
+  const myClass = cls(me.classId);
+  if (!myClass || myClass.role !== role) { toast(t('groups.role_mismatch'), 'danger'); return; }
+  if (playerLimitReached(me.id, g)) { toast(t('groups.limit_reached'), 'danger'); return; }
+  const emptyIdx = g.slots.findIndex(s => !s.playerId);
+  if (emptyIdx === -1) { toast(t('groups.group_full'), 'danger'); return; }
+  g.slots[emptyIdx].playerId = me.id;
+  toast(t('toast.player_added'));
   saveTeams(); render();
 }
 
@@ -1714,6 +1737,7 @@ function renderGroupCard(g, showPublish, showOpenControls){
   }).join('');
 
   const neededRoles = computeNeededRoles(g);
+  const creator = g.createdById ? PLAYERS.find(p => p.discordId === g.createdById) : null;
   return `<div class="gm-panel gm-group-card">
     <div class="gm-group-head">
       <div class="gm-group-title-row">
@@ -1727,10 +1751,11 @@ function renderGroupCard(g, showPublish, showOpenControls){
         ${canManageGroup(g) ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-group" data-group="${g.id}">${t('groups.delete')}</button>` : ''}
       </div>
     </div>
+    ${showOpenControls && creator ? `<div class="gm-group-creator">${t('groups.created_by')}: ${esc(creator.discordUsername || creator.pseudo)}</div>` : ''}
     ${showOpenControls && g.open && neededRoles.length ? `
     <div class="gm-needed-roles">
       <span class="gm-needed-roles-label">${t('groups.seeking_roles')}</span>
-      ${neededRoles.map(role => `<span class="gm-role-pill" style="border-color:${roleColor(role)}66;background:${roleColor(role)}1c;color:${roleColor(role)}">${role}</span>`).join('')}
+      ${neededRoles.map(role => `<button class="gm-role-pill gm-role-pill-clickable" data-action="quick-join-role" data-group="${g.id}" data-role="${role}" style="border-color:${roleColor(role)}66;background:${roleColor(role)}1c;color:${roleColor(role)}">${role} +</button>`).join('')}
     </div>` : ''}
     <div class="gm-slots">${slotsHtml}</div>
     ${subsHtml ? `<div class="gm-subs-title">${t('groups.substitutes')}</div>
@@ -2138,6 +2163,8 @@ function bindEvents(){
       el.addEventListener('click', () => cancelGroupEvent(el.dataset.group));
     } else if (action === 'toggle-group-open'){
       el.addEventListener('click', () => toggleGroupOpen(el.dataset.group));
+    } else if (action === 'quick-join-role'){
+      el.addEventListener('click', () => quickJoinGroupRole(el.dataset.group, el.dataset.role));
     } else if (action === 'reset-group'){
       el.addEventListener('click', () => resetGroup(el.dataset.group));
     } else if (action === 'delete-group'){
