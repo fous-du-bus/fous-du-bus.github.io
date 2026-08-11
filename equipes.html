@@ -1010,7 +1010,7 @@ function renderSidebar(){
   const upcomingCount = EVENTS.filter(e => e.date && (new Date(e.date + 'T' + (e.time || '00:00')).getTime() >= Date.now())).length;
   const myGroupEventCount = myUpcomingGroupEvents().length;
   const items = [
-    { id: 'dashboard', label: t('nav.dashboard'), icon: '◈', badge: upcomingCount },
+    { id: 'dashboard', label: t('nav.dashboard'), icon: '◈', badge: upcomingCount + myGroupEventCount },
     { id: 'players', label: t('nav.players'), icon: '☰' },
     { id: 'classes', label: t('nav.classes'), icon: '◆', adminOnly: true },
     { id: 'pve', label: t('nav.pve'), icon: '⚔' },
@@ -1136,18 +1136,20 @@ function renderDashboard(){
             </div>
           `).join('')}
       </div>
-      <div class="gm-panel gm-dashboard-event-card" style="flex:1;min-width:280px;">
-        <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.next_event')}</h3>
-        ${nextEvent ? renderEventCard(nextEvent) : `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_upcoming_event')}</div>`}
+      <div style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:16px;">
+        <div class="gm-panel gm-dashboard-event-card">
+          <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.next_event')}</h3>
+          ${nextEvent ? renderEventCard(nextEvent) : `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_upcoming_event')}</div>`}
+        </div>
+        ${myGroupEvents.length ? `
+        <div class="gm-panel gm-dashboard-event-card">
+          <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.my_group_events')}</h3>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;">
+            ${myGroupEvents.map(g => renderGroupEventCard(g)).join('')}
+          </div>
+        </div>` : ''}
       </div>
     </div>
-    ${myGroupEvents.length ? `
-    <div class="gm-panel gm-dashboard-event-card" style="margin-top:16px;">
-      <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.my_group_events')}</h3>
-      <div style="display:flex;gap:14px;flex-wrap:wrap;">
-        ${myGroupEvents.map(g => renderGroupEventCard(g)).join('')}
-      </div>
-    </div>` : ''}
   `;
 }
 
