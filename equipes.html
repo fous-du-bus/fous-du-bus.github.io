@@ -211,6 +211,18 @@ html, body { margin: 0; padding: 0; }
 .gm-form-row input, .gm-form-row select { width: 100%; background: var(--bg-2); border: 1px solid var(--border); color: var(--text); padding: 9px 11px; border-radius: 9px; font-size: 13px; outline: none; font-family:'Inter'; }
 .gm-form-row input:focus, .gm-form-row select:focus { border-color: var(--border-strong); }
 .gm-form-error { color: var(--danger); font-size: 11.5px; margin-top: 4px; }
+.gm-toggle-card { display: flex; align-items: center; gap: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; cursor: pointer; transition: border-color .15s ease, background .15s ease; }
+.gm-toggle-card:hover { border-color: var(--border-strong); }
+.gm-toggle-card-icon { font-size: 18px; flex-shrink: 0; }
+.gm-toggle-card-text { flex: 1; min-width: 0; }
+.gm-toggle-card-title { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.35; }
+.gm-toggle-card-hint { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+.gm-toggle-input { position: absolute; opacity: 0; width: 0; height: 0; }
+.gm-toggle-switch { position: relative; flex-shrink: 0; width: 40px; height: 22px; border-radius: 20px; background: var(--bg-2); border: 1px solid var(--border); transition: background .2s ease, border-color .2s ease; }
+.gm-toggle-switch::before { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--muted); transition: transform .2s ease, background .2s ease; }
+.gm-toggle-input:checked + .gm-toggle-switch { background: linear-gradient(135deg, #8b6bff, #45c1ff); border-color: transparent; }
+.gm-toggle-input:checked + .gm-toggle-switch::before { transform: translateX(18px); background: #fff; }
+.gm-toggle-card:has(.gm-toggle-input:checked) { border-color: var(--violet); background: rgba(139,107,255,0.08); }
 .gm-form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .gm-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
 .gm-toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 2000; }
@@ -1867,13 +1879,15 @@ function renderPublishGroupModal(){
           <option value="other" ${f.type==='other'?'selected':''}>${t('events.type.other')}</option>
         </select>
       </div>
-      <div class="gm-form-row">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-          <input type="checkbox" id="pg-seeking" ${f.seekingSecondGroup?'checked':''} />
-          <span>🔍 ${t('groups.publish_seeking_label')}</span>
-        </label>
-        <div class="gm-note" style="margin-top:6px;">${t('groups.publish_seeking_hint')}</div>
-      </div>
+      <label class="gm-toggle-card" for="pg-seeking">
+        <div class="gm-toggle-card-icon">🔍</div>
+        <div class="gm-toggle-card-text">
+          <div class="gm-toggle-card-title">${t('groups.publish_seeking_label')}</div>
+          <div class="gm-toggle-card-hint">${t('groups.publish_seeking_hint')}</div>
+        </div>
+        <input type="checkbox" id="pg-seeking" class="gm-toggle-input" ${f.seekingSecondGroup?'checked':''} />
+        <span class="gm-toggle-switch"></span>
+      </label>
       <div class="gm-note">${t('groups.lfg_react_prompt')}</div>
       ${MODAL.error ? `<div class="gm-form-error">${esc(MODAL.error)}</div>` : ''}
       <div class="gm-modal-actions">
