@@ -506,6 +506,7 @@ const I18N = {
     'groups.limit_reached': 'Ce joueur est déjà inscrit dans un groupe de cette catégorie (fixe PvE, fixe PvP ou ouvert).',
     'groups.created_by': 'Créé par',
     'groups.role_mismatch': "Ta classe ne correspond pas à ce rôle.",
+    'groups.already_in_group': 'Tu fais déjà partie de ce groupe.',
     'groups.group_full': 'Ce groupe est déjà complet.',
     'groups.lfg_react_prompt': '✅ Disponible · ❌ Indisponible — réagissez pour indiquer votre dispo !',
     'groups.publish_title_label': "Intitulé de l'événement",
@@ -678,6 +679,7 @@ const I18N = {
     'groups.limit_reached': 'This player is already registered in a group of this category (fixed PvE, fixed PvP, or open).',
     'groups.created_by': 'Created by',
     'groups.role_mismatch': 'Your class does not match this role.',
+    'groups.already_in_group': "You're already part of this group.",
     'groups.group_full': 'This group is already full.',
     'groups.lfg_react_prompt': '✅ Available · ❌ Not available — react to let us know!',
     'groups.publish_title_label': 'Event title',
@@ -854,6 +856,7 @@ function quickJoinGroupRole(groupId, role){
   if (!g) return;
   const me = myPlayerRecord();
   if (!me) { toast(t('rsvp.no_profile'), 'danger'); return; }
+  if (g.slots.some(s => s.playerId === me.id)) { toast(t('groups.already_in_group'), 'danger'); return; }
   const myClass = cls(me.classId);
   if (!myClass) { toast(t('groups.role_mismatch'), 'danger'); return; }
   if (role !== 'Flex' && !classAllRoles(myClass).includes(role)) { toast(t('groups.role_mismatch'), 'danger'); return; }
