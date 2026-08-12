@@ -217,6 +217,14 @@ html, body { margin: 0; padding: 0; }
 .gm-chat-msg-text { font-size: 13px; color: var(--text); line-height: 1.4; word-break: break-word; white-space: pre-wrap; }
 .gm-chat-msg-actions { display: flex; gap: 2px; flex-shrink: 0; opacity: 0; transition: opacity .15s ease; }
 .gm-chat-msg:hover .gm-chat-msg-actions { opacity: 1; }
+.gm-chat-reactions { display: flex; align-items: center; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+.gm-chat-reaction-pill { background: rgba(139,107,255,0.10); border: 1px solid var(--border); color: var(--muted); font-size: 11px; padding: 2px 7px; border-radius: 20px; cursor: pointer; }
+.gm-chat-reaction-pill.active { background: rgba(139,107,255,0.22); border-color: var(--violet); color: var(--text); }
+.gm-chat-reaction-pill:hover { border-color: var(--border-strong); }
+.gm-chat-reaction-picker { display: flex; gap: 2px; opacity: 0; transition: opacity .15s ease; }
+.gm-chat-msg:hover .gm-chat-reaction-picker { opacity: 1; }
+.gm-chat-reaction-add { background: none; border: none; font-size: 13px; padding: 2px 4px; border-radius: 6px; cursor: pointer; opacity: 0.7; }
+.gm-chat-reaction-add:hover { background: rgba(255,255,255,0.08); opacity: 1; }
 .gm-chat-action-btn { background: none; border: none; color: var(--muted-2); cursor: pointer; font-size: 11px; padding: 4px 6px; border-radius: 6px; }
 .gm-chat-action-btn:hover { color: var(--text); background: rgba(255,255,255,0.06); }
 .gm-chat-edit-row { display: flex; gap: 6px; margin-top: 4px; }
@@ -1177,6 +1185,23 @@ function sendGroupChatMessage(groupId, text){
     groupId, authorId: discordUser.id, authorName: discordUser.username, avatar: discordUser.avatar,
     text, at: Date.now(), mentionedIds: detectMentions(text),
   }).catch(err => { console.error(err); toast(t('chat.send_error'), 'danger'); });
+}
+function toggleChatReaction(collectionName, messageId, emoji){
+  if (!discordUser) { toast(t('rsvp.no_profile'), 'danger'); return; }
+  let msg = GENERAL_CHAT_MESSAGES.find(x => x.id === messageId);
+  if (!msg) {
+    for (const list of Object.values(GROUP_CHAT_MESSAGES)) {
+      const found = list.find(x => x.id === messageId);
+      if (found) { msg = found; break; }
+    }
+  }
+  const current = (msg && msg.reactions && msg.reactions[emoji]) || [];
+  const hasReacted = current.includes(discordUser.id);
+  const update = {};
+  update['reactions.' + emoji] = hasReacted
+    ? firebase.firestore.FieldValue.arrayRemove(discordUser.id)
+    : firebase.firestore.FieldValue.arrayUnion(discordUser.id);
+  db.collection(collectionName).doc(messageId).update(update).catch(err => console.error(err));
 }
 function deleteChatMessage(collectionName, messageId, authorId){
   const canDelete = isAdminView() || (discordUser && authorId === discordUser.id);
@@ -2515,12 +2540,25 @@ function renderChatMessage(m, collectionName){
     <div class="gm-chat-msg-body">
       <div class="gm-chat-msg-head"><strong>${esc(m.authorName)}</strong><span class="gm-chat-time">${esc(dateLabel)}${m.editedAt ? ' · ' + t('chat.edited') : ''}</span></div>
       <div class="gm-chat-msg-text">${highlightedText}</div>
+      ${renderChatReactions(m, collectionName)}
     </div>
     ${canManage ? `<div class="gm-chat-msg-actions">
       <button class="gm-chat-action-btn" data-action="edit-chat-msg" data-collection="${collectionName}" data-id="${m.id}" title="${t('players.edit')}">✎</button>
       <button class="gm-chat-action-btn" data-action="delete-chat-msg" data-collection="${collectionName}" data-id="${m.id}" data-author="${esc(m.authorId||'')}" title="${t('groups.delete')}">✕</button>
     </div>` : ''}
   </div>`;
+}
+const CHAT_REACTION_EMOJIS = ['👍','❤️','😂'];
+function renderChatReactions(m, collectionName){
+  const reactions = m.reactions || {};
+  const pills = CHAT_REACTION_EMOJIS.map(emoji => {
+    const users = reactions[emoji] || [];
+    if (!users.length) return '';
+    const mine = discordUser && users.includes(discordUser.id);
+    return `<button class="gm-chat-reaction-pill ${mine ? 'active' : ''}" data-action="toggle-chat-reaction" data-collection="${collectionName}" data-id="${m.id}" data-emoji="${encodeURIComponent(emoji)}">${emoji} ${users.length}</button>`;
+  }).join('');
+  const pickerBtns = CHAT_REACTION_EMOJIS.map(emoji => `<button class="gm-chat-reaction-add" data-action="toggle-chat-reaction" data-collection="${collectionName}" data-id="${m.id}" data-emoji="${encodeURIComponent(emoji)}">${emoji}</button>`).join('');
+  return `<div class="gm-chat-reactions">${pills}<div class="gm-chat-reaction-picker">${pickerBtns}</div></div>`;
 }
 function renderChatTab(){
   if (!discordUser) return `<div class="gm-empty">${t('mygroup.not_logged')}</div>`;
@@ -2912,6 +2950,8 @@ function bindEvents(){
       el.addEventListener('click', () => toggleGroupChat(el.dataset.group));
     } else if (action === 'delete-chat-msg'){
       el.addEventListener('click', () => deleteChatMessage(el.dataset.collection, el.dataset.id, el.dataset.author));
+    } else if (action === 'toggle-chat-reaction'){
+      el.addEventListener('click', () => toggleChatReaction(el.dataset.collection, el.dataset.id, decodeURIComponent(el.dataset.emoji)));
     } else if (action === 'edit-chat-msg'){
       el.addEventListener('click', () => startEditChatMessage(el.dataset.collection, el.dataset.id));
     } else if (action === 'save-chat-edit'){
