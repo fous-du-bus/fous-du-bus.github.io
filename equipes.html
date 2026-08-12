@@ -401,6 +401,8 @@ const REQUIRED_ROLE_ID = '1443636744267501618';
 const ADMIN_ROLE_ID = '1397018334590926929';
 const DISCORD_ANNOUNCE_WEBHOOK_URL = 'https://discord.com/api/webhooks/1536673660251668574/AyuydDHDwmxBfpsdu0ZATHAPB7b0VIAbWNLr0onaFBMjgsdyrPC5i3_C2tqIhe887VgP';
 const DISCORD_LFG_WEBHOOK_URL = 'https://discord.com/api/webhooks/1536678480895541249/D_c32KZ43GiC4j7n8Uv8n_17XF8I8dUC4FJim6C8xqhlujheIFmmiCM2EZbBFmXeUAy7';
+const LFG_CHANNEL_ID = '1529305584845852792';
+const LFG_WORKER_URL = 'https://lfg-reactions.aegrim-midgard.workers.dev';
 let IS_ADMIN = false;
 let PREVIEW_AS_MEMBER = false;
 function isAdminView(){ return IS_ADMIN && !PREVIEW_AS_MEMBER; }
@@ -542,7 +544,7 @@ const I18N = {
     'groups.role_mismatch': "Ta classe ne correspond pas à ce rôle.",
     'groups.already_in_group': 'Tu fais déjà partie de ce groupe.',
     'groups.group_full': 'Ce groupe est déjà complet.',
-    'groups.lfg_react_prompt': '✅ Disponible · ❌ Indisponible — réagissez pour indiquer votre dispo !',
+    'groups.lfg_react_prompt': '👇 Clique sur les boutons ci-dessous pour indiquer ta disponibilité !',
     'groups.publish_title_label': "Intitulé de l'événement",
     'groups.publish_title_placeholder': 'Ex : Boss Kroban, Sortie donjon...',
     'groups.substitutes': 'Remplaçants', 'groups.registered': 'inscrits',
@@ -726,7 +728,7 @@ const I18N = {
     'groups.role_mismatch': 'Your class does not match this role.',
     'groups.already_in_group': "You're already part of this group.",
     'groups.group_full': 'This group is already full.',
-    'groups.lfg_react_prompt': '✅ Available · ❌ Not available — react to let us know!',
+    'groups.lfg_react_prompt': '👇 Click the buttons below to indicate your availability!',
     'groups.publish_title_label': 'Event title',
     'groups.publish_title_placeholder': 'E.g. Kroban boss, dungeon run...',
     'groups.substitutes': 'Substitutes', 'groups.registered': 'registered',
@@ -1624,19 +1626,9 @@ function fallbackCopy(text, cb){
   document.body.removeChild(ta); cb();
 }
 
-const LFG_REACTIONS_WORKER_URL = 'https://lfg-reactions.aegrim-midgard.workers.dev/';
-function triggerLfgReactions(channelId, messageId){
-  if (!channelId || !messageId) return;
-  fetch(LFG_REACTIONS_WORKER_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ channelId, messageId }),
-  }).catch(err => console.error('reaction trigger error', err));
-}
 function openPublishGroupModal(groupId){
   const g = GROUPS.find(x => x.id === groupId);
   if (!g) return;
-  if (!DISCORD_LFG_WEBHOOK_URL) { toast(t('groups.lfg_not_configured'), 'danger'); return; }
   MODAL = {
     type: 'publish-group', groupId,
     form: { title: '', type: g.type, date: '', time: '' },
@@ -1647,7 +1639,6 @@ function openPublishGroupModal(groupId){
 function publishGroupToDiscord(groupId, opts){
   const g = GROUPS.find(x => x.id === groupId);
   if (!g) return;
-  if (!DISCORD_LFG_WEBHOOK_URL) { toast(t('groups.lfg_not_configured'), 'danger'); return; }
   g.event = {
     title: (opts && opts.title && opts.title.trim()) ? opts.title.trim() : g.name,
     date: opts ? opts.date : '', time: opts ? opts.time : '',
@@ -1687,26 +1678,20 @@ function publishGroupToDiscord(groupId, opts){
   descParts.push(t('groups.lfg_react_prompt'));
   const titlePrefix = g.type === 'sanctuary' ? '🏛️ ' : '';
   const content = mentionIds.length ? mentionIds.map(id => `<@${id}>`).join(' ') : `📣 ${g.name}`;
-  const payload = {
-    content,
-    allowed_mentions: { parse: ['users'] },
-    embeds: [{
-      title: titlePrefix + ((opts && opts.title && opts.title.trim()) ? esc(opts.title.trim()) : `${groupTypeLabel(g.type)} — ${g.name}`),
-      description: descParts.join('\n'),
-      color: g.type === 'sanctuary' ? 0xffb84f : (g.type === 'pve' ? 0x4f9dff : 0xff6b7a),
-    }],
+  const embed = {
+    title: titlePrefix + ((opts && opts.title && opts.title.trim()) ? esc(opts.title.trim()) : `${groupTypeLabel(g.type)} — ${g.name}`),
+    description: descParts.join('\n'),
+    color: g.type === 'sanctuary' ? 0xffb84f : (g.type === 'pve' ? 0x4f9dff : 0xff6b7a),
   };
-  fetch(DISCORD_LFG_WEBHOOK_URL + '?wait=true', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+  fetch(LFG_WORKER_URL + '/publish', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ channelId: LFG_CHANNEL_ID, content, embed, refType: 'group', refId: g.id }),
   }).then(r => {
-    if (r.ok) {
-      toast(t('groups.lfg_posted'));
-      r.json().then(msg => triggerLfgReactions(msg.channel_id, msg.id)).catch(() => {});
-    } else toast(t('groups.lfg_error'), 'danger');
+    if (r.ok) toast(t('groups.lfg_posted'));
+    else toast(t('groups.lfg_error'), 'danger');
   }).catch(() => toast(t('groups.lfg_error'), 'danger'));
 }
 function openPublishSanctuaryModal(pairId){
-  if (!DISCORD_LFG_WEBHOOK_URL) { toast(t('groups.lfg_not_configured'), 'danger'); return; }
   MODAL = {
     type: 'publish-group', pairId,
     form: { title: '', type: 'sanctuary', date: '', time: '' },
@@ -1717,7 +1702,6 @@ function openPublishSanctuaryModal(pairId){
 function publishSanctuaryPairToDiscord(pairId, opts){
   const pairGroups = GROUPS.filter(g => g.sanctuaryPairId === pairId);
   if (!pairGroups.length) return;
-  if (!DISCORD_LFG_WEBHOOK_URL) { toast(t('groups.lfg_not_configured'), 'danger'); return; }
   const eventData = {
     title: (opts && opts.title && opts.title.trim()) ? opts.title.trim() : t('sanctuary.default_title'),
     date: opts ? opts.date : '', time: opts ? opts.time : '',
@@ -1759,22 +1743,17 @@ function publishSanctuaryPairToDiscord(pairId, opts){
   descParts.push('');
   descParts.push(t('groups.lfg_react_prompt'));
   const content = mentionIds.length ? mentionIds.map(id => `<@${id}>`).join(' ') : `📣 ${eventData.title}`;
-  const payload = {
-    content,
-    allowed_mentions: { parse: ['users'] },
-    embeds: [{
-      title: `🏛️ ${(opts && opts.title && opts.title.trim()) ? esc(opts.title.trim()) : eventData.title}`,
-      description: descParts.join('\n'),
-      color: 0xffb84f,
-    }],
+  const embed = {
+    title: `🏛️ ${(opts && opts.title && opts.title.trim()) ? esc(opts.title.trim()) : eventData.title}`,
+    description: descParts.join('\n'),
+    color: 0xffb84f,
   };
-  fetch(DISCORD_LFG_WEBHOOK_URL + '?wait=true', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+  fetch(LFG_WORKER_URL + '/publish', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ channelId: LFG_CHANNEL_ID, content, embed, refType: 'sanctuary', refId: pairId }),
   }).then(r => {
-    if (r.ok) {
-      toast(t('groups.lfg_posted'));
-      r.json().then(msg => triggerLfgReactions(msg.channel_id, msg.id)).catch(() => {});
-    } else toast(t('groups.lfg_error'), 'danger');
+    if (r.ok) toast(t('groups.lfg_posted'));
+    else toast(t('groups.lfg_error'), 'danger');
   }).catch(() => toast(t('groups.lfg_error'), 'danger'));
 }
 function canManageSanctuaryPair(pairGroups){
