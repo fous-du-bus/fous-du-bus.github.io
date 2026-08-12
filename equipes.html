@@ -186,7 +186,7 @@ html, body { margin: 0; padding: 0; }
 .gm-rsvp-empty-note { font-size: 11px; color: var(--muted-2); font-style: italic; }
 .gm-dashboard-event-card { padding: 14px; border-left: 3px solid var(--violet); }
 .gm-open-group-mini { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; color: var(--text); padding: 8px 10px; background: var(--bg-2); border-radius: 8px; }
-.gm-mini-player-chip { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text); background: rgba(255,255,255,0.04); padding: 2px 8px 2px 3px; border-radius: 20px; }
+.gm-mini-player-chip { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text); background: rgba(255,255,255,0.04); padding: 2px 8px 2px 3px; border-radius: 20px; border: 1.5px solid var(--border); }
 .gm-chat-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
 .gm-chat-panel-full { max-width: 720px; }
 .gm-chat-panel-full .gm-chat-messages { height: 60vh; max-height: 620px; }
@@ -1739,7 +1739,7 @@ function renderDashboard(){
                     ${neededRoles.length ? `<div style="display:flex;gap:4px;flex-shrink:0;">${neededRoles.map(role => `<button class="gm-role-pill gm-role-pill-clickable" data-action="quick-join-role" data-group="${g.id}" data-role="${role}" style="font-size:9.5px;padding:2px 7px;border-color:${roleColor(role)}66;background:${roleColor(role)}1c;color:${roleColor(role)}">${role} +</button>`).join('')}</div>` : ''}
                   </div>
                   <div style="font-size:11px;color:var(--muted);">${esc(g.name)} · ${g.slots.filter(s=>s.playerId).length}/5${creator ? ` · ${t('groups.created_by')}: ${esc(creator.discordUsername || creator.pseudo)}` : ''}</div>
-                  ${registeredPlayers.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">${registeredPlayers.map(p => `<div class="gm-mini-player-chip">${avatarHtml(p, 18)}<span>${esc(p.discordUsername || p.pseudo)}</span></div>`).join('')}</div>` : ''}
+                  ${registeredPlayers.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">${registeredPlayers.map(p => { const pc = cls(p.classId); const rc = pc ? roleColor(pc.role) : 'var(--border)'; return `<div class="gm-mini-player-chip" style="border-color:${rc};">${avatarHtml(p, 18)}<span>${esc(p.discordUsername || p.pseudo)}</span></div>`; }).join('')}</div>` : ''}
                 </div>
               </div>`;
               }).join('')}
