@@ -309,12 +309,18 @@ html, body { margin: 0; padding: 0; }
 .gm-note { font-size: 11.5px; color: var(--muted-2); margin-top: 4px; line-height: 1.5; }
 .gm-scrollx { overflow-x: auto; }
 .gm-mobile-topbar { display: none; }
+.gm-mobile-bottom-nav { display: none; }
 @media (max-width: 780px) {
   .gm-shell { flex-direction: column; }
   .gm-sidebar { display: none; }
   .gm-sidebar.open { display: flex; position: fixed; z-index: 500; top:0; left:0; bottom:0; }
   .gm-mobile-topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); }
-  .gm-main { padding: 16px; }
+  .gm-main { padding: 16px; padding-bottom: 84px; }
+  .gm-mobile-bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 400; background: rgba(13,18,32,0.96); backdrop-filter: blur(10px); border-top: 1px solid var(--border); padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px)); }
+  .gm-mobile-bottom-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; border-radius: 10px; color: var(--muted); cursor: pointer; user-select: none; }
+  .gm-mobile-bottom-item.active { color: var(--violet); }
+  .gm-mobile-bottom-icon { font-size: 18px; line-height: 1; }
+  .gm-mobile-bottom-label { font-size: 9.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 }
 </style>
 
@@ -1821,7 +1827,26 @@ function renderShell(){
     </div>
     ${MODAL ? renderModal() : ''}
     <div class="gm-toast-container">${TOASTS.map(t => `<div class="gm-toast" style="border-left-color:${t.tone==='danger'?'var(--danger)':'var(--success)'}">${esc(t.msg)}</div>`).join('')}</div>
+    ${renderMobileBottomNav()}
   `;
+}
+function renderMobileBottomNav(){
+  const items = [
+    { id: 'dashboard', icon: '◈', label: t('nav.dashboard') },
+    { id: 'players', icon: '☰', label: t('nav.players') },
+    { id: 'mygroup', icon: '👥', label: t('nav.mygroup') },
+    { id: 'chat', icon: '💬', label: t('nav.chat') },
+  ];
+  return `<div class="gm-mobile-bottom-nav">
+    ${items.map(i => `<div class="gm-mobile-bottom-item ${ACTIVE_TAB===i.id?'active':''}" data-action="nav" data-tab="${i.id}">
+      <span class="gm-mobile-bottom-icon">${i.icon}</span>
+      <span class="gm-mobile-bottom-label">${esc(i.label)}</span>
+    </div>`).join('')}
+    <div class="gm-mobile-bottom-item ${MOBILE_NAV_OPEN?'active':''}" data-action="toggle-mobile-nav">
+      <span class="gm-mobile-bottom-icon">☰</span>
+      <span class="gm-mobile-bottom-label">${t('mobile.menu')}</span>
+    </div>
+  </div>`;
 }
 
 function renderSidebar(){
