@@ -1440,7 +1440,6 @@ function renderSidebar(){
     { id: 'classes', label: t('nav.classes'), icon: '◆', adminOnly: true },
   ].filter(i => !i.adminOnly || isAdminView());
   const itemsAfter = [
-    { id: 'chat', label: t('nav.chat'), icon: '💬' },
     { id: 'opengroups', label: t('nav.opengroups'), icon: '🔓', badge: openGroupsCount },
     { id: 'mygroup', label: t('nav.mygroup'), icon: '👥', badge: myGroupEventCount },
     { id: 'events', label: t('nav.events'), icon: '🗓️' },
@@ -1605,6 +1604,19 @@ function renderDashboard(){
             </div>
           </div>`;
         })()}
+        <div class="gm-panel">
+          <h3 style="font-size:13px;margin:0 0 12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">💬 ${t('nav.chat')}</h3>
+          ${discordUser ? `
+          <div class="gm-chat-panel" style="border:none;padding:0;">
+            <div class="gm-chat-messages" style="max-height:260px;">
+              ${GENERAL_CHAT_MESSAGES.length ? GENERAL_CHAT_MESSAGES.slice(-30).map(m => renderChatMessage(m, 'chatGeneral')).join('') : `<div class="gm-chat-empty">${t('chat.empty')}</div>`}
+            </div>
+            <div class="gm-chat-input-row">
+              <input type="text" id="chat-input-general" data-action="chat-keydown-general" maxlength="500" placeholder="${t('chat.placeholder')}" />
+              <button class="gm-btn gm-btn-primary" data-action="send-general-chat">${t('chat.send')}</button>
+            </div>
+          </div>` : `<div class="gm-empty">${t('mygroup.not_logged')}</div>`}
+        </div>
       </div>
       <div style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:24px;">
         <div class="gm-panel gm-dashboard-event-card">
@@ -1619,19 +1631,6 @@ function renderDashboard(){
           </div>
         </div>` : ''}
       </div>
-    </div>
-    <div class="gm-panel" style="margin-top:24px;">
-      <h3 style="font-size:13px;margin:0 0 12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">💬 ${t('nav.chat')}</h3>
-      ${discordUser ? `
-      <div class="gm-chat-panel" style="border:none;padding:0;">
-        <div class="gm-chat-messages" style="max-height:260px;">
-          ${GENERAL_CHAT_MESSAGES.length ? GENERAL_CHAT_MESSAGES.slice(-30).map(m => renderChatMessage(m, 'chatGeneral')).join('') : `<div class="gm-chat-empty">${t('chat.empty')}</div>`}
-        </div>
-        <div class="gm-chat-input-row">
-          <input type="text" id="chat-input-general" data-action="chat-keydown-general" maxlength="500" placeholder="${t('chat.placeholder')}" />
-          <button class="gm-btn gm-btn-primary" data-action="send-general-chat">${t('chat.send')}</button>
-        </div>
-      </div>` : `<div class="gm-empty">${t('mygroup.not_logged')}</div>`}
     </div>
   `;
 }
