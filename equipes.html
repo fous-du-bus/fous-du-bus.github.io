@@ -61,6 +61,10 @@ html, body { margin: 0; padding: 0; }
 .gm-shell { display: flex; min-height: 100vh; }
 .gm-sidebar { width: 350px; flex-shrink: 0; background: linear-gradient(180deg, rgba(20,26,46,0.9), rgba(13,18,32,0.9)); border-right: 1px solid var(--border); padding: 22px 14px; display: flex; flex-direction: column; gap: 22px; }
 .gm-brand { display: flex; align-items: center; gap: 10px; padding: 0 6px; }
+.gm-global-search-wrap { position: relative; padding: 0 6px; }
+.gm-global-search-wrap input { width: 100%; box-sizing: border-box; background: var(--bg-2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 9px; font-size: 12.5px; outline: none; font-family: 'Inter'; }
+.gm-global-search-wrap input:focus { border-color: var(--border-strong); }
+.gm-global-search-wrap .gm-mention-dropdown { top: calc(100% + 4px); bottom: auto; left: 6px; right: 6px; }
 .gm-brand-crest { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
 .gm-brand-text { font-size: 15px; font-weight: 600; line-height: 1.15; }
 .gm-brand-text span { display:block; font-size: 10px; color: var(--muted); font-family:'Inter'; font-weight:500; letter-spacing:0.08em; text-transform: uppercase; }
@@ -371,7 +375,7 @@ let EDITING_CHAT_MSG = null;
 let ACTIVE_TAB = 'dashboard';
 let TOASTS = [];
 let MODAL = null;
-let PLAYER_FILTERS = { search: '', classId: '', status: '' };
+let PLAYER_FILTERS = { search: '', classId: '', status: '', sort: '' };
 let EVENTS_VIEW = 'calendar';
 let CALENDAR_YM = null;
 let SELECTED_CAL_DAY = null;
@@ -491,6 +495,9 @@ const I18N = {
     'players.empty_sub': 'Les joueurs apparaissent automatiquement en se connectant avec Discord.',
     'players.filter.all_classes': 'Toutes les classes', 'players.filter.all_status': 'Tous les statuts',
     'players.filter.new': 'Nouveau joueur', 'players.filter.experienced': 'Joueur expérimenté',
+    'players.sort.default': 'Tri par défaut', 'players.sort.cp_desc': 'CP décroissant', 'players.sort.cp_asc': 'CP croissant',
+    'search.global_placeholder': '🔍 Rechercher un joueur...',
+    'search.no_results': 'Aucun joueur trouvé.',
     'players.no_match': 'Aucun joueur ne correspond à ces filtres.',
     'players.edit': 'Modifier',
     'notreg.title': 'Pas encore inscrits', 'notreg.subtitle': 'Membres Discord avec le rôle Aion 2',
@@ -664,6 +671,9 @@ const I18N = {
     'players.empty_sub': 'Players appear automatically when they sign in with Discord.',
     'players.filter.all_classes': 'All classes', 'players.filter.all_status': 'All statuses',
     'players.filter.new': 'New player', 'players.filter.experienced': 'Experienced player',
+    'players.sort.default': 'Default order', 'players.sort.cp_desc': 'CP descending', 'players.sort.cp_asc': 'CP ascending',
+    'search.global_placeholder': '🔍 Search a player...',
+    'search.no_results': 'No player found.',
     'players.no_match': 'No players match these filters.',
     'players.edit': 'Edit',
     'notreg.title': 'Not registered yet', 'notreg.subtitle': 'Discord members with the Aion 2 role',
@@ -1120,6 +1130,36 @@ function setupChatMentionInput(el, dd, onSend){
   });
   el.addEventListener('blur', () => { setTimeout(() => { if (dd) dd.style.display = 'none'; }, 150); });
 }
+
+/* ---- Global search ---- */
+function jumpToPlayer(pid){
+  const p = player(pid);
+  if (!p) return;
+  ACTIVE_TAB = 'players';
+  PLAYER_FILTERS.search = p.pseudo;
+  PLAYER_FILTERS.classId = '';
+  PLAYER_FILTERS.status = '';
+  MOBILE_NAV_OPEN = false;
+  render();
+}
+function renderGlobalSearchDropdown(inputEl, dd){
+  const q = inputEl.value.trim().toLowerCase();
+  if (!q) { dd.style.display = 'none'; dd.innerHTML = ''; return; }
+  const matches = PLAYERS.filter(p => {
+    const name = (p.discordUsername || p.pseudo || '').toLowerCase();
+    return name.includes(q) || (p.pseudo || '').toLowerCase().includes(q);
+  }).slice(0, 8);
+  if (!matches.length) { dd.style.display = 'block'; dd.innerHTML = `<div class="gm-mention-item" style="cursor:default;color:var(--muted-2);">${esc(t('search.no_results'))}</div>`; return; }
+  dd.innerHTML = matches.map(p => `<div class="gm-mention-item" data-id="${p.id}">${avatarHtml(p, 20)}<span>${esc(p.discordUsername || p.pseudo)}</span></div>`).join('');
+  dd.style.display = 'block';
+  dd.querySelectorAll('.gm-mention-item[data-id]').forEach(item => {
+    item.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      jumpToPlayer(item.dataset.id);
+    });
+  });
+}
+
 function sendGeneralChatMessage(text){
   text = (text || '').trim().slice(0, 500);
   if (!text) return;
@@ -1784,6 +1824,10 @@ function renderSidebar(){
         <img class="gm-brand-crest" src="./logo-lfdb.webp" alt="" />
         <div class="gm-brand-text">Fous du Bus<span>${t('brand.subtitle')}</span></div>
       </div>
+      <div class="gm-global-search-wrap">
+        <input type="text" id="global-search-input" data-action="global-search" placeholder="${t('search.global_placeholder')}" autocomplete="off" />
+        <div class="gm-mention-dropdown" id="global-search-dropdown"></div>
+      </div>
       <a class="gm-nav-item" href="./index.html"><span class="gm-nav-icon">⌂</span>${t('nav.dailies')}</a>
       <div class="gm-nav">
         ${itemsBefore.map(navItemHtml).join('')}
@@ -2024,7 +2068,9 @@ function renderPlayers(){
   if (PLAYER_FILTERS.classId) list = list.filter(p => p.classId === PLAYER_FILTERS.classId);
   if (PLAYER_FILTERS.status === 'new') list = list.filter(p => p.isNewPlayer);
   if (PLAYER_FILTERS.status === 'experienced') list = list.filter(p => !p.isNewPlayer);
-  if (discordUser) list.sort((a, b) => (b.discordId === discordUser.id ? 1 : 0) - (a.discordId === discordUser.id ? 1 : 0));
+  if (PLAYER_FILTERS.sort === 'cp_desc') list.sort((a,b) => (Number(b.cp)||0) - (Number(a.cp)||0));
+  else if (PLAYER_FILTERS.sort === 'cp_asc') list.sort((a,b) => (Number(a.cp)||0) - (Number(b.cp)||0));
+  else if (discordUser) list.sort((a, b) => (b.discordId === discordUser.id ? 1 : 0) - (a.discordId === discordUser.id ? 1 : 0));
 
   if (!PLAYERS.length){
     return `<div class="gm-players-layout">
@@ -2040,6 +2086,11 @@ function renderPlayers(){
         <option value="">${t('players.filter.all_status')}</option>
         <option value="new" ${PLAYER_FILTERS.status==='new'?'selected':''}>${t('players.filter.new')}</option>
         <option value="experienced" ${PLAYER_FILTERS.status==='experienced'?'selected':''}>${t('players.filter.experienced')}</option>
+      </select>
+      <select class="gm-select" data-action="filter-sort">
+        <option value="">${t('players.sort.default')}</option>
+        <option value="cp_desc" ${PLAYER_FILTERS.sort==='cp_desc'?'selected':''}>${t('players.sort.cp_desc')}</option>
+        <option value="cp_asc" ${PLAYER_FILTERS.sort==='cp_asc'?'selected':''}>${t('players.sort.cp_asc')}</option>
       </select>
     </div>
     ${!list.length ? `<div class="gm-empty">${t('players.no_match')}</div>` : `
@@ -2740,6 +2791,13 @@ function bindEvents(){
       el.addEventListener('click', () => { ACTIVE_TAB = el.dataset.tab; MOBILE_NAV_OPEN = false; render(); });
     } else if (action === 'toggle-group-nav'){
       el.addEventListener('click', () => { GROUP_NAV_EXPANDED = !GROUP_NAV_EXPANDED; render(); });
+    } else if (action === 'global-search'){
+      const dd = document.getElementById('global-search-dropdown');
+      el.addEventListener('input', () => renderGlobalSearchDropdown(el, dd));
+      el.addEventListener('blur', () => { setTimeout(() => { if (dd) dd.style.display = 'none'; }, 150); });
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { el.value = ''; if (dd) dd.style.display = 'none'; }
+      });
     } else if (action === 'toggle-mobile-nav'){
       el.addEventListener('click', () => { MOBILE_NAV_OPEN = !MOBILE_NAV_OPEN; render(); });
     } else if (action === 'discord-login'){
@@ -2776,6 +2834,8 @@ function bindEvents(){
       el.addEventListener('change', () => { PLAYER_FILTERS.classId = el.value; render(); });
     } else if (action === 'filter-status'){
       el.addEventListener('change', () => { PLAYER_FILTERS.status = el.value; render(); });
+    } else if (action === 'filter-sort'){
+      el.addEventListener('change', () => { PLAYER_FILTERS.sort = el.value; render(); });
     } else if (action === 'open-class-modal'){
       el.addEventListener('click', () => openClassModal(null));
     } else if (action === 'edit-class'){
