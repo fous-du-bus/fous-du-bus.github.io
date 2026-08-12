@@ -123,7 +123,8 @@ html, body { margin: 0; padding: 0; }
 .gm-players-main { flex: 1; min-width: 0; }
 .gm-not-registered { flex: 0 0 260px; position: sticky; top: 20px; }
 .gm-not-registered-list { display: flex; flex-direction: column; gap: 6px; max-height: 60vh; overflow-y: auto; }
-.gm-not-registered-item { font-size: 12.5px; color: var(--text); background: var(--panel-solid); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; }
+.gm-not-registered-item { font-size: 12.5px; color: var(--text); background: var(--panel-solid); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 8px; }
+.gm-not-registered-avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
 @media (max-width: 900px) { .gm-players-layout { flex-direction: column; } .gm-not-registered { flex: none; width: 100%; position: static; } }
 .gm-player-card { padding: 18px; position: relative; transition: transform .15s ease, border-color .15s ease; overflow: hidden; display: flex; align-items: center; gap: 12px; }
 .gm-player-info { flex: 1; min-width: 0; }
@@ -140,6 +141,7 @@ html, body { margin: 0; padding: 0; }
 .gm-player-pseudo { font-weight: 600; font-size: 15.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gm-player-discord { color: var(--muted); font-size: 12px; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gm-player-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.gm-cp-badge { font-size: 10.5px; font-weight: 700; color: var(--new); background: rgba(255,184,79,0.14); border: 1px solid rgba(255,184,79,0.35); border-radius: 20px; padding: 3px 9px; display: inline-flex; align-items: center; }
 .gm-player-avail { display: flex; gap: 12px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
 .gm-player-actions { display: flex; gap: 6px; margin-top: 10px; }
 .gm-group-card { padding: 16px; margin-bottom: 18px; }
@@ -524,6 +526,9 @@ const I18N = {
     'modal.player.choose_class': '-- Choisir une classe --', 'modal.player.no_secondary': 'Aucune',
     'modal.player.status_label': 'Statut',
     'modal.player.status_new': 'Nouveau joueur', 'modal.player.status_experienced': 'Joueur expérimenté',
+    'modal.player.cp_label': 'Combat Power (CP)',
+    'modal.player.cp_placeholder': 'Ex : 45000',
+    'modal.player.cp_hint': "À renseigner toi-même pour l'instant — une synchronisation automatique avec le jeu est prévue plus tard.",
     'modal.save': 'Enregistrer', 'modal.add': 'Ajouter',
     'modal.class.edit_title': 'Modifier la classe', 'modal.class.new_title': 'Nouvelle classe',
     'modal.class.create': 'Créer',
@@ -691,6 +696,9 @@ const I18N = {
     'modal.player.choose_class': '-- Choose a class --', 'modal.player.no_secondary': 'None',
     'modal.player.status_label': 'Status',
     'modal.player.status_new': 'New player', 'modal.player.status_experienced': 'Experienced player',
+    'modal.player.cp_label': 'Combat Power (CP)',
+    'modal.player.cp_placeholder': 'E.g. 45000',
+    'modal.player.cp_hint': 'Fill this in yourself for now — automatic in-game sync is planned later.',
     'modal.save': 'Save', 'modal.add': 'Add',
     'modal.class.edit_title': 'Edit class', 'modal.class.new_title': 'New class',
     'modal.class.create': 'Create',
@@ -782,7 +790,7 @@ function renderPlayerCard(p, actionsHtml, noteHtml){
           <div class="gm-player-pseudo">${esc(p.discordUsername || p.pseudo)}</div>
         </div>
       </div>
-      <div class="gm-player-meta">${classPill(p.classId)}</div>
+      <div class="gm-player-meta">${classPill(p.classId)}${p.cp ? `<span class="gm-cp-badge">⚔ CP ${Number(p.cp).toLocaleString(LANG==='en'?'en-GB':'fr-FR')}</span>` : ''}</div>
       ${noteHtml || ''}
       <div class="gm-player-actions">${actionsHtml}</div>
     </div>
@@ -1137,7 +1145,7 @@ function openPlayerModal(playerId){
   if (!canEdit) { toast(t('toast.admin_only'), 'danger'); return; }
   MODAL = {
     type: 'player', editingId: playerId || null,
-    form: existing ? { ...existing } : { pseudo: '', classId: CLASSES[0] ? CLASSES[0].id : '', secondaryClassId: '', isNewPlayer: true, pve: true, pvp: true },
+    form: existing ? { ...existing } : { pseudo: '', classId: CLASSES[0] ? CLASSES[0].id : '', secondaryClassId: '', isNewPlayer: true, pve: true, pvp: true, cp: '' },
     error: '',
   };
   render();
@@ -1149,6 +1157,7 @@ function savePlayerForm(){
   const dup = PLAYERS.find(p => p.pseudo.toLowerCase() === pseudo.toLowerCase() && p.id !== MODAL.editingId);
   if (dup) { MODAL.error = t('error.pseudo_dup'); render(); return; }
   if (!f.classId) { MODAL.error = t('error.choose_class'); render(); return; }
+  f.cp = f.cp ? Math.max(0, parseInt(f.cp, 10) || 0) : '';
   if (MODAL.editingId) {
     const idx = PLAYERS.findIndex(p => p.id === MODAL.editingId);
     PLAYERS[idx] = { ...PLAYERS[idx], ...f, pseudo };
@@ -2009,7 +2018,7 @@ function renderNotRegisteredPanel(){
       ? `<div style="font-size:12px;color:var(--muted-2);">${t('notreg.none_imported')}</div>`
       : !notRegistered.length
         ? `<div style="font-size:12px;color:var(--success);">${t('notreg.all_registered')}</div>`
-        : `<div class="gm-not-registered-list">${notRegistered.map(m => `<div class="gm-not-registered-item">${esc(m.nick || m.globalName || m.username)}</div>`).join('')}</div>`
+        : `<div class="gm-not-registered-list">${notRegistered.map(m => `<div class="gm-not-registered-item">${m.avatar ? `<img src="${esc(m.avatar)}" alt="" class="gm-not-registered-avatar" />` : ''}${esc(m.nick || m.globalName || m.username)}</div>`).join('')}</div>`
     }
   </div>`;
 }
@@ -2545,6 +2554,11 @@ function renderPlayerModal(){
           <option value="experienced" ${!f.isNewPlayer?'selected':''}>${t('modal.player.status_experienced')}</option>
         </select>
       </div>
+      <div class="gm-form-row">
+        <label>${t('modal.player.cp_label')}</label>
+        <input type="number" id="pf-cp" min="0" step="1" value="${f.cp !== undefined && f.cp !== null ? esc(String(f.cp)) : ''}" placeholder="${t('modal.player.cp_placeholder')}" />
+        <div class="gm-note">${t('modal.player.cp_hint')}</div>
+      </div>
       ${MODAL.error ? `<div class="gm-form-error">${esc(MODAL.error)}</div>` : ''}
       <div class="gm-modal-actions">
         <button class="gm-btn gm-btn-ghost" data-action="close-modal">${t('modal.cancel')}</button>
@@ -2802,6 +2816,7 @@ function bindEvents(){
         MODAL.form.classId = document.getElementById('pf-class').value;
         MODAL.form.secondaryClassId = document.getElementById('pf-class-secondary').value;
         MODAL.form.isNewPlayer = document.getElementById('pf-status').value === 'new';
+        MODAL.form.cp = document.getElementById('pf-cp').value;
         savePlayerForm();
       });
     } else if (action === 'save-class'){
