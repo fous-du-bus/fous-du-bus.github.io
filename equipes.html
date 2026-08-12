@@ -472,6 +472,9 @@ const I18N = {
     'dashboard.next_event': 'Prochain événement',
     'dashboard.no_upcoming_event': 'Aucun événement à venir.',
     'dashboard.my_group_events': 'Événement(s) de ton groupe',
+    'dashboard.no_group_events': 'Aucun événement pour tes groupes fixes actuellement.',
+    'dashboard.no_open_groups': 'Aucun groupe en recherche actuellement.',
+    'dashboard.no_sanctuary': 'Aucune recherche Sanctuaire actuellement.',
     'dashboard.open_groups': 'Groupes en recherche',
     'access.admin_only': 'Accès réservé aux administrateurs.',
     'dash.stat.players': 'Joueurs inscrits', 'dash.stat.pve_groups': 'Groupes PvE',
@@ -636,6 +639,9 @@ const I18N = {
     'dashboard.next_event': 'Next event',
     'dashboard.no_upcoming_event': 'No upcoming event.',
     'dashboard.my_group_events': 'Your group event(s)',
+    'dashboard.no_group_events': 'No event for your fixed groups at the moment.',
+    'dashboard.no_open_groups': 'No group currently looking for players.',
+    'dashboard.no_sanctuary': 'No Sanctuary search at the moment.',
     'dashboard.open_groups': 'Open groups looking for players',
     'access.admin_only': 'Access restricted to administrators.',
     'dash.stat.players': 'Registered players', 'dash.stat.pve_groups': 'PvE groups',
@@ -1856,10 +1862,10 @@ function renderDashboard(){
         </div>
         ${(() => {
           const openGroups = GROUPS.filter(g => g.open && g.event && g.type !== 'sanctuary');
-          if (!openGroups.length) return '';
           return `
-          <div class="gm-panel">
+          <div class="gm-panel" style="min-height:140px;">
             <h3 style="font-size:13px;margin:0 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">🔓 ${t('dashboard.open_groups')} (${openGroups.length})</h3>
+            ${!openGroups.length ? `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_open_groups')}</div>` : `
             <div style="display:flex;flex-direction:column;gap:10px;max-height:230px;overflow-y:auto;padding-right:4px;">
               ${openGroups.map(g => {
                 const neededRoles = computeNeededRoles(g);
@@ -1877,7 +1883,7 @@ function renderDashboard(){
                 </div>
               </div>`;
               }).join('')}
-            </div>
+            </div>`}
           </div>`;
         })()}
         <div class="gm-panel">
@@ -1904,23 +1910,23 @@ function renderDashboard(){
             ${nextEvent ? renderEventCard(nextEvent) : `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_upcoming_event')}</div>`}
           </div>
         </div>
-        ${myGroupEvents.length ? `
-        <div class="gm-panel gm-dashboard-event-card">
+        <div class="gm-panel gm-dashboard-event-card" style="min-height:100px;">
           <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.my_group_events')}</h3>
+          ${!myGroupEvents.length ? `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_group_events')}</div>` : `
           <div style="display:flex;flex-direction:column;gap:14px;max-height:460px;overflow-y:auto;padding-right:4px;">
             ${myGroupEvents.map(g => renderGroupEventCard(g)).join('')}
-          </div>
-        </div>` : ''}
+          </div>`}
+        </div>
         ${(() => {
           const pairsById = {};
           GROUPS.filter(g => g.type === 'sanctuary' && g.event).forEach(g => {
             (pairsById[g.sanctuaryPairId] = pairsById[g.sanctuaryPairId] || []).push(g);
           });
           const pairs = Object.values(pairsById);
-          if (!pairs.length) return '';
           return `
-          <div class="gm-panel">
+          <div class="gm-panel" style="min-height:100px;">
             <h3 style="font-size:13px;margin:0 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">🏛️ ${t('nav.sanctuary')} (${pairs.length})</h3>
+            ${!pairs.length ? `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_sanctuary')}</div>` : `
             <div style="display:flex;flex-direction:column;gap:10px;max-height:180px;overflow-y:auto;padding-right:4px;">
               ${pairs.map(pairGroups => {
                 const ev = pairGroups[0].event;
@@ -1942,7 +1948,7 @@ function renderDashboard(){
                 </div>
               </div>`;
               }).join('')}
-            </div>
+            </div>`}
           </div>`;
         })()}
       </div>
