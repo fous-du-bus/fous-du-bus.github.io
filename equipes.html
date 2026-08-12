@@ -512,6 +512,14 @@ const I18N = {
     'players.sort.default': 'Tri par défaut', 'players.sort.cp_desc': 'CP décroissant', 'players.sort.cp_asc': 'CP croissant',
     'search.global_placeholder': '🔍 Rechercher un joueur...',
     'search.no_results': 'Aucun joueur trouvé.',
+    'notif.player_joined': '{player} a rejoint {group} !',
+    'notif.player_left': '{player} a quitté {group}.',
+    'notif.enable_tooltip': 'Activer les rappels de notification pour tes événements',
+    'notif.enabled': 'Rappels activés ! Tu recevras une notification 30 min avant tes événements.',
+    'notif.denied': 'Notifications refusées — active-les dans les réglages de ton navigateur si tu changes d\'avis.',
+    'notif.unsupported': "Ton navigateur ne supporte pas les notifications.",
+    'notif.reminder_title': '🔔 Événement dans 30 minutes',
+    'notif.reminder_body': '{title} commence bientôt !',
     'players.no_match': 'Aucun joueur ne correspond à ces filtres.',
     'players.edit': 'Modifier',
     'notreg.title': 'Pas encore inscrits', 'notreg.subtitle': 'Membres Discord avec le rôle Aion 2',
@@ -688,6 +696,14 @@ const I18N = {
     'players.sort.default': 'Default order', 'players.sort.cp_desc': 'CP descending', 'players.sort.cp_asc': 'CP ascending',
     'search.global_placeholder': '🔍 Search a player...',
     'search.no_results': 'No player found.',
+    'notif.player_joined': '{player} joined {group}!',
+    'notif.player_left': '{player} left {group}.',
+    'notif.enable_tooltip': 'Enable reminder notifications for your events',
+    'notif.enabled': "Reminders enabled! You'll get a notification 30 min before your events.",
+    'notif.denied': 'Notifications denied — enable them in your browser settings if you change your mind.',
+    'notif.unsupported': "Your browser doesn't support notifications.",
+    'notif.reminder_title': '🔔 Event in 30 minutes',
+    'notif.reminder_body': '{title} is starting soon!',
     'players.no_match': 'No players match these filters.',
     'players.edit': 'Edit',
     'notreg.title': 'Not registered yet', 'notreg.subtitle': 'Discord members with the Aion 2 role',
@@ -1900,6 +1916,7 @@ function renderSidebar(){
               <div style="font-size:10px;color:var(--muted);">${t('role.connected')}</div>
             </div>
             ${(() => { const mc = unreadMentionCount(); return mc > 0 ? `<button class="gm-btn gm-btn-sm gm-btn-ghost gm-mention-envelope" data-action="mark-mentions-seen" title="${t('chat.mentions_tooltip')}" style="padding:6px 9px;position:relative;">✉️<span class="gm-nav-badge" style="position:absolute;top:-6px;right:-6px;">${mc}</span></button>` : ''; })()}
+            ${(typeof Notification !== 'undefined' && Notification.permission !== 'granted') ? `<button class="gm-btn gm-btn-sm gm-btn-ghost" data-action="enable-notifications" title="${t('notif.enable_tooltip')}" style="padding:6px 9px;">🔔</button>` : ''}
             ${IS_ADMIN ? `<button class="gm-btn gm-btn-sm ${PREVIEW_AS_MEMBER ? 'gm-btn-primary' : 'gm-btn-ghost'}" data-action="toggle-preview" title="${PREVIEW_AS_MEMBER ? t('role.preview_on') : t('role.preview_off')}" style="padding:6px 9px;">👁</button>` : ''}
             <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="discord-logout" title="${t('role.logout_title')}">⏻</button>
           </div>
@@ -2872,6 +2889,15 @@ function bindEvents(){
         markMentionsSeen();
         if (ACTIVE_TAB !== 'dashboard') { ACTIVE_TAB = 'dashboard'; render(); }
       });
+    } else if (action === 'enable-notifications'){
+      el.addEventListener('click', () => {
+        if (typeof Notification === 'undefined') { toast(t('notif.unsupported'), 'danger'); return; }
+        Notification.requestPermission().then(perm => {
+          if (perm === 'granted') { toast(t('notif.enabled')); checkEventReminders(); }
+          else toast(t('notif.denied'), 'danger');
+          render();
+        });
+      });
     } else if (action === 'toggle-preview'){
       el.addEventListener('click', () => {
         PREVIEW_AS_MEMBER = !PREVIEW_AS_MEMBER;
@@ -3147,6 +3173,8 @@ function startApp(){
         scheduleSave();
       }
       firstLoad = false;
+      checkGroupRosterChanges();
+      checkEventReminders();
       render();
     }, err => {
       console.error('Firestore error', err);
@@ -3154,6 +3182,69 @@ function startApp(){
     });
   });
 }
+let PREV_MY_GROUP_ROSTERS = null;
+function checkGroupRosterChanges(){
+  if (!discordUser) return;
+  const me = myPlayerRecord();
+  if (!me) return;
+  const myGroups = GROUPS.filter(g => g.slots.some(s => s.playerId === me.id) || g.substitutes.includes(me.id));
+  const current = {};
+  myGroups.forEach(g => {
+    current[g.id] = { name: g.name, ids: new Set(g.slots.filter(s => s.playerId).map(s => s.playerId)) };
+  });
+  if (PREV_MY_GROUP_ROSTERS !== null) {
+    Object.keys(current).forEach(gid => {
+      const prevEntry = PREV_MY_GROUP_ROSTERS[gid];
+      const prevSet = prevEntry ? prevEntry.ids : new Set();
+      const curSet = current[gid].ids;
+      const groupName = current[gid].name;
+      curSet.forEach(pid => {
+        if (pid !== me.id && !prevSet.has(pid)) {
+          const p = player(pid);
+          if (p) toast(t('notif.player_joined').replace('{player}', p.discordUsername || p.pseudo).replace('{group}', groupName));
+        }
+      });
+      prevSet.forEach(pid => {
+        if (pid !== me.id && !curSet.has(pid)) {
+          const p = player(pid);
+          toast(t('notif.player_left').replace('{player}', p ? (p.discordUsername || p.pseudo) : '?').replace('{group}', groupName), 'danger');
+        }
+      });
+    });
+  }
+  PREV_MY_GROUP_ROSTERS = current;
+}
+
+/* ---- Event reminders ---- */
+let NOTIFIED_EVENTS = new Set();
+try { NOTIFIED_EVENTS = new Set(JSON.parse(localStorage.getItem('equipes-notified-events') || '[]')); } catch(e){}
+function checkEventReminders(){
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+  if (!discordUser) return;
+  const me = myPlayerRecord();
+  if (!me) return;
+  const now = Date.now();
+  const windowMs = 30 * 60 * 1000;
+  const checkList = [];
+  EVENTS.forEach(e => { if (e.date) checkList.push({ id: 'ev_' + e.id, title: e.title, date: e.date, time: e.time, rsvps: e.rsvps }); });
+  GROUPS.forEach(g => { if (g.event && g.event.date) checkList.push({ id: 'gev_' + g.id, title: g.event.title, date: g.event.date, time: g.event.time, rsvps: g.event.rsvps }); });
+  let changed = false;
+  checkList.forEach(item => {
+    if ((item.rsvps || {})[me.id] !== 'yes') return;
+    if (NOTIFIED_EVENTS.has(item.id)) return;
+    const eventTime = new Date(item.date + 'T' + (item.time || '00:00')).getTime();
+    const diff = eventTime - now;
+    if (diff > 0 && diff <= windowMs) {
+      try {
+        new Notification(t('notif.reminder_title'), { body: t('notif.reminder_body').replace('{title}', item.title), icon: './logo-lfdb.webp' });
+      } catch(e){}
+      NOTIFIED_EVENTS.add(item.id);
+      changed = true;
+    }
+  });
+  if (changed) localStorage.setItem('equipes-notified-events', JSON.stringify(Array.from(NOTIFIED_EVENTS)));
+}
+setInterval(checkEventReminders, 60000);
 
 /* ---- Init ---- */
 document.documentElement.lang = LANG;
