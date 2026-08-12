@@ -191,7 +191,9 @@ html, body { margin: 0; padding: 0; }
 .gm-chat-panel-full .gm-chat-messages { height: 60vh; max-height: 620px; }
 .gm-chat-messages { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 320px; padding-right: 4px; }
 .gm-chat-empty { color: var(--muted-2); font-size: 12.5px; text-align: center; padding: 16px 0; }
-.gm-chat-msg { display: flex; align-items: flex-start; gap: 8px; }
+.gm-chat-msg { display: flex; align-items: flex-start; gap: 8px; padding: 4px 6px; border-radius: 8px; }
+.gm-chat-msg-mentioned { background: rgba(255,184,79,0.10); box-shadow: inset 2px 0 0 var(--new); }
+.gm-chat-mention { color: var(--violet); font-weight: 600; }
 .gm-chat-avatar { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; object-fit: cover; background: var(--bg-2); }
 .gm-chat-msg-body { flex: 1; min-width: 0; }
 .gm-chat-msg-head { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; }
@@ -395,6 +397,7 @@ const I18N = {
     'chat.group_toggle': 'Discussion du groupe',
     'chat.save': 'Enregistrer',
     'chat.edited': 'modifié',
+    'chat.mentions_tooltip': 'Tu as été mentionné(e) dans le tchat',
     'topbar.auditlog.title': 'Journal d\'activité', 'topbar.auditlog.sub': 'Historique des suppressions et modifications effectuées par les admins',
     'audit.empty': 'Aucune activité enregistrée pour le moment.',
     'audit.col_action': 'Action', 'audit.col_target': 'Concerne', 'audit.col_actor': 'Par', 'audit.col_when': 'Quand',
@@ -551,6 +554,7 @@ const I18N = {
     'chat.group_toggle': 'Group chat',
     'chat.save': 'Save',
     'chat.edited': 'edited',
+    'chat.mentions_tooltip': 'You were mentioned in the chat',
     'topbar.auditlog.title': 'Activity log', 'topbar.auditlog.sub': 'History of deletions and changes made by admins',
     'audit.empty': 'No activity recorded yet.',
     'audit.col_action': 'Action', 'audit.col_target': 'Target', 'audit.col_actor': 'By', 'audit.col_when': 'When',
@@ -956,13 +960,26 @@ function startGroupChatListener(groupId){
     render();
   }, err => console.error('group chat error', err));
 }
+function detectMentions(text){
+  const matches = text.match(/@([\p{L}\p{N}_.]+)/gu) || [];
+  const ids = new Set();
+  matches.forEach(raw => {
+    const name = raw.slice(1).toLowerCase();
+    const p = PLAYERS.find(pl =>
+      (pl.discordUsername && pl.discordUsername.toLowerCase() === name) ||
+      (pl.pseudo && pl.pseudo.toLowerCase() === name)
+    );
+    if (p && p.discordId) ids.add(p.discordId);
+  });
+  return Array.from(ids);
+}
 function sendGeneralChatMessage(text){
   text = (text || '').trim().slice(0, 500);
   if (!text) return;
   if (!discordUser) { toast(t('rsvp.no_profile'), 'danger'); return; }
   generalChatRef.add({
     authorId: discordUser.id, authorName: discordUser.username, avatar: discordUser.avatar,
-    text, at: Date.now(),
+    text, at: Date.now(), mentionedIds: detectMentions(text),
   }).catch(err => { console.error(err); toast(t('chat.send_error'), 'danger'); });
 }
 function sendGroupChatMessage(groupId, text){
@@ -971,7 +988,7 @@ function sendGroupChatMessage(groupId, text){
   if (!discordUser) { toast(t('rsvp.no_profile'), 'danger'); return; }
   groupChatRef.add({
     groupId, authorId: discordUser.id, authorName: discordUser.username, avatar: discordUser.avatar,
-    text, at: Date.now(),
+    text, at: Date.now(), mentionedIds: detectMentions(text),
   }).catch(err => { console.error(err); toast(t('chat.send_error'), 'danger'); });
 }
 function deleteChatMessage(collectionName, messageId, authorId){
@@ -992,7 +1009,7 @@ function saveEditChatMessage(collectionName, messageId){
   if (!inp) return;
   const text = inp.value.trim().slice(0, 500);
   if (!text) return;
-  db.collection(collectionName).doc(messageId).update({ text, editedAt: Date.now() }).catch(err => console.error(err));
+  db.collection(collectionName).doc(messageId).update({ text, editedAt: Date.now(), mentionedIds: detectMentions(text) }).catch(err => console.error(err));
   EDITING_CHAT_MSG = null;
   render();
 }
@@ -1188,6 +1205,29 @@ function eventTypeLabel(type){
 function myPlayerRecord(){
   if (!discordUser) return null;
   return PLAYERS.find(p => p.discordId === discordUser.id) || null;
+}
+function getMentionSeenAt(){
+  if (!discordUser) return 0;
+  return parseInt(localStorage.getItem('equipes-mentions-seen-' + discordUser.id) || '0', 10);
+}
+function unreadMentionCount(){
+  if (!discordUser) return 0;
+  const seenAt = getMentionSeenAt();
+  let count = 0;
+  GENERAL_CHAT_MESSAGES.forEach(m => {
+    if (m.mentionedIds && m.mentionedIds.includes(discordUser.id) && m.at > seenAt && m.authorId !== discordUser.id) count++;
+  });
+  Object.values(GROUP_CHAT_MESSAGES).forEach(list => {
+    list.forEach(m => {
+      if (m.mentionedIds && m.mentionedIds.includes(discordUser.id) && m.at > seenAt && m.authorId !== discordUser.id) count++;
+    });
+  });
+  return count;
+}
+function markMentionsSeen(){
+  if (!discordUser) return;
+  localStorage.setItem('equipes-mentions-seen-' + discordUser.id, String(Date.now()));
+  render();
 }
 function rsvpCounts(rsvps){
   rsvps = rsvps || {};
@@ -1500,6 +1540,7 @@ function renderSidebar(){
               <div style="font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(discordUser.username)}</div>
               <div style="font-size:10px;color:var(--muted);">${t('role.connected')}</div>
             </div>
+            ${(() => { const mc = unreadMentionCount(); return mc > 0 ? `<button class="gm-btn gm-btn-sm gm-btn-ghost gm-mention-envelope" data-action="mark-mentions-seen" title="${t('chat.mentions_tooltip')}" style="padding:6px 9px;position:relative;">✉️<span class="gm-nav-badge" style="position:absolute;top:-6px;right:-6px;">${mc}</span></button>` : ''; })()}
             ${IS_ADMIN ? `<button class="gm-btn gm-btn-sm ${PREVIEW_AS_MEMBER ? 'gm-btn-primary' : 'gm-btn-ghost'}" data-action="toggle-preview" title="${PREVIEW_AS_MEMBER ? t('role.preview_on') : t('role.preview_off')}" style="padding:6px 9px;">👁</button>` : ''}
             <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="discord-logout" title="${t('role.logout_title')}">⏻</button>
           </div>
@@ -2023,11 +2064,13 @@ function renderChatMessage(m, collectionName){
       </div>
     </div>`;
   }
-  return `<div class="gm-chat-msg">
+  const isMentioned = discordUser && m.mentionedIds && m.mentionedIds.includes(discordUser.id);
+  const highlightedText = esc(m.text).replace(/@([\p{L}\p{N}_.]+)/gu, '<span class="gm-chat-mention">@$1</span>');
+  return `<div class="gm-chat-msg ${isMentioned ? 'gm-chat-msg-mentioned' : ''}">
     <img class="gm-chat-avatar" src="${esc(m.avatar || '')}" alt="" />
     <div class="gm-chat-msg-body">
       <div class="gm-chat-msg-head"><strong>${esc(m.authorName)}</strong><span class="gm-chat-time">${esc(dateLabel)}${m.editedAt ? ' · ' + t('chat.edited') : ''}</span></div>
-      <div class="gm-chat-msg-text">${esc(m.text)}</div>
+      <div class="gm-chat-msg-text">${highlightedText}</div>
     </div>
     ${canManage ? `<div class="gm-chat-msg-actions">
       <button class="gm-chat-action-btn" data-action="edit-chat-msg" data-collection="${collectionName}" data-id="${m.id}" title="${t('players.edit')}">✎</button>
@@ -2297,6 +2340,11 @@ function bindEvents(){
       el.addEventListener('click', loginWithDiscord);
     } else if (action === 'discord-logout'){
       el.addEventListener('click', logoutDiscord);
+    } else if (action === 'mark-mentions-seen'){
+      el.addEventListener('click', () => {
+        markMentionsSeen();
+        if (ACTIVE_TAB !== 'dashboard') { ACTIVE_TAB = 'dashboard'; render(); }
+      });
     } else if (action === 'toggle-preview'){
       el.addEventListener('click', () => {
         PREVIEW_AS_MEMBER = !PREVIEW_AS_MEMBER;
