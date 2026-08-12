@@ -313,6 +313,7 @@ html, body { margin: 0; padding: 0; }
 
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script>
 (function(){
 
@@ -326,6 +327,10 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const fbAuth = firebase.auth();
+let firebaseAuthReady = fbAuth.signInAnonymously().catch(err => {
+  console.error('Firebase anonymous auth failed', err);
+});
 const docRef = db.collection('teamComps').doc('guildManager');
 const generalChatRef = db.collection('chatGeneral');
 const groupChatRef = db.collection('chatGroupMessages');
@@ -953,7 +958,7 @@ function verifyRoleAndProceed(isNewLogin){
         discordSession.isAdmin = IS_ADMIN;
         localStorage.setItem('equipes-discord-session', JSON.stringify(discordSession));
         if (isNewLogin){
-          docRef.get().then(snap => {
+          firebaseAuthReady.then(() => docRef.get()).then(snap => {
             if (snap.exists){
               const d = snap.data();
               if (d.players) PLAYERS = d.players;
@@ -3001,25 +3006,27 @@ function fetchDiscordMembersList(){
 }
 
 function startApp(){
-  fetchDiscordMembersList();
-  startGeneralChatListener();
-  let firstLoad = true;
-  docRef.onSnapshot(snap => {
-    if (snap.exists){
-      const d = snap.data();
-      if (d.players) PLAYERS = d.players;
-      if (d.classes && d.classes.length) CLASSES = d.classes;
-      if (d.groups) GROUPS = d.groups;
-      if (d.events) EVENTS = d.events;
-      if (d.auditLog) AUDIT_LOG = d.auditLog;
-    } else if (firstLoad){
-      scheduleSave();
-    }
-    firstLoad = false;
-    render();
-  }, err => {
-    console.error('Firestore error', err);
-    render();
+  firebaseAuthReady.then(() => {
+    fetchDiscordMembersList();
+    startGeneralChatListener();
+    let firstLoad = true;
+    docRef.onSnapshot(snap => {
+      if (snap.exists){
+        const d = snap.data();
+        if (d.players) PLAYERS = d.players;
+        if (d.classes && d.classes.length) CLASSES = d.classes;
+        if (d.groups) GROUPS = d.groups;
+        if (d.events) EVENTS = d.events;
+        if (d.auditLog) AUDIT_LOG = d.auditLog;
+      } else if (firstLoad){
+        scheduleSave();
+      }
+      firstLoad = false;
+      render();
+    }, err => {
+      console.error('Firestore error', err);
+      render();
+    });
   });
 }
 
