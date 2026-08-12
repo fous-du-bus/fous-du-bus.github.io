@@ -207,6 +207,12 @@ html, body { margin: 0; padding: 0; }
 .gm-chat-edit-row { display: flex; gap: 6px; margin-top: 4px; }
 .gm-chat-edit-row input { flex: 1; background: var(--bg-2); border: 1px solid var(--border-strong); color: var(--text); padding: 6px 10px; border-radius: 8px; font-size: 13px; outline: none; font-family: 'Inter'; }
 .gm-chat-input-row { display: flex; gap: 8px; }
+.gm-chat-input-wrap { position: relative; flex: 1; }
+.gm-chat-input-wrap input { width: 100%; background: var(--bg-2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 9px; font-size: 13px; outline: none; font-family: 'Inter'; box-sizing: border-box; }
+.gm-chat-input-wrap input:focus { border-color: var(--border-strong); }
+.gm-mention-dropdown { display: none; position: absolute; bottom: calc(100% + 6px); left: 0; right: 0; background: var(--panel-solid); border: 1px solid var(--border-strong); border-radius: 10px; padding: 4px; max-height: 220px; overflow-y: auto; z-index: 50; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+.gm-mention-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 7px; cursor: pointer; font-size: 12.5px; color: var(--text); }
+.gm-mention-item.selected, .gm-mention-item:hover { background: rgba(139,107,255,0.16); }
 .gm-chat-input-row input { flex: 1; background: var(--bg-2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 9px; font-size: 13px; outline: none; font-family: 'Inter'; }
 .gm-chat-input-row input:focus { border-color: var(--border-strong); }
 .gm-group-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -973,6 +979,71 @@ function detectMentions(text){
   });
   return Array.from(ids);
 }
+
+/* ---- Mention autocomplete ---- */
+function getMentionQuery(el){
+  const val = el.value;
+  const pos = el.selectionStart;
+  const before = val.slice(0, pos);
+  const m = before.match(/(?:^|\s)@([\p{L}\p{N}_.]*)$/u);
+  return m ? m[1] : null;
+}
+function mentionDisplayName(p){ return p.discordUsername || p.pseudo; }
+function updateMentionSelection(dd){
+  dd.querySelectorAll('.gm-mention-item').forEach((it, i) => it.classList.toggle('selected', i === dd._selectedIdx));
+}
+function insertMention(inputEl, name){
+  const val = inputEl.value;
+  const pos = inputEl.selectionStart;
+  const before = val.slice(0, pos);
+  const after = val.slice(pos);
+  const newBefore = before.replace(/(^|\s)@([\p{L}\p{N}_.]*)$/u, (match, lead) => lead + '@' + name + ' ');
+  inputEl.value = newBefore + after;
+  const newPos = newBefore.length;
+  inputEl.focus();
+  inputEl.setSelectionRange(newPos, newPos);
+}
+function renderMentionDropdown(inputEl, dd){
+  if (!dd) return;
+  const query = getMentionQuery(inputEl);
+  if (query === null) { dd.style.display = 'none'; dd.innerHTML = ''; return; }
+  const qLower = query.toLowerCase();
+  const seen = new Set();
+  const matches = PLAYERS.filter(p => {
+    const name = mentionDisplayName(p);
+    if (!name || seen.has(name)) return false;
+    const ok = name.toLowerCase().includes(qLower);
+    if (ok) seen.add(name);
+    return ok;
+  }).slice(0, 6);
+  if (!matches.length) { dd.style.display = 'none'; dd.innerHTML = ''; return; }
+  dd._matches = matches;
+  dd._selectedIdx = 0;
+  dd.innerHTML = matches.map((p, i) => `<div class="gm-mention-item" data-idx="${i}">${avatarHtml(p, 18)}<span>${esc(mentionDisplayName(p))}</span></div>`).join('');
+  dd.style.display = 'block';
+  updateMentionSelection(dd);
+  dd.querySelectorAll('.gm-mention-item').forEach(item => {
+    item.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      const p = dd._matches[parseInt(item.dataset.idx, 10)];
+      insertMention(inputEl, mentionDisplayName(p));
+      dd.style.display = 'none';
+    });
+  });
+}
+function setupChatMentionInput(el, dd, onSend){
+  el.addEventListener('input', () => renderMentionDropdown(el, dd));
+  el.addEventListener('keydown', (e) => {
+    if (dd && dd.style.display === 'block' && dd._matches && dd._matches.length) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); dd._selectedIdx = Math.min(dd._selectedIdx + 1, dd._matches.length - 1); updateMentionSelection(dd); return; }
+      if (e.key === 'ArrowUp') { e.preventDefault(); dd._selectedIdx = Math.max(dd._selectedIdx - 1, 0); updateMentionSelection(dd); return; }
+      if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); const p = dd._matches[dd._selectedIdx]; if (p) insertMention(el, mentionDisplayName(p)); dd.style.display = 'none'; return; }
+      if (e.key === 'Escape') { dd.style.display = 'none'; return; }
+    }
+    if (e.key === 'Enter') { e.preventDefault(); onSend(el.value); el.value = ''; if (dd) dd.style.display = 'none'; }
+  });
+  el.addEventListener('blur', () => { setTimeout(() => { if (dd) dd.style.display = 'none'; }, 150); });
+}
 function sendGeneralChatMessage(text){
   text = (text || '').trim().slice(0, 500);
   if (!text) return;
@@ -1680,7 +1751,10 @@ function renderDashboard(){
               ${GENERAL_CHAT_MESSAGES.length ? GENERAL_CHAT_MESSAGES.slice(-30).map(m => renderChatMessage(m, 'chatGeneral')).join('') : `<div class="gm-chat-empty">${t('chat.empty')}</div>`}
             </div>
             <div class="gm-chat-input-row">
-              <input type="text" id="chat-input-general" data-action="chat-keydown-general" maxlength="500" placeholder="${t('chat.placeholder')}" />
+              <div class="gm-chat-input-wrap">
+                <input type="text" id="chat-input-general" data-action="chat-keydown-general" maxlength="500" placeholder="${t('chat.placeholder')}" autocomplete="off" />
+                <div class="gm-mention-dropdown" id="mention-dd-general"></div>
+              </div>
               <button class="gm-btn gm-btn-primary" data-action="send-general-chat">${t('chat.send')}</button>
             </div>
           </div>` : `<div class="gm-empty">${t('mygroup.not_logged')}</div>`}
@@ -2085,7 +2159,10 @@ function renderChatTab(){
       ${GENERAL_CHAT_MESSAGES.length ? GENERAL_CHAT_MESSAGES.map(m => renderChatMessage(m, 'chatGeneral')).join('') : `<div class="gm-chat-empty">${t('chat.empty')}</div>`}
     </div>
     <div class="gm-chat-input-row">
-      <input type="text" id="chat-input-general" data-action="chat-keydown-general" maxlength="500" placeholder="${t('chat.placeholder')}" />
+      <div class="gm-chat-input-wrap">
+        <input type="text" id="chat-input-general" data-action="chat-keydown-general" maxlength="500" placeholder="${t('chat.placeholder')}" autocomplete="off" />
+        <div class="gm-mention-dropdown" id="mention-dd-general"></div>
+      </div>
       <button class="gm-btn gm-btn-primary" data-action="send-general-chat">${t('chat.send')}</button>
     </div>
   </div>`;
@@ -2101,7 +2178,10 @@ function renderGroupChatPanel(g){
         ${messages.length ? messages.map(m => renderChatMessage(m, 'chatGroupMessages')).join('') : `<div class="gm-chat-empty">${t('chat.empty')}</div>`}
       </div>
       <div class="gm-chat-input-row">
-        <input type="text" id="chat-input-group-${g.id}" data-action="chat-keydown-group" data-group="${g.id}" maxlength="500" placeholder="${t('chat.placeholder')}" />
+        <div class="gm-chat-input-wrap">
+          <input type="text" id="chat-input-group-${g.id}" data-action="chat-keydown-group" data-group="${g.id}" maxlength="500" placeholder="${t('chat.placeholder')}" autocomplete="off" />
+          <div class="gm-mention-dropdown" id="mention-dd-group-${g.id}"></div>
+        </div>
         <button class="gm-btn gm-btn-primary gm-btn-sm" data-action="send-group-chat" data-group="${g.id}">${t('chat.send')}</button>
       </div>
     </div>` : ''}
@@ -2419,18 +2499,16 @@ function bindEvents(){
     } else if (action === 'quick-join-role'){
       el.addEventListener('click', () => quickJoinGroupRole(el.dataset.group, el.dataset.role));
     } else if (action === 'chat-keydown-general'){
-      el.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') { e.preventDefault(); sendGeneralChatMessage(el.value); el.value = ''; }
-      });
+      const dd = document.getElementById('mention-dd-general');
+      setupChatMentionInput(el, dd, (val) => sendGeneralChatMessage(val));
     } else if (action === 'send-general-chat'){
       el.addEventListener('click', () => {
         const inp = document.getElementById('chat-input-general');
         if (inp) { sendGeneralChatMessage(inp.value); inp.value = ''; }
       });
     } else if (action === 'chat-keydown-group'){
-      el.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') { e.preventDefault(); sendGroupChatMessage(el.dataset.group, el.value); el.value = ''; }
-      });
+      const dd = document.getElementById('mention-dd-group-' + el.dataset.group);
+      setupChatMentionInput(el, dd, (val) => sendGroupChatMessage(el.dataset.group, val));
     } else if (action === 'send-group-chat'){
       el.addEventListener('click', () => {
         const inp = document.getElementById('chat-input-group-' + el.dataset.group);
