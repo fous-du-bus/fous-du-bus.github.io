@@ -198,8 +198,12 @@ html, body { margin: 0; padding: 0; }
 .gm-chat-msg-head strong { color: var(--text); }
 .gm-chat-time { font-size: 10.5px; color: var(--muted-2); }
 .gm-chat-msg-text { font-size: 13px; color: var(--text); line-height: 1.4; word-break: break-word; white-space: pre-wrap; }
-.gm-chat-delete { background: none; border: none; color: var(--muted-2); cursor: pointer; font-size: 11px; padding: 2px 4px; flex-shrink: 0; }
-.gm-chat-delete:hover { color: var(--danger); }
+.gm-chat-msg-actions { display: flex; gap: 2px; flex-shrink: 0; opacity: 0; transition: opacity .15s ease; }
+.gm-chat-msg:hover .gm-chat-msg-actions { opacity: 1; }
+.gm-chat-action-btn { background: none; border: none; color: var(--muted-2); cursor: pointer; font-size: 11px; padding: 4px 6px; border-radius: 6px; }
+.gm-chat-action-btn:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+.gm-chat-edit-row { display: flex; gap: 6px; margin-top: 4px; }
+.gm-chat-edit-row input { flex: 1; background: var(--bg-2); border: 1px solid var(--border-strong); color: var(--text); padding: 6px 10px; border-radius: 8px; font-size: 13px; outline: none; font-family: 'Inter'; }
 .gm-chat-input-row { display: flex; gap: 8px; }
 .gm-chat-input-row input { flex: 1; background: var(--bg-2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 9px; font-size: 13px; outline: none; font-family: 'Inter'; }
 .gm-chat-input-row input:focus { border-color: var(--border-strong); }
@@ -334,6 +338,7 @@ let GROUP_CHAT_MESSAGES = {};
 let GENERAL_CHAT_STARTED = false;
 let GROUP_CHAT_STARTED = {};
 let OPEN_GROUP_CHATS = {};
+let EDITING_CHAT_MSG = null;
 
 let ACTIVE_TAB = 'dashboard';
 let TOASTS = [];
@@ -388,6 +393,8 @@ const I18N = {
     'chat.send': 'Envoyer',
     'chat.send_error': "Erreur lors de l'envoi du message.",
     'chat.group_toggle': 'Discussion du groupe',
+    'chat.save': 'Enregistrer',
+    'chat.edited': 'modifié',
     'topbar.auditlog.title': 'Journal d\'activité', 'topbar.auditlog.sub': 'Historique des suppressions et modifications effectuées par les admins',
     'audit.empty': 'Aucune activité enregistrée pour le moment.',
     'audit.col_action': 'Action', 'audit.col_target': 'Concerne', 'audit.col_actor': 'Par', 'audit.col_when': 'Quand',
@@ -542,6 +549,8 @@ const I18N = {
     'chat.send': 'Send',
     'chat.send_error': 'Error sending the message.',
     'chat.group_toggle': 'Group chat',
+    'chat.save': 'Save',
+    'chat.edited': 'edited',
     'topbar.auditlog.title': 'Activity log', 'topbar.auditlog.sub': 'History of deletions and changes made by admins',
     'audit.empty': 'No activity recorded yet.',
     'audit.col_action': 'Action', 'audit.col_target': 'Target', 'audit.col_actor': 'By', 'audit.col_when': 'When',
@@ -965,9 +974,27 @@ function sendGroupChatMessage(groupId, text){
     text, at: Date.now(),
   }).catch(err => { console.error(err); toast(t('chat.send_error'), 'danger'); });
 }
-function deleteChatMessage(collectionName, messageId){
-  if (!isAdminView()) { toast(t('toast.admin_only'), 'danger'); return; }
+function deleteChatMessage(collectionName, messageId, authorId){
+  const canDelete = isAdminView() || (discordUser && authorId === discordUser.id);
+  if (!canDelete) { toast(t('toast.admin_only'), 'danger'); return; }
   db.collection(collectionName).doc(messageId).delete().catch(err => console.error(err));
+}
+function startEditChatMessage(collectionName, messageId){
+  EDITING_CHAT_MSG = { collection: collectionName, id: messageId };
+  render();
+}
+function cancelEditChatMessage(){
+  EDITING_CHAT_MSG = null;
+  render();
+}
+function saveEditChatMessage(collectionName, messageId){
+  const inp = document.getElementById('chat-edit-input-' + messageId);
+  if (!inp) return;
+  const text = inp.value.trim().slice(0, 500);
+  if (!text) return;
+  db.collection(collectionName).doc(messageId).update({ text, editedAt: Date.now() }).catch(err => console.error(err));
+  EDITING_CHAT_MSG = null;
+  render();
 }
 function toggleGroupChat(groupId){
   OPEN_GROUP_CHATS[groupId] = !OPEN_GROUP_CHATS[groupId];
@@ -1981,13 +2008,31 @@ function renderOpenGroupsTab(){
 /* ---- Chat ---- */
 function renderChatMessage(m, collectionName){
   const dateLabel = new Date(m.at).toLocaleString(LANG==='en'?'en-GB':'fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+  const canManage = isAdminView() || (discordUser && m.authorId === discordUser.id);
+  const isEditing = EDITING_CHAT_MSG && EDITING_CHAT_MSG.collection === collectionName && EDITING_CHAT_MSG.id === m.id;
+  if (isEditing) {
+    return `<div class="gm-chat-msg">
+      <img class="gm-chat-avatar" src="${esc(m.avatar || '')}" alt="" />
+      <div class="gm-chat-msg-body">
+        <div class="gm-chat-msg-head"><strong>${esc(m.authorName)}</strong></div>
+        <div class="gm-chat-edit-row">
+          <input type="text" id="chat-edit-input-${m.id}" data-action="chat-edit-keydown" data-collection="${collectionName}" data-id="${m.id}" maxlength="500" value="${esc(m.text).replace(/"/g,'&quot;')}" />
+          <button class="gm-btn gm-btn-primary gm-btn-sm" data-action="save-chat-edit" data-collection="${collectionName}" data-id="${m.id}">${t('chat.save')}</button>
+          <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="cancel-chat-edit">${t('modal.cancel')}</button>
+        </div>
+      </div>
+    </div>`;
+  }
   return `<div class="gm-chat-msg">
     <img class="gm-chat-avatar" src="${esc(m.avatar || '')}" alt="" />
     <div class="gm-chat-msg-body">
-      <div class="gm-chat-msg-head"><strong>${esc(m.authorName)}</strong><span class="gm-chat-time">${esc(dateLabel)}</span></div>
+      <div class="gm-chat-msg-head"><strong>${esc(m.authorName)}</strong><span class="gm-chat-time">${esc(dateLabel)}${m.editedAt ? ' · ' + t('chat.edited') : ''}</span></div>
       <div class="gm-chat-msg-text">${esc(m.text)}</div>
     </div>
-    ${isAdminView() ? `<button class="gm-chat-delete" data-action="delete-chat-msg" data-collection="${collectionName}" data-id="${m.id}" title="${t('groups.delete')}">✕</button>` : ''}
+    ${canManage ? `<div class="gm-chat-msg-actions">
+      <button class="gm-chat-action-btn" data-action="edit-chat-msg" data-collection="${collectionName}" data-id="${m.id}" title="${t('players.edit')}">✎</button>
+      <button class="gm-chat-action-btn" data-action="delete-chat-msg" data-collection="${collectionName}" data-id="${m.id}" data-author="${esc(m.authorId||'')}" title="${t('groups.delete')}">✕</button>
+    </div>` : ''}
   </div>`;
 }
 function renderChatTab(){
@@ -2346,7 +2391,18 @@ function bindEvents(){
     } else if (action === 'toggle-group-chat'){
       el.addEventListener('click', () => toggleGroupChat(el.dataset.group));
     } else if (action === 'delete-chat-msg'){
-      el.addEventListener('click', () => deleteChatMessage(el.dataset.collection, el.dataset.id));
+      el.addEventListener('click', () => deleteChatMessage(el.dataset.collection, el.dataset.id, el.dataset.author));
+    } else if (action === 'edit-chat-msg'){
+      el.addEventListener('click', () => startEditChatMessage(el.dataset.collection, el.dataset.id));
+    } else if (action === 'save-chat-edit'){
+      el.addEventListener('click', () => saveEditChatMessage(el.dataset.collection, el.dataset.id));
+    } else if (action === 'cancel-chat-edit'){
+      el.addEventListener('click', () => cancelEditChatMessage());
+    } else if (action === 'chat-edit-keydown'){
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); saveEditChatMessage(el.dataset.collection, el.dataset.id); }
+        else if (e.key === 'Escape') { e.preventDefault(); cancelEditChatMessage(); }
+      });
     } else if (action === 'reset-group'){
       el.addEventListener('click', () => resetGroup(el.dataset.group));
     } else if (action === 'delete-group'){
