@@ -1863,7 +1863,7 @@ function renderDashboard(){
         ${(() => {
           const openGroups = GROUPS.filter(g => g.open && g.event && g.type !== 'sanctuary');
           return `
-          <div class="gm-panel" style="min-height:140px;">
+          <div class="gm-panel" style="height:300px;display:flex;flex-direction:column;">
             <h3 style="font-size:13px;margin:0 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">🔓 ${t('dashboard.open_groups')} (${openGroups.length})</h3>
             ${!openGroups.length ? `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_open_groups')}</div>` : `
             <div style="display:flex;flex-direction:column;gap:10px;max-height:230px;overflow-y:auto;padding-right:4px;">
@@ -1904,13 +1904,13 @@ function renderDashboard(){
         </div>
       </div>
       <div style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:24px;">
-        <div class="gm-panel gm-dashboard-event-card">
+        <div class="gm-panel gm-dashboard-event-card" style="height:270px;display:flex;flex-direction:column;">
           <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.next_event')}</h3>
           <div style="max-height:230px;overflow-y:auto;padding-right:4px;">
             ${nextEvent ? renderEventCard(nextEvent) : `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_upcoming_event')}</div>`}
           </div>
         </div>
-        <div class="gm-panel gm-dashboard-event-card" style="min-height:100px;">
+        <div class="gm-panel gm-dashboard-event-card" style="height:530px;display:flex;flex-direction:column;">
           <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.my_group_events')}</h3>
           ${!myGroupEvents.length ? `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_group_events')}</div>` : `
           <div style="display:flex;flex-direction:column;gap:14px;max-height:460px;overflow-y:auto;padding-right:4px;">
@@ -1924,7 +1924,7 @@ function renderDashboard(){
           });
           const pairs = Object.values(pairsById);
           return `
-          <div class="gm-panel" style="min-height:100px;">
+          <div class="gm-panel" style="height:250px;display:flex;flex-direction:column;">
             <h3 style="font-size:13px;margin:0 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">🏛️ ${t('nav.sanctuary')} (${pairs.length})</h3>
             ${!pairs.length ? `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_sanctuary')}</div>` : `
             <div style="display:flex;flex-direction:column;gap:10px;max-height:180px;overflow-y:auto;padding-right:4px;">
