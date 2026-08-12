@@ -1691,6 +1691,21 @@ function deleteSanctuaryPair(pairId){
 /* =========================================================
    RENDER
 ========================================================= */
+function updateLiveClock(){
+  const clockEl = document.getElementById('gm-live-clock');
+  const dateEl = document.getElementById('gm-live-date');
+  if (!clockEl && !dateEl) return;
+  const now = new Date();
+  const locale = LANG === 'en' ? 'en-GB' : 'fr-FR';
+  if (clockEl) clockEl.textContent = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  if (dateEl) {
+    let label = now.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
+    label = label.charAt(0).toUpperCase() + label.slice(1);
+    dateEl.textContent = label;
+  }
+}
+setInterval(updateLiveClock, 1000);
+
 function render(){
   const root = document.getElementById('gm-app');
   const scrollY = window.scrollY;
@@ -1711,6 +1726,7 @@ function render(){
     }
   }
   root.querySelectorAll('.gm-chat-messages').forEach(box => { box.scrollTop = box.scrollHeight; });
+  updateLiveClock();
 }
 
 function renderShell(){
@@ -1824,6 +1840,12 @@ function renderTopbar(){
   return `
     <div class="gm-topbar">
       <div><div class="gm-page-title gm-font-display">${esc(title)}</div><div class="gm-page-sub">${esc(sub)}</div></div>
+      ${ACTIVE_TAB==='dashboard' ? `
+        <div style="text-align:right;">
+          <div class="gm-page-title gm-font-display" id="gm-live-clock">--:--:--</div>
+          <div class="gm-page-sub" id="gm-live-date"></div>
+        </div>
+      ` : ''}
       ${ACTIVE_TAB==='players' ? `
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <div class="gm-search"><input type="text" placeholder="${t('topbar.search_placeholder')}" value="${esc(PLAYER_FILTERS.search)}" data-action="filter-search" /></div>
