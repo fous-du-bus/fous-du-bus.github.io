@@ -1697,7 +1697,7 @@ function updateLiveClock(){
   if (!clockEl && !dateEl) return;
   const now = new Date();
   const locale = LANG === 'en' ? 'en-GB' : 'fr-FR';
-  if (clockEl) clockEl.textContent = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  if (clockEl) clockEl.textContent = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
   if (dateEl) {
     let label = now.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
     label = label.charAt(0).toUpperCase() + label.slice(1);
