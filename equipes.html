@@ -1780,7 +1780,7 @@ function renderDashboard(){
         ${myGroupEvents.length ? `
         <div class="gm-panel gm-dashboard-event-card">
           <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.my_group_events')}</h3>
-          <div style="display:flex;flex-direction:column;gap:14px;max-height:280px;overflow-y:auto;padding-right:4px;">
+          <div style="display:flex;flex-direction:column;gap:14px;max-height:460px;overflow-y:auto;padding-right:4px;">
             ${myGroupEvents.map(g => renderGroupEventCard(g)).join('')}
           </div>
         </div>` : ''}
