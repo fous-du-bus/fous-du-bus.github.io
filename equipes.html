@@ -235,7 +235,10 @@ html, body { margin: 0; padding: 0; }
 .gm-group-name:focus { border-bottom: 1px dashed var(--border-strong); }
 .gm-group-meta-inputs { display: flex; gap: 8px; flex-wrap: wrap; }
 .gm-group-meta-inputs input { background: var(--panel-solid); border: 1px solid var(--border); color: var(--text); padding: 6px 9px; border-radius: 8px; font-size: 12px; outline: none; font-family:'Inter'; }
-.gm-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+.gm-slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 1200px) { .gm-slots { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .gm-slots { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 460px) { .gm-slots { grid-template-columns: 1fr; } }
 .gm-slot-wrapper { position: relative; }
 .gm-slot-wrapper .gm-slot-num { position: absolute; top: 14px; left: 18px; z-index: 2; background: var(--panel-solid); border: 1px solid var(--border); border-radius: 20px; padding: 2px 8px; }
 .gm-slot { border: 1.5px dashed var(--border); border-radius: 12px; padding: 10px; min-height: auto; display: flex; flex-direction: column; gap: 6px; position: relative; background: rgba(255,255,255,0.015); }
