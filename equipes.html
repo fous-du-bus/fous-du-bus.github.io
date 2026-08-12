@@ -1297,7 +1297,9 @@ function resetGroup(groupId){
   render();
 }
 function canManageGroup(g){
-  return isAdminView() || (discordUser && g.createdById === discordUser.id);
+  if (isAdminView()) return true;
+  if (!g.open) return false;
+  return discordUser && g.createdById === discordUser.id;
 }
 function deleteGroup(groupId){
   const g = GROUPS.find(x => x.id === groupId);
