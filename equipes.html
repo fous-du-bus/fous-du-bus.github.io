@@ -1855,7 +1855,7 @@ function renderDashboard(){
             `).join('')}
         </div>
         ${(() => {
-          const openGroups = GROUPS.filter(g => g.open && g.event);
+          const openGroups = GROUPS.filter(g => g.open && g.event && g.type !== 'sanctuary');
           if (!openGroups.length) return '';
           return `
           <div class="gm-panel">
