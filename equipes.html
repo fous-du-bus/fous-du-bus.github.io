@@ -1624,6 +1624,15 @@ function fallbackCopy(text, cb){
   document.body.removeChild(ta); cb();
 }
 
+const LFG_REACTIONS_WORKER_URL = 'https://lfg-reactions.aegrim-midgard.workers.dev/';
+function triggerLfgReactions(channelId, messageId){
+  if (!channelId || !messageId) return;
+  fetch(LFG_REACTIONS_WORKER_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ channelId, messageId }),
+  }).catch(err => console.error('reaction trigger error', err));
+}
 function openPublishGroupModal(groupId){
   const g = GROUPS.find(x => x.id === groupId);
   if (!g) return;
@@ -1687,11 +1696,13 @@ function publishGroupToDiscord(groupId, opts){
       color: g.type === 'sanctuary' ? 0xffb84f : (g.type === 'pve' ? 0x4f9dff : 0xff6b7a),
     }],
   };
-  fetch(DISCORD_LFG_WEBHOOK_URL, {
+  fetch(DISCORD_LFG_WEBHOOK_URL + '?wait=true', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
   }).then(r => {
-    if (r.ok) toast(t('groups.lfg_posted'));
-    else toast(t('groups.lfg_error'), 'danger');
+    if (r.ok) {
+      toast(t('groups.lfg_posted'));
+      r.json().then(msg => triggerLfgReactions(msg.channel_id, msg.id)).catch(() => {});
+    } else toast(t('groups.lfg_error'), 'danger');
   }).catch(() => toast(t('groups.lfg_error'), 'danger'));
 }
 function openPublishSanctuaryModal(pairId){
@@ -1757,11 +1768,13 @@ function publishSanctuaryPairToDiscord(pairId, opts){
       color: 0xffb84f,
     }],
   };
-  fetch(DISCORD_LFG_WEBHOOK_URL, {
+  fetch(DISCORD_LFG_WEBHOOK_URL + '?wait=true', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
   }).then(r => {
-    if (r.ok) toast(t('groups.lfg_posted'));
-    else toast(t('groups.lfg_error'), 'danger');
+    if (r.ok) {
+      toast(t('groups.lfg_posted'));
+      r.json().then(msg => triggerLfgReactions(msg.channel_id, msg.id)).catch(() => {});
+    } else toast(t('groups.lfg_error'), 'danger');
   }).catch(() => toast(t('groups.lfg_error'), 'danger'));
 }
 function canManageSanctuaryPair(pairGroups){
