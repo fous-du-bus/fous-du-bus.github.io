@@ -146,9 +146,10 @@ html, body { margin: 0; padding: 0; }
 .gm-mygroup-section-title { font-family: 'Cinzel'; font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
 .gm-open-create-row { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
 .gm-sanctuary-pair { border: 1px solid rgba(255,184,79,0.3); border-radius: 16px; padding: 16px; margin-bottom: 24px; background: rgba(255,184,79,0.03); }
-.gm-sanctuary-pair-title { font-family: 'Cinzel'; font-size: 14px; font-weight: 600; color: var(--new); margin-bottom: 14px; }
-.gm-sanctuary-pair-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
-.gm-sanctuary-pair-groups .gm-slots { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.gm-sanctuary-pair-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+.gm-sanctuary-pair-title { font-family: 'Cinzel'; font-size: 14px; font-weight: 600; color: var(--new); }
+.gm-sanctuary-pair-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 14px; }
+.gm-sanctuary-pair-groups .gm-slots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .gm-sanctuary-pair-groups .gm-group-card { margin-bottom: 0; }
 .gm-event-request-banner { background: rgba(255,184,79,0.14); border: 1px solid rgba(255,184,79,0.4); color: var(--new); font-size: 13px; padding: 10px 14px; border-radius: 10px; margin-bottom: 10px; }
 .gm-events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
@@ -409,6 +410,8 @@ const I18N = {
     'topbar.sanctuary.title': 'Groupe Sanctuaire (10p)', 'topbar.sanctuary.sub': 'Recherches de groupe pour le contenu à 10 joueurs (Sanctuaire)',
     'sanctuary.empty': 'Aucune recherche de groupe Sanctuaire pour le moment.',
     'sanctuary.create': '+ Créer une recherche Sanctuaire',
+    'sanctuary.default_title': 'Recherche Sanctuaire',
+    'sanctuary.delete_confirm': 'Supprimer cette recherche Sanctuaire (les 2 groupes de 5) ? Cette action est irréversible.',
     'sanctuary.pair_progress': 'Sanctuaire — {n}/{total} joueurs inscrits',
     'nav.auditlog': 'Journal',
     'nav.chat': 'Tchat',
@@ -571,6 +574,8 @@ const I18N = {
     'topbar.sanctuary.title': 'Sanctuary Group (10p)', 'topbar.sanctuary.sub': 'Group searches for 10-player content (Sanctuary)',
     'sanctuary.empty': 'No Sanctuary group search at the moment.',
     'sanctuary.create': '+ Create a Sanctuary search',
+    'sanctuary.default_title': 'Sanctuary search',
+    'sanctuary.delete_confirm': 'Delete this Sanctuary search (both groups of 5)? This action is irreversible.',
     'sanctuary.pair_progress': 'Sanctuary — {n}/{total} players registered',
     'nav.auditlog': 'Log',
     'nav.chat': 'Chat',
@@ -1557,7 +1562,92 @@ function publishGroupToDiscord(groupId, opts){
     else toast(t('groups.lfg_error'), 'danger');
   }).catch(() => toast(t('groups.lfg_error'), 'danger'));
 }
-
+function openPublishSanctuaryModal(pairId){
+  if (!DISCORD_LFG_WEBHOOK_URL) { toast(t('groups.lfg_not_configured'), 'danger'); return; }
+  MODAL = {
+    type: 'publish-group', pairId,
+    form: { title: '', type: 'sanctuary', date: '', time: '' },
+    error: '',
+  };
+  render();
+}
+function publishSanctuaryPairToDiscord(pairId, opts){
+  const pairGroups = GROUPS.filter(g => g.sanctuaryPairId === pairId);
+  if (!pairGroups.length) return;
+  if (!DISCORD_LFG_WEBHOOK_URL) { toast(t('groups.lfg_not_configured'), 'danger'); return; }
+  const eventData = {
+    title: (opts && opts.title && opts.title.trim()) ? opts.title.trim() : t('sanctuary.default_title'),
+    date: opts ? opts.date : '', time: opts ? opts.time : '',
+    type: 'sanctuary', createdAt: Date.now(),
+    createdById: discordUser ? discordUser.id : null,
+    createdByName: discordUser ? discordUser.username : '',
+  };
+  pairGroups.forEach(g => { g.event = eventData; });
+  saveTeams(); render();
+  const roleOrder = ['Tank', 'Heal', 'DPS', 'Flex'];
+  const mentionIds = [];
+  const descParts = [];
+  const dateLabel = (opts && opts.date) ? new Date(opts.date + 'T' + (opts.time || '00:00')).toLocaleString(LANG==='en'?'en-GB':'fr-FR', { weekday:'long', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+  if (dateLabel) descParts.push(`🗓️ ${dateLabel}`);
+  descParts.push('');
+  let totalFilled = 0;
+  pairGroups.forEach((g, gi) => {
+    descParts.push(`**${g.name}**`);
+    const filled = g.slots.filter(s => s.playerId).map(s => {
+      const p = player(s.playerId);
+      const c = p ? cls(p.classId) : null;
+      const mention = p && p.discordId ? `<@${p.discordId}>` : (p ? esc(p.pseudo) : '?');
+      if (p && p.discordId) mentionIds.push(p.discordId);
+      return { mention, className: c ? c.name : '?', role: c ? c.role : '' };
+    });
+    totalFilled += filled.length;
+    const lines = [];
+    roleOrder.forEach(role => {
+      filled.filter(f => f.role === role).forEach(f => lines.push(`**${role}** — ${f.mention} (${f.className})`));
+    });
+    filled.filter(f => !roleOrder.includes(f.role)).forEach(f => lines.push(`**${f.role || '?'}** — ${f.mention} (${f.className})`));
+    descParts.push(lines.join('\n') || t('groups.lfg_empty'));
+    descParts.push('');
+  });
+  const combinedNeeded = [];
+  pairGroups.forEach(g => combinedNeeded.push(...computeNeededRoles(g)));
+  if (combinedNeeded.length) descParts.push(`🔍 **${t('groups.seeking_roles')}** ${combinedNeeded.join(', ')}`, '');
+  descParts.push(`${totalFilled}/10 ${t('groups.registered')}`);
+  descParts.push('');
+  descParts.push(t('groups.lfg_react_prompt'));
+  const content = mentionIds.length ? mentionIds.map(id => `<@${id}>`).join(' ') : `📣 ${eventData.title}`;
+  const payload = {
+    content,
+    allowed_mentions: { parse: ['users'] },
+    embeds: [{
+      title: `🏛️ ${(opts && opts.title && opts.title.trim()) ? esc(opts.title.trim()) : eventData.title}`,
+      description: descParts.join('\n'),
+      color: 0xffb84f,
+    }],
+  };
+  fetch(DISCORD_LFG_WEBHOOK_URL, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+  }).then(r => {
+    if (r.ok) toast(t('groups.lfg_posted'));
+    else toast(t('groups.lfg_error'), 'danger');
+  }).catch(() => toast(t('groups.lfg_error'), 'danger'));
+}
+function canManageSanctuaryPair(pairGroups){
+  if (!pairGroups.length) return false;
+  return isAdminView() || (discordUser && pairGroups.some(g => g.createdById === discordUser.id));
+}
+function deleteSanctuaryPair(pairId){
+  const pairGroups = GROUPS.filter(g => g.sanctuaryPairId === pairId);
+  if (!canManageSanctuaryPair(pairGroups)) { toast(t('toast.admin_only'), 'danger'); return; }
+  MODAL = { type: 'confirm', title: t('modal.delete_group_title'), message: t('sanctuary.delete_confirm'),
+    onConfirm: () => {
+      GROUPS = GROUPS.filter(g => g.sanctuaryPairId !== pairId);
+      logAudit('group_deleted', t('sanctuary.default_title'));
+      toast(t('toast.group_deleted'), 'danger'); MODAL = null; saveTeams(); render();
+    }
+  };
+  render();
+}
 /* =========================================================
    RENDER
 ========================================================= */
@@ -1822,24 +1912,32 @@ function renderDashboard(){
           </div>
         </div>` : ''}
         ${(() => {
-          const sanctuaryGroups = GROUPS.filter(g => g.type === 'sanctuary' && g.event);
-          if (!sanctuaryGroups.length) return '';
+          const pairsById = {};
+          GROUPS.filter(g => g.type === 'sanctuary' && g.event).forEach(g => {
+            (pairsById[g.sanctuaryPairId] = pairsById[g.sanctuaryPairId] || []).push(g);
+          });
+          const pairs = Object.values(pairsById);
+          if (!pairs.length) return '';
           return `
           <div class="gm-panel">
-            <h3 style="font-size:13px;margin:0 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">🏛️ ${t('nav.sanctuary')} (${sanctuaryGroups.length})</h3>
+            <h3 style="font-size:13px;margin:0 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">🏛️ ${t('nav.sanctuary')} (${pairs.length})</h3>
             <div style="display:flex;flex-direction:column;gap:10px;max-height:230px;overflow-y:auto;padding-right:4px;">
-              ${sanctuaryGroups.map(g => {
-                const neededRoles = computeNeededRoles(g);
-                const creator = g.createdById ? PLAYERS.find(p => p.discordId === g.createdById) : null;
-                const registeredPlayers = g.slots.filter(s => s.playerId).map(s => player(s.playerId)).filter(Boolean);
+              ${pairs.map(pairGroups => {
+                const ev = pairGroups[0].event;
+                const combinedNeeded = [];
+                pairGroups.forEach(g => combinedNeeded.push(...computeNeededRoles(g)));
+                const creator = pairGroups[0].createdById ? PLAYERS.find(p => p.discordId === pairGroups[0].createdById) : null;
+                const registeredPlayers = pairGroups.flatMap(g => g.slots.filter(s => s.playerId).map(s => player(s.playerId))).filter(Boolean);
+                const totalFilled = registeredPlayers.length;
+                const totalSlots = pairGroups.reduce((sum, g) => sum + g.slots.length, 0);
                 return `<div class="gm-open-group-mini">
                 <span class="gm-class-pill" style="border-color:${groupTypeColor('sanctuary')}66;background:${groupTypeColor('sanctuary')}1c;color:${groupTypeColor('sanctuary')}">🏛️</span>
                 <div style="flex:1;min-width:0;">
                   <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-                    <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(g.event.title || g.name)}</div>
-                    ${neededRoles.length ? `<div style="display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;">${neededRoles.map(role => `<button class="gm-role-pill gm-role-pill-clickable" data-action="quick-join-role" data-group="${g.id}" data-role="${role}" style="font-size:9.5px;padding:2px 7px;border-color:${roleColor(role)}66;background:${roleColor(role)}1c;color:${roleColor(role)}">${role} +</button>`).join('')}</div>` : ''}
+                    <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(ev.title)}</div>
+                    ${combinedNeeded.length ? `<div style="display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;">${combinedNeeded.map(role => `<span class="gm-role-pill" style="font-size:9.5px;padding:2px 7px;border-color:${roleColor(role)}66;background:${roleColor(role)}1c;color:${roleColor(role)}">${role}</span>`).join('')}</div>` : ''}
                   </div>
-                  <div style="font-size:11px;color:var(--muted);">${esc(g.name)} · ${g.slots.filter(s=>s.playerId).length}/${g.slots.length}${creator ? ` · ${t('groups.created_by')}: ${esc(creator.discordUsername || creator.pseudo)}` : ''}</div>
+                  <div style="font-size:11px;color:var(--muted);">${totalFilled}/${totalSlots}${creator ? ` · ${t('groups.created_by')}: ${esc(creator.discordUsername || creator.pseudo)}` : ''}</div>
                   ${registeredPlayers.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">${registeredPlayers.map(p => { const pc = cls(p.classId); const rc = pc ? roleColor(pc.role) : 'var(--border)'; return `<div class="gm-mini-player-chip" style="border-color:${rc};">${avatarHtml(p, 18)}<span>${esc(p.discordUsername || p.pseudo)}</span></div>`; }).join('')}</div>` : ''}
                 </div>
               </div>`;
@@ -2191,6 +2289,50 @@ function renderOpenGroupsTab(){
   }
   return html;
 }
+function renderSanctuarySubGroupCard(g){
+  const eligiblePlayers = PLAYERS.filter(p => p.pve);
+  const slotsHtml = g.slots.map((slot, i) => {
+    const p = slot.playerId ? player(slot.playerId) : null;
+    if (p){
+      const canRemove = isAdminView() || (discordUser && p.discordId === discordUser.id);
+      const actions = canRemove ? `<button class="gm-btn gm-btn-danger gm-btn-sm" data-action="remove-slot-player" data-group="${g.id}" data-slot="${i}" style="padding:7px 16px;font-size:12.5px;">${t('groups.remove_title')}</button>` : '';
+      return `<div class="gm-slot-wrapper">${renderPlayerCard(p, actions, '')}</div>`;
+    }
+    const usedIds = new Set(g.slots.filter((s,si) => si !== i && s.playerId).map(s => s.playerId));
+    const options = eligiblePlayers.filter(p => !usedIds.has(p.id) && !playerLimitReached(p.id, g));
+    return `<div class="gm-slot">
+      <div class="gm-slot-empty">
+        <select data-action="set-slot-player" data-group="${g.id}" data-slot="${i}">
+          <option value="">${t('groups.choose_player')}</option>
+          ${options.map(p => `<option value="${p.id}">${esc(p.pseudo)}</option>`).join('')}
+        </select>
+      </div>
+    </div>`;
+  }).join('');
+  const subsHtml = g.substitutes.map(id => {
+    const p = player(id);
+    if (!p) return '';
+    return `<div class="gm-sub-chip">${avatarHtml(p, 22)}${esc(p.pseudo)}<button data-action="remove-substitute" data-group="${g.id}" data-player="${p.id}">✕</button></div>`;
+  }).join('');
+  const neededRoles = computeNeededRoles(g);
+  const filledCount = g.slots.filter(s => s.playerId).length;
+  return `<div class="gm-panel gm-group-card">
+    <div class="gm-group-head">
+      <div class="gm-group-title-row">
+        <input class="gm-group-name" value="${esc(g.name).replace(/"/g,'&quot;')}" data-action="update-group-name" data-group="${g.id}" />
+      </div>
+    </div>
+    ${neededRoles.length ? `
+    <div class="gm-needed-roles">
+      <span class="gm-needed-roles-label">${t('groups.seeking_roles')}</span>
+      ${neededRoles.map(role => `<button class="gm-role-pill gm-role-pill-clickable" data-action="quick-join-role" data-group="${g.id}" data-role="${role}" style="border-color:${roleColor(role)}66;background:${roleColor(role)}1c;color:${roleColor(role)}">${role} +</button>`).join('')}
+    </div>` : ''}
+    <div class="gm-slots">${slotsHtml}</div>
+    ${subsHtml ? `<div class="gm-subs-title">${t('groups.substitutes')}</div>
+    <div class="gm-subs-list">${subsHtml}</div>` : ''}
+    <div style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center;">${filledCount}/${g.slots.length} ${t('groups.registered')}</div>
+  </div>`;
+}
 function groupSanctuaryPairs(){
   const groups = GROUPS.filter(g => g.type === 'sanctuary');
   const byPair = {};
@@ -2203,10 +2345,19 @@ function groupSanctuaryPairs(){
 function renderSanctuaryPair(pairGroups){
   const totalFilled = pairGroups.reduce((sum, g) => sum + g.slots.filter(s => s.playerId).length, 0);
   const totalSlots = pairGroups.reduce((sum, g) => sum + g.slots.length, 0);
+  const pairId = pairGroups[0].sanctuaryPairId;
+  const creator = pairGroups[0].createdById ? PLAYERS.find(p => p.discordId === pairGroups[0].createdById) : null;
   return `<div class="gm-sanctuary-pair">
-    <div class="gm-sanctuary-pair-title">🏛️ ${t('sanctuary.pair_progress').replace('{n}', totalFilled).replace('{total}', totalSlots)}</div>
+    <div class="gm-sanctuary-pair-head">
+      <div class="gm-sanctuary-pair-title">🏛️ ${t('sanctuary.pair_progress').replace('{n}', totalFilled).replace('{total}', totalSlots)}</div>
+      <div class="gm-group-actions">
+        <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="publish-sanctuary-pair" data-pair="${pairId}" style="background:#5865F2;border-color:#5865F2;color:#fff;">${t('groups.publish_discord')}</button>
+        <button class="gm-btn gm-btn-danger gm-btn-sm" data-action="delete-sanctuary-pair" data-pair="${pairId}">${t('groups.delete')}</button>
+      </div>
+    </div>
+    ${creator ? `<div class="gm-group-creator">${t('groups.created_by')}: ${esc(creator.discordUsername || creator.pseudo)}</div>` : ''}
     <div class="gm-sanctuary-pair-groups">
-      ${pairGroups.map(g => renderGroupCard(g, true, true)).join('')}
+      ${pairGroups.map(g => renderSanctuarySubGroupCard(g)).join('')}
     </div>
   </div>`;
 }
@@ -2474,6 +2625,7 @@ function renderPublishGroupModal(){
           <input type="time" id="pg-time" value="${esc(f.time)}" />
         </div>
       </div>
+      ${!MODAL.pairId ? `
       <div class="gm-form-row">
         <label>${t('events.field.type')}</label>
         <select id="pg-type">
@@ -2481,7 +2633,7 @@ function renderPublishGroupModal(){
           <option value="pvp" ${f.type==='pvp'?'selected':''}>${t('events.type.pvp')}</option>
           <option value="other" ${f.type==='other'?'selected':''}>${t('events.type.other')}</option>
         </select>
-      </div>
+      </div>` : ''}
       <div class="gm-note">${t('groups.lfg_react_prompt')}</div>
       ${MODAL.error ? `<div class="gm-form-error">${esc(MODAL.error)}</div>` : ''}
       <div class="gm-modal-actions">
@@ -2572,18 +2724,25 @@ function bindEvents(){
       el.addEventListener('click', () => duplicateGroup(el.dataset.group));
     } else if (action === 'publish-group-discord'){
       el.addEventListener('click', () => openPublishGroupModal(el.dataset.group));
+    } else if (action === 'publish-sanctuary-pair'){
+      el.addEventListener('click', () => openPublishSanctuaryModal(el.dataset.pair));
+    } else if (action === 'delete-sanctuary-pair'){
+      el.addEventListener('click', () => deleteSanctuaryPair(el.dataset.pair));
     } else if (action === 'confirm-publish-group'){
       el.addEventListener('click', () => {
+        const typeEl = document.getElementById('pg-type');
         const opts = {
           title: document.getElementById('pg-title').value,
           date: document.getElementById('pg-date').value,
           time: document.getElementById('pg-time').value,
-          type: document.getElementById('pg-type').value,
+          type: typeEl ? typeEl.value : 'sanctuary',
         };
         if (!opts.date || !opts.time) { MODAL.error = t('error.event_date_required'); render(); return; }
         const groupId = MODAL.groupId;
+        const pairId = MODAL.pairId;
         MODAL = null; render();
-        publishGroupToDiscord(groupId, opts);
+        if (pairId) publishSanctuaryPairToDiscord(pairId, opts);
+        else publishGroupToDiscord(groupId, opts);
       });
     } else if (action === 'cancel-group-event'){
       el.addEventListener('click', () => cancelGroupEvent(el.dataset.group));
