@@ -1884,7 +1884,7 @@ function renderDashboard(){
           <h3 style="font-size:13px;margin:0 0 12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">💬 ${t('nav.chat')}</h3>
           ${discordUser ? `
           <div class="gm-chat-panel" style="border:none;padding:0;">
-            <div class="gm-chat-messages" style="max-height:130px;">
+            <div class="gm-chat-messages" style="max-height:260px;">
               ${GENERAL_CHAT_MESSAGES.length ? GENERAL_CHAT_MESSAGES.slice(-30).map(m => renderChatMessage(m, 'chatGeneral')).join('') : `<div class="gm-chat-empty">${t('chat.empty')}</div>`}
             </div>
             <div class="gm-chat-input-row">
