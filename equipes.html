@@ -172,7 +172,9 @@ html, body { margin: 0; padding: 0; }
 .gm-event-desc { font-size: 12.5px; color: var(--text); line-height: 1.5; margin-bottom: 8px; white-space: pre-wrap; }
 .gm-event-creator { font-size: 11px; color: var(--muted-2); }
 .gm-rsvp-block { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-.gm-rsvp-buttons { display: flex; gap: 6px; }
+.gm-rsvp-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+.gm-rsvp-toggle { background: none; border: 1px solid var(--border); color: var(--muted); font-size: 11px; padding: 5px 10px; border-radius: 8px; cursor: pointer; }
+.gm-rsvp-toggle:hover { color: var(--text); border-color: var(--border-strong); }
 .gm-rsvp-btn { background: var(--panel); border: 1px solid var(--border); color: var(--muted); font-size: 11.5px; font-weight: 600; padding: 5px 10px; border-radius: 8px; cursor: pointer; transition: all .15s ease; }
 .gm-rsvp-btn:hover { border-color: var(--border-strong); color: var(--text); }
 .gm-rsvp-btn.gm-rsvp-active-yes { background: rgba(53,210,154,0.16); border-color: var(--success); color: var(--success); }
@@ -347,6 +349,7 @@ let GROUP_CHAT_MESSAGES = {};
 let GENERAL_CHAT_STARTED = false;
 let GROUP_CHAT_STARTED = {};
 let OPEN_GROUP_CHATS = {};
+let RSVP_LIST_EXPANDED = {};
 let EDITING_CHAT_MSG = null;
 
 let ACTIVE_TAB = 'dashboard';
@@ -1340,11 +1343,15 @@ function renderRsvpBlock(rsvps, refType, refId){
     else if (status === 'no') noPlayers.push(p);
   });
   const chip = p => `<div class="gm-rsvp-chip" title="${esc(p.discordUsername || p.pseudo)}">${avatarHtml(p, 20)}<span>${esc(p.discordUsername || p.pseudo)}</span></div>`;
+  const key = refType + ':' + refId;
+  const expanded = !!RSVP_LIST_EXPANDED[key];
   return `<div class="gm-rsvp-block">
     <div class="gm-rsvp-buttons">
       <button class="gm-rsvp-btn ${mine==='yes'?'gm-rsvp-active-yes':''}" data-action="${yesAction}" data-id="${refId}">✅ ${t('rsvp.present')}</button>
       <button class="gm-rsvp-btn ${mine==='no'?'gm-rsvp-active-no':''}" data-action="${noAction}" data-id="${refId}">❌ ${t('rsvp.absent')}</button>
+      <button class="gm-rsvp-toggle" data-action="toggle-rsvp-list" data-key="${key}">${expanded ? '▾' : '▸'} ✅ ${yesPlayers.length} · ❌ ${noPlayers.length}</button>
     </div>
+    ${expanded ? `
     <div class="gm-rsvp-lists">
       <div class="gm-rsvp-list-col">
         <div class="gm-rsvp-list-label" style="color:var(--success);">✅ ${t('rsvp.present')} (${yesPlayers.length})</div>
@@ -1354,7 +1361,7 @@ function renderRsvpBlock(rsvps, refType, refId){
         <div class="gm-rsvp-list-label" style="color:var(--danger);">❌ ${t('rsvp.absent')} (${noPlayers.length})</div>
         ${noPlayers.length ? `<div class="gm-rsvp-chips">${noPlayers.map(chip).join('')}</div>` : `<div class="gm-rsvp-empty-note">${t('rsvp.none_yet')}</div>`}
       </div>
-    </div>
+    </div>` : ''}
   </div>`;
 }
 function postEventToDiscord(ev){
@@ -1726,7 +1733,7 @@ function renderDashboard(){
           return `
           <div class="gm-panel">
             <h3 style="font-size:13px;margin:0 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">🔓 ${t('dashboard.open_groups')} (${openGroups.length})</h3>
-            <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;flex-direction:column;gap:10px;max-height:230px;overflow-y:auto;padding-right:4px;">
               ${openGroups.map(g => {
                 const neededRoles = computeNeededRoles(g);
                 const creator = g.createdById ? PLAYERS.find(p => p.discordId === g.createdById) : null;
@@ -1750,7 +1757,7 @@ function renderDashboard(){
           <h3 style="font-size:13px;margin:0 0 12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">💬 ${t('nav.chat')}</h3>
           ${discordUser ? `
           <div class="gm-chat-panel" style="border:none;padding:0;">
-            <div class="gm-chat-messages" style="max-height:260px;">
+            <div class="gm-chat-messages" style="max-height:300px;">
               ${GENERAL_CHAT_MESSAGES.length ? GENERAL_CHAT_MESSAGES.slice(-30).map(m => renderChatMessage(m, 'chatGeneral')).join('') : `<div class="gm-chat-empty">${t('chat.empty')}</div>`}
             </div>
             <div class="gm-chat-input-row">
@@ -1766,12 +1773,14 @@ function renderDashboard(){
       <div style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:24px;">
         <div class="gm-panel gm-dashboard-event-card">
           <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.next_event')}</h3>
-          ${nextEvent ? renderEventCard(nextEvent) : `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_upcoming_event')}</div>`}
+          <div style="max-height:230px;overflow-y:auto;padding-right:4px;">
+            ${nextEvent ? renderEventCard(nextEvent) : `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_upcoming_event')}</div>`}
+          </div>
         </div>
         ${myGroupEvents.length ? `
         <div class="gm-panel gm-dashboard-event-card">
           <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.my_group_events')}</h3>
-          <div style="display:flex;gap:14px;flex-wrap:wrap;">
+          <div style="display:flex;flex-direction:column;gap:14px;max-height:280px;overflow-y:auto;padding-right:4px;">
             ${myGroupEvents.map(g => renderGroupEventCard(g)).join('')}
           </div>
         </div>` : ''}
@@ -2563,6 +2572,8 @@ function bindEvents(){
       el.addEventListener('click', () => openEventModal(el.dataset.id));
     } else if (action === 'delete-event'){
       el.addEventListener('click', () => requestDeleteEvent(el.dataset.id));
+    } else if (action === 'toggle-rsvp-list'){
+      el.addEventListener('click', () => { RSVP_LIST_EXPANDED[el.dataset.key] = !RSVP_LIST_EXPANDED[el.dataset.key]; render(); });
     } else if (action === 'rsvp-event-yes'){
       el.addEventListener('click', () => setEventRsvp(el.dataset.id, 'yes'));
     } else if (action === 'rsvp-event-no'){
