@@ -145,6 +145,10 @@ html, body { margin: 0; padding: 0; }
 .gm-group-card { padding: 16px; margin-bottom: 18px; }
 .gm-mygroup-section-title { font-family: 'Cinzel'; font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
 .gm-open-create-row { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.gm-sanctuary-pair { border: 1px solid rgba(255,184,79,0.3); border-radius: 16px; padding: 16px; margin-bottom: 24px; background: rgba(255,184,79,0.03); }
+.gm-sanctuary-pair-title { font-family: 'Cinzel'; font-size: 14px; font-weight: 600; color: var(--new); margin-bottom: 14px; }
+.gm-sanctuary-pair-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.gm-sanctuary-pair-groups .gm-group-card { margin-bottom: 0; }
 .gm-event-request-banner { background: rgba(255,184,79,0.14); border: 1px solid rgba(255,184,79,0.4); color: var(--new); font-size: 13px; padding: 10px 14px; border-radius: 10px; margin-bottom: 10px; }
 .gm-events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
 .gm-view-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
@@ -401,6 +405,7 @@ const I18N = {
     'topbar.sanctuary.title': 'Groupe Sanctuaire (10p)', 'topbar.sanctuary.sub': 'Recherches de groupe pour le contenu à 10 joueurs (Sanctuaire)',
     'sanctuary.empty': 'Aucune recherche de groupe Sanctuaire pour le moment.',
     'sanctuary.create': '+ Créer une recherche Sanctuaire',
+    'sanctuary.pair_progress': 'Sanctuaire — {n}/{total} joueurs inscrits',
     'nav.auditlog': 'Journal',
     'nav.chat': 'Tchat',
     'topbar.chat.title': 'Tchat', 'topbar.chat.sub': 'Discussion en direct avec toute la guilde',
@@ -562,6 +567,7 @@ const I18N = {
     'topbar.sanctuary.title': 'Sanctuary Group (10p)', 'topbar.sanctuary.sub': 'Group searches for 10-player content (Sanctuary)',
     'sanctuary.empty': 'No Sanctuary group search at the moment.',
     'sanctuary.create': '+ Create a Sanctuary search',
+    'sanctuary.pair_progress': 'Sanctuary — {n}/{total} players registered',
     'nav.auditlog': 'Log',
     'nav.chat': 'Chat',
     'topbar.chat.title': 'Chat', 'topbar.chat.sub': 'Live discussion with the whole guild',
@@ -1210,13 +1216,15 @@ function createOpenGroup(type){
   toast(t('toast.group_created')); saveTeams(); render();
 }
 function createSanctuaryGroup(){
-  const count = GROUPS.filter(g => g.type === 'sanctuary').length;
-  const g = { id: uid('g'), type: 'sanctuary', name: 'Sanctuaire ' + (count + 1), activity: '', date: '', time: '', open: true,
-    createdById: discordUser ? discordUser.id : null,
-    slots: Array.from({length: 10}, () => ({ playerId: null })), substitutes: [] };
+  const pairCount = new Set(GROUPS.filter(g => g.type === 'sanctuary').map(g => g.sanctuaryPairId)).size;
+  const pairId = uid('sp');
+  const base = { type: 'sanctuary', activity: '', date: '', time: '', open: true, sanctuaryPairId: pairId,
+    createdById: discordUser ? discordUser.id : null, substitutes: [] };
+  const g1 = { ...base, id: uid('g'), name: `Sanctuaire ${pairCount + 1} — Groupe A`, slots: [0,1,2,3,4].map(() => ({ playerId: null })) };
+  const g2 = { ...base, id: uid('g'), name: `Sanctuaire ${pairCount + 1} — Groupe B`, slots: [0,1,2,3,4].map(() => ({ playerId: null })) };
   const me = myPlayerRecord();
-  if (me && me.pve) g.slots[0].playerId = me.id;
-  GROUPS.push(g);
+  if (me && me.pve) g1.slots[0].playerId = me.id;
+  GROUPS.push(g1, g2);
   toast(t('toast.group_created')); saveTeams(); render();
 }
 function duplicateGroup(groupId){
@@ -2179,15 +2187,34 @@ function renderOpenGroupsTab(){
   }
   return html;
 }
-function renderSanctuaryTab(){
+function groupSanctuaryPairs(){
   const groups = GROUPS.filter(g => g.type === 'sanctuary');
+  const byPair = {};
+  groups.forEach(g => {
+    const key = g.sanctuaryPairId || g.id;
+    (byPair[key] = byPair[key] || []).push(g);
+  });
+  return Object.values(byPair);
+}
+function renderSanctuaryPair(pairGroups){
+  const totalFilled = pairGroups.reduce((sum, g) => sum + g.slots.filter(s => s.playerId).length, 0);
+  const totalSlots = pairGroups.reduce((sum, g) => sum + g.slots.length, 0);
+  return `<div class="gm-sanctuary-pair">
+    <div class="gm-sanctuary-pair-title">🏛️ ${t('sanctuary.pair_progress').replace('{n}', totalFilled).replace('{total}', totalSlots)}</div>
+    <div class="gm-sanctuary-pair-groups">
+      ${pairGroups.map(g => renderGroupCard(g, true, true)).join('')}
+    </div>
+  </div>`;
+}
+function renderSanctuaryTab(){
+  const pairs = groupSanctuaryPairs();
   const createButton = `<div class="gm-open-create-row">
     <button class="gm-btn gm-btn-primary" data-action="create-sanctuary-group">${t('sanctuary.create')}</button>
   </div>`;
-  if (!groups.length){
+  if (!pairs.length){
     return `${createButton}<div class="gm-empty"><div class="gm-empty-crest"></div>${t('sanctuary.empty')}</div>`;
   }
-  return createButton + groups.map(g => renderGroupCard(g, true, true)).join('');
+  return createButton + pairs.map(renderSanctuaryPair).join('');
 }
 
 /* ---- Chat ---- */
