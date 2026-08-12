@@ -2019,6 +2019,7 @@ function renderPlayers(){
   if (PLAYER_FILTERS.classId) list = list.filter(p => p.classId === PLAYER_FILTERS.classId);
   if (PLAYER_FILTERS.status === 'new') list = list.filter(p => p.isNewPlayer);
   if (PLAYER_FILTERS.status === 'experienced') list = list.filter(p => !p.isNewPlayer);
+  if (discordUser) list.sort((a, b) => (b.discordId === discordUser.id ? 1 : 0) - (a.discordId === discordUser.id ? 1 : 0));
 
   if (!PLAYERS.length){
     return `<div class="gm-players-layout">
