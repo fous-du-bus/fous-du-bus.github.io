@@ -397,6 +397,10 @@ const I18N = {
     'topbar.opengroups.title': 'Groupe ouvert', 'topbar.opengroups.sub': 'Tous les groupes PvE et PvP activement en recherche de joueurs',
     'opengroups.empty': "Aucun groupe ouvert pour le moment.",
     'opengroups.create_pve': '+ Créer un groupe ouvert PvE', 'opengroups.create_pvp': '+ Créer un groupe ouvert PvP',
+    'nav.sanctuary': 'Groupe Sanctuaire (10p)', 'nav.sanctuary_short': 'Sanctuaire',
+    'topbar.sanctuary.title': 'Groupe Sanctuaire (10p)', 'topbar.sanctuary.sub': 'Recherches de groupe pour le contenu à 10 joueurs (Sanctuaire)',
+    'sanctuary.empty': 'Aucune recherche de groupe Sanctuaire pour le moment.',
+    'sanctuary.create': '+ Créer une recherche Sanctuaire',
     'nav.auditlog': 'Journal',
     'nav.chat': 'Tchat',
     'topbar.chat.title': 'Tchat', 'topbar.chat.sub': 'Discussion en direct avec toute la guilde',
@@ -554,6 +558,10 @@ const I18N = {
     'topbar.opengroups.title': 'Open groups', 'topbar.opengroups.sub': 'All PvE and PvP groups actively looking for players',
     'opengroups.empty': 'No open group at the moment.',
     'opengroups.create_pve': '+ Create open PvE group', 'opengroups.create_pvp': '+ Create open PvP group',
+    'nav.sanctuary': 'Sanctuary Group (10p)', 'nav.sanctuary_short': 'Sanctuary',
+    'topbar.sanctuary.title': 'Sanctuary Group (10p)', 'topbar.sanctuary.sub': 'Group searches for 10-player content (Sanctuary)',
+    'sanctuary.empty': 'No Sanctuary group search at the moment.',
+    'sanctuary.create': '+ Create a Sanctuary search',
     'nav.auditlog': 'Log',
     'nav.chat': 'Chat',
     'topbar.chat.title': 'Chat', 'topbar.chat.sub': 'Live discussion with the whole guild',
@@ -764,8 +772,15 @@ function renderPlayerCard(p, actionsHtml, noteHtml){
 function roleColor(role){
   return { Tank: 'var(--tank)', Heal: 'var(--healer)', DPS: 'var(--dps)', Flex: 'var(--support)' }[role] || '#888';
 }
+function groupTypeColor(type){
+  return { pve: 'var(--tank)', pvp: 'var(--dps)', sanctuary: 'var(--new)' }[type] || 'var(--violet)';
+}
+function groupTypeLabel(type){
+  return { pve: 'PvE', pvp: 'PvP', sanctuary: t('nav.sanctuary_short') }[type] || type.toUpperCase();
+}
 function computeNeededRoles(g){
-  const template = { Tank: 1, Heal: 1, DPS: 3 };
+  const scale = g.slots.length / 5;
+  const template = { Tank: Math.round(1*scale), Heal: Math.round(1*scale), DPS: Math.round(3*scale) };
   const counts = { Tank: 0, Heal: 0, DPS: 0, Flex: 0 };
   g.slots.forEach(s => {
     if (!s.playerId) return;
@@ -1194,6 +1209,16 @@ function createOpenGroup(type){
   GROUPS.push(g);
   toast(t('toast.group_created')); saveTeams(); render();
 }
+function createSanctuaryGroup(){
+  const count = GROUPS.filter(g => g.type === 'sanctuary').length;
+  const g = { id: uid('g'), type: 'sanctuary', name: 'Sanctuaire ' + (count + 1), activity: '', date: '', time: '', open: true,
+    createdById: discordUser ? discordUser.id : null,
+    slots: Array.from({length: 10}, () => ({ playerId: null })), substitutes: [] };
+  const me = myPlayerRecord();
+  if (me && me.pve) g.slots[0].playerId = me.id;
+  GROUPS.push(g);
+  toast(t('toast.group_created')); saveTeams(); render();
+}
 function duplicateGroup(groupId){
   const g = GROUPS.find(x => x.id === groupId);
   const copy = JSON.parse(JSON.stringify(g));
@@ -1456,7 +1481,7 @@ function openPublishGroupModal(groupId){
   if (!DISCORD_LFG_WEBHOOK_URL) { toast(t('groups.lfg_not_configured'), 'danger'); return; }
   MODAL = {
     type: 'publish-group', groupId,
-    form: { title: '', type: g.type, date: '', time: '', seekingSecondGroup: false },
+    form: { title: '', type: g.type, date: '', time: '' },
     error: '',
   };
   render();
@@ -1469,7 +1494,6 @@ function publishGroupToDiscord(groupId, opts){
     title: (opts && opts.title && opts.title.trim()) ? opts.title.trim() : g.name,
     date: opts ? opts.date : '', time: opts ? opts.time : '',
     type: opts && opts.type ? opts.type : g.type,
-    seekingSecondGroup: !!(opts && opts.seekingSecondGroup),
     createdAt: Date.now(),
     createdById: discordUser ? discordUser.id : null,
     createdByName: discordUser ? discordUser.username : '',
@@ -1492,9 +1516,7 @@ function publishGroupToDiscord(groupId, opts){
   const filledCount = filled.length;
   const dateLabel = (opts && opts.date) ? new Date(opts.date + 'T' + (opts.time || '00:00')).toLocaleString(LANG==='en'?'en-GB':'fr-FR', { weekday:'long', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
   const typeLabel = eventTypeLabel(opts && opts.type ? opts.type : g.type);
-  const seeking = !!(opts && opts.seekingSecondGroup);
   const descParts = [];
-  if (seeking) descParts.push(`🔍 **${t('groups.lfg_seeking_banner')}**`, '');
   if (dateLabel) descParts.push(`🗓️ ${dateLabel}`);
   descParts.push(`🏷️ ${typeLabel}`);
   descParts.push('');
@@ -1502,19 +1524,18 @@ function publishGroupToDiscord(groupId, opts){
   descParts.push('');
   const neededRoles = computeNeededRoles(g);
   if (neededRoles.length) descParts.push(`🔍 **${t('groups.seeking_roles')}** ${neededRoles.join(', ')}`, '');
-  descParts.push(`${filledCount}/5 ${t('groups.registered')}`);
+  descParts.push(`${filledCount}/${g.slots.length} ${t('groups.registered')}`);
   descParts.push('');
   descParts.push(t('groups.lfg_react_prompt'));
-  const titlePrefix = seeking ? '🔍 [x2] ' : '';
-  const contentPrefix = seeking ? `📣 **${t('groups.lfg_seeking_short')}**\n` : '';
-  const content = contentPrefix + (mentionIds.length ? mentionIds.map(id => `<@${id}>`).join(' ') : `📣 ${g.name}`);
+  const titlePrefix = g.type === 'sanctuary' ? '🏛️ ' : '';
+  const content = mentionIds.length ? mentionIds.map(id => `<@${id}>`).join(' ') : `📣 ${g.name}`;
   const payload = {
     content,
     allowed_mentions: { parse: ['users'] },
     embeds: [{
-      title: titlePrefix + ((opts && opts.title && opts.title.trim()) ? esc(opts.title.trim()) : `${g.type === 'pve' ? 'PvE' : 'PvP'} — ${g.name}`),
+      title: titlePrefix + ((opts && opts.title && opts.title.trim()) ? esc(opts.title.trim()) : `${groupTypeLabel(g.type)} — ${g.name}`),
       description: descParts.join('\n'),
-      color: seeking ? 0xffb84f : (g.type === 'pve' ? 0x4f9dff : 0xff6b7a),
+      color: g.type === 'sanctuary' ? 0xffb84f : (g.type === 'pve' ? 0x4f9dff : 0xff6b7a),
     }],
   };
   fetch(DISCORD_LFG_WEBHOOK_URL, {
@@ -1578,7 +1599,8 @@ function renderShell(){
 function renderSidebar(){
   const upcomingCount = EVENTS.filter(e => e.date && (new Date(e.date + 'T' + (e.time || '00:00')).getTime() >= Date.now())).length;
   const myGroupEventCount = myUpcomingGroupEvents().length;
-  const openGroupsCount = GROUPS.filter(g => g.open).length;
+  const openGroupsCount = GROUPS.filter(g => g.open && g.type !== 'sanctuary').length;
+  const sanctuaryCount = GROUPS.filter(g => g.type === 'sanctuary').length;
   const groupExpanded = GROUP_NAV_EXPANDED || ACTIVE_TAB === 'pve' || ACTIVE_TAB === 'pvp';
   const itemsBefore = [
     { id: 'dashboard', label: t('nav.dashboard'), icon: '◈', badge: upcomingCount + myGroupEventCount },
@@ -1587,6 +1609,7 @@ function renderSidebar(){
   ].filter(i => !i.adminOnly || isAdminView());
   const itemsAfter = [
     { id: 'opengroups', label: t('nav.opengroups'), icon: '🔓', badge: openGroupsCount },
+    { id: 'sanctuary', label: t('nav.sanctuary'), icon: '🏛️', badge: sanctuaryCount },
     { id: 'mygroup', label: t('nav.mygroup'), icon: '👥', badge: myGroupEventCount },
     { id: 'events', label: t('nav.events'), icon: '🗓️' },
     { id: 'auditlog', label: t('nav.auditlog'), icon: '📋', adminOnly: true },
@@ -1651,6 +1674,7 @@ function renderTopbar(){
     events: [t('topbar.events.title'), t('topbar.events.sub')],
     mygroup: [t('topbar.mygroup.title'), t('topbar.mygroup.sub')],
     opengroups: [t('topbar.opengroups.title'), t('topbar.opengroups.sub')],
+    sanctuary: [t('topbar.sanctuary.title'), t('topbar.sanctuary.sub')],
     chat: [t('topbar.chat.title'), t('topbar.chat.sub')],
     auditlog: [t('topbar.auditlog.title'), t('topbar.auditlog.sub')],
   };
@@ -1679,6 +1703,7 @@ function renderTabContent(){
   if (ACTIVE_TAB === 'events') return renderEvents();
   if (ACTIVE_TAB === 'mygroup') return renderMyGroupTab();
   if (ACTIVE_TAB === 'opengroups') return renderOpenGroupsTab();
+  if (ACTIVE_TAB === 'sanctuary') return renderSanctuaryTab();
   if (ACTIVE_TAB === 'chat') return renderChatTab();
   if (ACTIVE_TAB === 'auditlog') return isAdminView() ? renderAuditLog() : `<div class="gm-empty">${t('access.admin_only')}</div>`;
   return '';
@@ -1739,7 +1764,7 @@ function renderDashboard(){
                 const creator = g.createdById ? PLAYERS.find(p => p.discordId === g.createdById) : null;
                 const registeredPlayers = g.slots.filter(s => s.playerId).map(s => player(s.playerId)).filter(Boolean);
                 return `<div class="gm-open-group-mini">
-                <span class="gm-class-pill" style="border-color:${g.type==='pve'?'var(--tank)':'var(--dps)'}66;background:${g.type==='pve'?'var(--tank)':'var(--dps)'}1c;color:${g.type==='pve'?'var(--tank)':'var(--dps)'}">${g.type.toUpperCase()}</span>
+                <span class="gm-class-pill" style="border-color:${groupTypeColor(g.type)}66;background:${groupTypeColor(g.type)}1c;color:${groupTypeColor(g.type)}">${groupTypeLabel(g.type)}</span>
                 <div style="flex:1;min-width:0;">
                   <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
                     <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(g.event.title || g.name)}</div>
@@ -1784,6 +1809,32 @@ function renderDashboard(){
             ${myGroupEvents.map(g => renderGroupEventCard(g)).join('')}
           </div>
         </div>` : ''}
+        ${(() => {
+          const sanctuaryGroups = GROUPS.filter(g => g.type === 'sanctuary' && g.event);
+          if (!sanctuaryGroups.length) return '';
+          return `
+          <div class="gm-panel">
+            <h3 style="font-size:13px;margin:0 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">🏛️ ${t('nav.sanctuary')} (${sanctuaryGroups.length})</h3>
+            <div style="display:flex;flex-direction:column;gap:10px;max-height:230px;overflow-y:auto;padding-right:4px;">
+              ${sanctuaryGroups.map(g => {
+                const neededRoles = computeNeededRoles(g);
+                const creator = g.createdById ? PLAYERS.find(p => p.discordId === g.createdById) : null;
+                const registeredPlayers = g.slots.filter(s => s.playerId).map(s => player(s.playerId)).filter(Boolean);
+                return `<div class="gm-open-group-mini">
+                <span class="gm-class-pill" style="border-color:${groupTypeColor('sanctuary')}66;background:${groupTypeColor('sanctuary')}1c;color:${groupTypeColor('sanctuary')}">🏛️</span>
+                <div style="flex:1;min-width:0;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                    <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(g.event.title || g.name)}</div>
+                    ${neededRoles.length ? `<div style="display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;">${neededRoles.map(role => `<button class="gm-role-pill gm-role-pill-clickable" data-action="quick-join-role" data-group="${g.id}" data-role="${role}" style="font-size:9.5px;padding:2px 7px;border-color:${roleColor(role)}66;background:${roleColor(role)}1c;color:${roleColor(role)}">${role} +</button>`).join('')}</div>` : ''}
+                  </div>
+                  <div style="font-size:11px;color:var(--muted);">${esc(g.name)} · ${g.slots.filter(s=>s.playerId).length}/${g.slots.length}${creator ? ` · ${t('groups.created_by')}: ${esc(creator.discordUsername || creator.pseudo)}` : ''}</div>
+                  ${registeredPlayers.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">${registeredPlayers.map(p => { const pc = cls(p.classId); const rc = pc ? roleColor(pc.role) : 'var(--border)'; return `<div class="gm-mini-player-chip" style="border-color:${rc};">${avatarHtml(p, 18)}<span>${esc(p.discordUsername || p.pseudo)}</span></div>`; }).join('')}</div>` : ''}
+                </div>
+              </div>`;
+              }).join('')}
+            </div>
+          </div>`;
+        })()}
       </div>
     </div>
   `;
@@ -1979,7 +2030,7 @@ function renderGroupsTab(type){
 
 function renderGroupCard(g, showPublish, showOpenControls){
   const filledCount = g.slots.filter(s => s.playerId).length;
-  const eligiblePlayers = PLAYERS.filter(p => g.type === 'pve' ? p.pve : p.pvp);
+  const eligiblePlayers = PLAYERS.filter(p => g.type === 'pvp' ? p.pvp : p.pve);
 
   const slotsHtml = g.slots.map((slot, i) => {
     const p = slot.playerId ? player(slot.playerId) : null;
@@ -2031,7 +2082,7 @@ function renderGroupCard(g, showPublish, showOpenControls){
     <div class="gm-slots">${slotsHtml}</div>
     ${subsHtml ? `<div class="gm-subs-title">${t('groups.substitutes')}</div>
     <div class="gm-subs-list">${subsHtml}</div>` : ''}
-    <div style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center;">${filledCount}/5 ${t('groups.registered')}</div>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center;">${filledCount}/${g.slots.length} ${t('groups.registered')}</div>
     ${renderGroupChatPanel(g)}
   </div>`;
 }
@@ -2057,7 +2108,6 @@ function renderGroupEventCard(g){
   return `<div class="gm-panel gm-event-card">
     <div class="gm-event-head">
       <span class="gm-class-pill" style="border-color:${typeColor}66;background:${typeColor}1c;color:${typeColor}">${esc(eventTypeLabel(ev.type))}</span>
-      ${ev.seekingSecondGroup ? `<span class="gm-class-pill" style="border-color:#ffb84f66;background:#ffb84f1c;color:var(--new);">🔍 ${t('groups.seeking_badge')}</span>` : ''}
     </div>
     <div class="gm-event-title">${esc(ev.title)}</div>
     <div class="gm-event-datetime">🗓️ ${esc(dateLabel)} · 🕐 ${esc(ev.time || '')}</div>
@@ -2080,9 +2130,7 @@ function groupEventBanner(g){
   const isUpcoming = new Date(g.event.date + 'T' + (g.event.time || '00:00')).getTime() >= Date.now();
   if (!isUpcoming) return '';
   const typeLabel = eventTypeLabel(g.event.type || g.type);
-  const msg = g.event.seekingSecondGroup
-    ? t('mygroup.event_request_banner_seeking').replace('{type}', typeLabel)
-    : t('mygroup.event_request_banner').replace('{type}', typeLabel);
+  const msg = t('mygroup.event_request_banner').replace('{type}', typeLabel);
   const cancelBtn = canCancelGroupEvent(g)
     ? `<div style="margin-top:8px;"><button class="gm-btn gm-btn-danger gm-btn-sm" data-action="cancel-group-event" data-group="${g.id}">${t('groups.cancel_event')}</button></div>`
     : '';
@@ -2110,7 +2158,7 @@ function renderMyGroupTab(){
   return html;
 }
 function renderOpenGroupsTab(){
-  const openGroups = GROUPS.filter(g => g.open);
+  const openGroups = GROUPS.filter(g => g.open && g.type !== 'sanctuary');
   const createButtons = `<div class="gm-open-create-row">
     <button class="gm-btn gm-btn-primary" data-action="create-open-group" data-type="pve">${t('opengroups.create_pve')}</button>
     <button class="gm-btn gm-btn-primary" data-action="create-open-group" data-type="pvp">${t('opengroups.create_pvp')}</button>
@@ -2130,6 +2178,16 @@ function renderOpenGroupsTab(){
     html += pvpGroups.map(g => renderGroupCard(g, true, true)).join('');
   }
   return html;
+}
+function renderSanctuaryTab(){
+  const groups = GROUPS.filter(g => g.type === 'sanctuary');
+  const createButton = `<div class="gm-open-create-row">
+    <button class="gm-btn gm-btn-primary" data-action="create-sanctuary-group">${t('sanctuary.create')}</button>
+  </div>`;
+  if (!groups.length){
+    return `${createButton}<div class="gm-empty"><div class="gm-empty-crest"></div>${t('sanctuary.empty')}</div>`;
+  }
+  return createButton + groups.map(g => renderGroupCard(g, true, true)).join('');
 }
 
 /* ---- Chat ---- */
@@ -2393,15 +2451,6 @@ function renderPublishGroupModal(){
           <option value="other" ${f.type==='other'?'selected':''}>${t('events.type.other')}</option>
         </select>
       </div>
-      <label class="gm-toggle-card" for="pg-seeking">
-        <div class="gm-toggle-card-icon">🔍</div>
-        <div class="gm-toggle-card-text">
-          <div class="gm-toggle-card-title">${t('groups.publish_seeking_label')}</div>
-          <div class="gm-toggle-card-hint">${t('groups.publish_seeking_hint')}</div>
-        </div>
-        <input type="checkbox" id="pg-seeking" class="gm-toggle-input" ${f.seekingSecondGroup?'checked':''} />
-        <span class="gm-toggle-switch"></span>
-      </label>
       <div class="gm-note">${t('groups.lfg_react_prompt')}</div>
       ${MODAL.error ? `<div class="gm-form-error">${esc(MODAL.error)}</div>` : ''}
       <div class="gm-modal-actions">
@@ -2472,6 +2521,8 @@ function bindEvents(){
       el.addEventListener('click', () => createGroup(el.dataset.type));
     } else if (action === 'create-open-group'){
       el.addEventListener('click', () => createOpenGroup(el.dataset.type));
+    } else if (action === 'create-sanctuary-group'){
+      el.addEventListener('click', () => createSanctuaryGroup());
     } else if (action === 'set-slot-player'){
       el.addEventListener('change', () => setSlotPlayer(el.dataset.group, parseInt(el.dataset.slot), el.value));
     } else if (action === 'remove-slot-player'){
@@ -2497,7 +2548,6 @@ function bindEvents(){
           date: document.getElementById('pg-date').value,
           time: document.getElementById('pg-time').value,
           type: document.getElementById('pg-type').value,
-          seekingSecondGroup: document.getElementById('pg-seeking').checked,
         };
         if (!opts.date || !opts.time) { MODAL.error = t('error.event_date_required'); render(); return; }
         const groupId = MODAL.groupId;
