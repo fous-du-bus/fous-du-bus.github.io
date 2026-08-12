@@ -1,179 +1,208 @@
 {
-  "updatedAt": "2026-08-12T09:47:07.185Z",
+  "updatedAt": "2026-08-12T11:42:19.460Z",
   "members": [
     {
       "id": "119867255088611332",
       "username": "junkyy",
       "globalName": "Junkyy",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/119867255088611332/e9d9c213a05c50cdfcaf011dd7eac249.png?size=64"
     },
     {
       "id": "150681824371146753",
       "username": "lou5169",
       "globalName": "Lou",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/embed/avatars/5.png"
     },
     {
       "id": "150714607869231104",
       "username": "nisteria",
       "globalName": "Nisteria",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/150714607869231104/886eaf10c9eeb1464865783f99e2a8ec.png?size=64"
     },
     {
       "id": "152532537699205121",
       "username": "rms6",
       "globalName": "Ramos",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/152532537699205121/4cc77f14848d5c437520c9cbc3e75347.png?size=64"
     },
     {
       "id": "154240265601810432",
       "username": "aoky1022",
       "globalName": "Biakko",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/154240265601810432/30a0d46cccba52c3fe09b8e45af7a3a9.png?size=64"
     },
     {
       "id": "176375097366413312",
       "username": "migisiuu_",
       "globalName": "Migi",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/176375097366413312/1d9b2ab02ede53497123583f53c620fc.png?size=64"
     },
     {
       "id": "182228617005236225",
       "username": "lovette_",
       "globalName": "Løvette アクセラレータ",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/182228617005236225/01af96ed2d2f01d2de45754ebfaa5566.png?size=64"
     },
     {
       "id": "207476528005644288",
       "username": "khim4552",
       "globalName": "Khim",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/embed/avatars/4.png"
     },
     {
       "id": "212214170370834433",
       "username": "samba_uwu",
       "globalName": "Samba",
-      "nick": "Pharmacie"
+      "nick": "Pharmacie",
+      "avatar": "https://cdn.discordapp.com/avatars/212214170370834433/91c48ed34c2aa319bea0a11566eb3256.png?size=64"
     },
     {
       "id": "224209904376741889",
       "username": "hyperion1108",
       "globalName": "Hyperion",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/224209904376741889/aa671e6d6d3d92ad7547d65b8eacfd73.png?size=64"
     },
     {
       "id": "241645408793788416",
       "username": "bjuny",
       "globalName": "Bjuny",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/241645408793788416/74afa569e1930d235b9d7807ad1b26fc.png?size=64"
     },
     {
       "id": "241718540351176706",
       "username": "chenontop",
       "globalName": "Chen",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/241718540351176706/a_6da9d6f452b0b2789d5316a10c3fb864.gif?size=64"
     },
     {
       "id": "244193467708866562",
       "username": "nimaj",
       "globalName": "Melakeen",
-      "nick": "Melakeen"
+      "nick": "Melakeen",
+      "avatar": "https://cdn.discordapp.com/avatars/244193467708866562/af012b018b0dde49b4b3db8478e356bd.png?size=64"
     },
     {
       "id": "251070463650824204",
       "username": "ashura00443",
       "globalName": "A$HURA",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/251070463650824204/a78bc9295fc067f43d9e2354ffc4a5c6.png?size=64"
     },
     {
       "id": "263019032620433409",
       "username": "matchou9977",
       "globalName": "Matchou",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/263019032620433409/843a127cb0d853f18ca3a42b1f956135.png?size=64"
     },
     {
       "id": "289034190853505035",
       "username": "kottoroe",
       "globalName": "Kotoro",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/289034190853505035/a_9cdb425bb299b3fc8830413c0c677e3e.gif?size=64"
     },
     {
       "id": "289721621198143488",
       "username": "meyki1.",
       "globalName": "Ikue",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/289721621198143488/aaa331e76d2fb473af05481e7299967c.png?size=64"
     },
     {
       "id": "290102279061635072",
       "username": "biggiecheese3415",
       "globalName": "Biggie Cheese",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/290102279061635072/91f0fe1e4bf29159f97b75e46140eb09.png?size=64"
     },
     {
       "id": "306120089877348352",
       "username": "coubo",
       "globalName": "coubo",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/306120089877348352/ee4a1317935980a0e1d0cfb4d7a0f45f.png?size=64"
     },
     {
       "id": "311097144297652225",
       "username": "gohanfleur",
       "globalName": "GOHΔN",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/311097144297652225/1828f9ec4b132035ce564619a652bb12.png?size=64"
     },
     {
       "id": "320970519946199041",
       "username": "tlaloc8320",
       "globalName": "Ellesmerra",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/320970519946199041/3030ae6e1b0c8ed3797c1c834c9b43f3.png?size=64"
     },
     {
       "id": "334072649586311170",
       "username": "0nisaku",
       "globalName": "Ichigeki",
-      "nick": "Ichigeki"
+      "nick": "Ichigeki",
+      "avatar": "https://cdn.discordapp.com/avatars/334072649586311170/e8a7e0203b7e4b0e84ac212037608ce3.png?size=64"
     },
     {
       "id": "334298996400979978",
       "username": "zilly1811",
       "globalName": "Zilly",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/334298996400979978/7ea529c7b48e4384301415a6fc4a4260.png?size=64"
     },
     {
       "id": "343428677134188545",
       "username": "k4brone",
       "globalName": "K4BRONE",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/343428677134188545/95db5c702ad0d063452af0fa417dcb44.png?size=64"
     },
     {
       "id": "430825929565274113",
       "username": "chimicz",
       "globalName": "Chimicz",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/430825929565274113/fec54051a6da88d909c5b94bd74c93d7.png?size=64"
     },
     {
       "id": "544163771447246858",
       "username": "kayzen4892",
       "globalName": "Kayzen357",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/544163771447246858/b2e876979ba3e7726e07667969c153b1.png?size=64"
     },
     {
       "id": "920151229202571354",
       "username": "kissoka",
       "globalName": "Kiiissoka",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/920151229202571354/b6300e2c04d7d86f771fb503afe7c77d.png?size=64"
     },
     {
       "id": "1104662079681597471",
       "username": "palertz",
       "globalName": "Seitzer",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/1104662079681597471/12dd8dadb66d64f3d03a63fca5f8c06f.png?size=64"
     },
     {
       "id": "1265360697307562216",
       "username": ".aegrimm",
       "globalName": "Aegrim",
-      "nick": null
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/1265360697307562216/a_8ead69cb2c14fd5d99125ebe36be96d6.gif?size=64"
     }
   ]
 }
