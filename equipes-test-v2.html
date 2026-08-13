@@ -1647,10 +1647,15 @@ async function leaveSearchGroup(groupId){
   if(g.leaderId===me.id)g.leaderId=g.memberIds[0]||'';
   await saveData(); showToast('Tu as quitté le groupe'); window.MCM_RENDER();
 }
+function isSearchGroupCreator(g){
+  const me=myPlayer();if(!me||!g)return false;
+  const owner=(g.activity==='Sanctuary'&&g.sanctuaryPairId)?(SEARCH_GROUPS.find(x=>x.sanctuaryPairId===g.sanctuaryPairId&&x.subgroup==='A')||g):g;
+  return owner.createdByPlayerId===me.id||!!(owner.createdById&&discordUser&&owner.createdById===discordUser.id);
+}
 async function deleteSearchGroup(id){
   const g=SEARCH_GROUPS.find(x=>x.id===id),me=myPlayer();
   if(!g)return;
-  const allowed=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||(me&&g.createdByPlayerId===me.id);
+  const allowed=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||isSearchGroupCreator(g);
   if(!allowed)return showToast('Seul le créateur ou un admin peut supprimer ce groupe');
 
   if(g.activity==='Sanctuary' && g.sanctuaryPairId){
@@ -1714,7 +1719,7 @@ function sanctuaryUnifiedCard(g){
   const ma=searchGroupMembers(a),mb=searchGroupMembers(b);
   const leader=PLAYERS.find(p=>p.id===a.leaderId);
   const me=myPlayer(),gc=activityColor('Sanctuary');
-  const canDelete=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||(me&&a.createdByPlayerId===me.id);
+  const canDelete=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||isSearchGroupCreator(a);
   const canPublish=canManageSearchGroup(a);
 
   return `<article class="panel search-card sanctuary-unified" style="--gc:${gc}">
@@ -1758,7 +1763,7 @@ function renderSearchGroupCards(groups){
 function searchGroupCard(g){
   normalizeSearchGroup(g);
   const members=searchGroupMembers(g),leader=PLAYERS.find(p=>p.id===g.leaderId),me=myPlayer(),gc=activityColor(g.activity);
-  const canDelete=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||(me&&g.createdByPlayerId===me.id); const canPublish=canManageSearchGroup(g)&&canShowSanctuaryPublish(g);
+  const canDelete=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||isSearchGroupCreator(g); const canPublish=canManageSearchGroup(g)&&canShowSanctuaryPublish(g);
   return `<article class="panel search-card" style="--gc:${gc}">
     <div class="search-head">
       <div>
