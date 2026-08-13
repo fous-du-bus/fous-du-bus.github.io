@@ -1132,7 +1132,7 @@ window.sanctuaryDungeons=[
 ];
 console.info('MCM BUILD: V2-FIX-SANCTUARY-GLOBAL');
 const firebaseConfig={apiKey:"AIzaSyCcfWoW_0IWkAopHrlXnKUiZJViss9FSpU",authDomain:"routine-aion-2.firebaseapp.com",projectId:"routine-aion-2",storageBucket:"routine-aion-2.firebasestorage.app",messagingSenderId:"400230415217",appId:"1:400230415217:web:c75da7cea4b0305f4014d0"};
-firebase.initializeApp(firebaseConfig); const db=firebase.firestore(); const fbAuth=firebase.auth(); const docRef=db.collection('teamComps').doc('guildManagerTest'); const firebaseAuthReady=fbAuth.signInAnonymously().catch(console.error);
+firebase.initializeApp(firebaseConfig); const db=firebase.firestore(); const fbAuth=firebase.auth(); const docRef=db.collection('teamComps').doc('guildManagerTest'); const legacyDocRef=db.collection('teamComps').doc('guildManager'); const firebaseAuthReady=fbAuth.signInAnonymously().catch(console.error);
 
 /* ===== MCM ACTIVITY TAXONOMY — defined early to avoid runtime scope/order issues ===== */
 window.MCM_SEARCH_PVE=['Expéditions','Transcendances','Sanctuary'];
@@ -1995,6 +1995,20 @@ async function loadData(){
     ACTIVITY_LOG=Array.isArray(d.activityLog)?d.activityLog:[];
     if(Array.isArray(d.classes)&&d.classes.length)CLASSES=d.classes;
   }
+  /* Importation sûre des membres de l'ancien site : lecture seule de guildManager,
+     fusion par identifiant Discord, puis sauvegarde uniquement dans guildManagerTest. */
+  try{
+    const legacySnap=await legacyDocRef.get();
+    const legacyPlayers=legacySnap.exists&&Array.isArray(legacySnap.data().players)?legacySnap.data().players:[];
+    const knownDiscordIds=new Set(PLAYERS.map(p=>p.discordId).filter(Boolean));
+    const knownIds=new Set(PLAYERS.map(p=>p.id).filter(Boolean));
+    const imported=legacyPlayers.filter(p=>p&&(p.discordId?!knownDiscordIds.has(p.discordId):!knownIds.has(p.id))).map(p=>({...p,importedFromLegacy:true}));
+    if(imported.length){
+      PLAYERS.push(...imported);
+      addActivity('profile',`${imported.length} compte${imported.length>1?'s':''} membre${imported.length>1?'s':''} importé${imported.length>1?'s':''}`,'Synchronisation depuis equipes.html');
+      await saveData();
+    }
+  }catch(err){console.warn('Import des anciens membres indisponible',err)}
 }
 function saveData(){
   return docRef.set({players:PLAYERS,classes:CLASSES,fixedGroups:FIXED_GROUPS,searchGroups:SEARCH_GROUPS,plannedEvents:PLANNED_EVENTS,activityLog:ACTIVITY_LOG},{merge:true})
