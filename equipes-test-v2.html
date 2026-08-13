@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- MCM BUILD 2026-08-13 V2-EXPEDITION-DUNGEONS -->
+<!-- MCM BUILD 2026-08-13 V2-EXPEDITIONS-10-DONJONS -->
 <title>MCM — MMO Connect Manager</title>
 <link rel="apple-touch-icon" href="./icon-192.png">
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -545,6 +545,106 @@ body{background:
   .expedition-dungeon-grid{grid-template-columns:1fr}
 }
 
+
+/* ===== CHOIX INSTANCE SANCTUARY ===== */
+.sanctuary-dungeon-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+  margin:16px 0;
+}
+.sanctuary-dungeon-choice{
+  min-height:88px;
+  border:1px solid rgba(0,199,199,.35);
+  border-radius:12px;
+  background:linear-gradient(145deg,rgba(5,33,45,.96),rgba(5,15,31,.96));
+  color:#eaffff;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:5px;
+  padding:12px;
+  transition:.18s ease;
+}
+.sanctuary-dungeon-choice:hover{
+  transform:translateY(-2px);
+  border-color:#00d9d9;
+  box-shadow:0 0 22px rgba(0,199,199,.15);
+}
+.sanctuary-dungeon-choice b{font-size:12px}
+.sanctuary-dungeon-choice span:last-child{font-size:8px;color:#6f9ca2;letter-spacing:.1em}
+.sanctuary-dungeon-icon{font-size:21px;color:#61ffff}
+.sanctuary-mode-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin:16px 0;
+}
+.sanctuary-mode-choice{
+  min-height:92px;
+  border-radius:12px;
+  cursor:pointer;
+  background:#07162d;
+  color:#fff;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+}
+.sanctuary-mode-choice.normal{border:1px solid rgba(0,220,163,.42)}
+.sanctuary-mode-choice.hard{border:1px solid rgba(255,77,103,.48)}
+.sanctuary-mode-choice.normal:hover{background:rgba(0,220,163,.09)}
+.sanctuary-mode-choice.hard:hover{background:rgba(255,77,103,.10)}
+.sanctuary-mode-choice b{font-size:14px}
+.sanctuary-mode-choice span{font-size:8px;color:#8191aa}
+
+
+/* ===== CHOIX INSTANCE TRANSCENDENCE ===== */
+.transcendence-dungeon-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin:16px 0;
+}
+.transcendence-dungeon-choice{
+  min-height:92px;
+  border:1px solid rgba(124,86,255,.38);
+  border-radius:12px;
+  background:linear-gradient(145deg,rgba(22,15,54,.96),rgba(7,13,31,.96));
+  color:#f2edff;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:5px;
+  padding:12px;
+  transition:.18s ease;
+}
+.transcendence-dungeon-choice:hover{
+  transform:translateY(-2px);
+  border-color:#9b7cff;
+  box-shadow:0 0 22px rgba(124,86,255,.16);
+}
+.transcendence-dungeon-choice b{font-size:12px}
+.transcendence-dungeon-choice span:last-child{
+  color:#8d80b2;
+  font-size:8px;
+  letter-spacing:.1em;
+}
+.transcendence-dungeon-icon{
+  color:#a98cff;
+  font-size:22px;
+  line-height:1;
+}
+@media(max-width:600px){
+  .transcendence-dungeon-grid{grid-template-columns:1fr}
+}
+
 </style>
 </head>
 <body><div id="app"></div><div id="overlay"></div><div id="toast"></div>
@@ -1064,7 +1164,7 @@ function sanctuaryUnifiedCard(g){
     <div class="search-head">
       <div>
         <span class="search-kind" style="color:${gc};border-color:${gc}66;background:${gc}16">PVE · SANCTUARY · 10 JOUEURS</span>
-        <div class="search-activity">Sanctuary</div>
+        <div class="search-activity">Sanctuary${a.sanctuaryDungeon?` · ${esc(a.sanctuaryDungeon)}`:''}${a.sanctuaryMode?` · ${esc(a.sanctuaryMode)}`:''}</div>
         <div class="search-meta"><span>👑 <strong>${esc(leader?playerName(leader):'Leader à définir')}</strong></span><span>👥 ${ma.length+mb.length}/10</span></div>
       </div>
       <div class="search-actions">
@@ -1106,7 +1206,7 @@ function searchGroupCard(g){
     <div class="search-head">
       <div>
         <span class="search-kind" style="color:${gc};border-color:${gc}66;background:${gc}16">${activityTypeLabel(g.activity)} · ${esc(g.activity)}${g.expeditionDungeon?` · ${esc(g.expeditionDungeon).toUpperCase()}`:''}${g.activity==='Sanctuary'&&g.subgroup?` · GROUPE ${esc(g.subgroup)}`:''}</span>
-        <div class="search-activity">${esc(g.activity)}${g.expeditionDungeon?` · ${esc(g.expeditionDungeon)}`:''}${g.activity==='Sanctuary'&&g.subgroup?` · Groupe ${esc(g.subgroup)}`:''}</div>
+        <div class="search-activity">${esc(g.activity)}${g.expeditionDungeon?` · ${esc(g.expeditionDungeon)}`:''}${g.transcendenceDungeon?` · ${esc(g.transcendenceDungeon)}`:''}${g.activity==='Sanctuary'&&g.subgroup?` · Groupe ${esc(g.subgroup)}`:''}</div>
         <div class="search-meta"><span>👑 <strong>${esc(leader?playerName(leader):'Leader à définir')}</strong></span><span>👥 ${members.length}/5</span></div>${g.activity==='Sanctuary'&&g.sanctuaryPairId?`<div class="sanctuary-pair-note">Sanctuary 10 joueurs · Groupe ${esc(g.subgroup||'')} sur 2</div>${g.subgroup==='A'?`<div class="sanctuary-publish-note">'Publication Discord disponible'</div>`:''}`:''}
       </div>
       <div class="search-actions">${canPublish?`<button class="btn" data-publish-search="${g.id}">${icon('calendar','ui-icon')} Discord</button>`:''}${canDelete?`<button class="btn danger" data-delete-search="${g.id}">${icon('trash','ui-icon')}</button>`:''}</div>
@@ -1121,8 +1221,119 @@ const MCM_EXPEDITION_DUNGEONS=[
   'Urugugu Canyon',
   'Vakron Sky Island',
   'Fire Temple',
-  'Ferocious Horn Den'
+  'Ferocious Horn Den',
+  "Dying Dramata's Nest",
+  'Cradle of Nihility',
+  'Phantom Corridor',
+  'Encroached Deus Research Base'
 ];
+
+const MCM_SANCTUARY_DUNGEONS=[
+  'Eternal Ludra',
+  'Chalice of Muspel',
+  'Corroded Decontamination Facility'
+];
+
+const MCM_SANCTUARY_MODES={
+  'Eternal Ludra':['Normal'],
+  'Chalice of Muspel':['Normal'],
+  'Corroded Decontamination Facility':['Normal','Hard']
+};
+
+const MCM_TRANSCENDENCE_DUNGEONS=[
+  'Deus Research Base',
+  'Shattered Arcanis',
+  'Submerged Life Temple',
+  'Mirror of Scarlet Desire'
+];
+
+function openTranscendenceDungeonChoice(){
+  overlay.innerHTML=`<div class="modal-backdrop"><div class="modal">
+    <h3>Choisir la Transcendence</h3>
+    <div style="font-size:10px;color:#8e9db8;margin-bottom:12px">
+      Sélectionne l’instance avant de créer la recherche de groupe.
+    </div>
+    <div class="transcendence-dungeon-grid">
+      ${MCM_TRANSCENDENCE_DUNGEONS.map(d=>`
+        <button type="button" class="transcendence-dungeon-choice" data-transcendence-dungeon="${esc(d)}">
+          <span class="transcendence-dungeon-icon">✧</span>
+          <b>${esc(d)}</b>
+          <span>TRANSCENDENCE · PVE</span>
+        </button>`).join('')}
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="backTranscendenceChoice">Retour</button>
+      <button class="btn" id="cancelTranscendenceChoice">Annuler</button>
+    </div>
+  </div></div>`;
+
+  document.getElementById('backTranscendenceChoice').onclick=()=>openSearchGroupCreate();
+  document.getElementById('cancelTranscendenceChoice').onclick=()=>overlay.innerHTML='';
+  document.querySelectorAll('[data-transcendence-dungeon]').forEach(b=>{
+    b.onclick=()=>createSearchGroup('Transcendances','','','',b.dataset.transcendenceDungeon);
+  });
+}
+
+
+function openSanctuaryDungeonChoice(){
+  overlay.innerHTML=`<div class="modal-backdrop"><div class="modal">
+    <h3>Choisir le Sanctuary</h3>
+    <div style="font-size:10px;color:#8e9db8;margin-bottom:12px">
+      Sélectionne l’instance avant de créer les groupes A + B.
+    </div>
+    <div class="sanctuary-dungeon-grid">
+      ${MCM_SANCTUARY_DUNGEONS.map(d=>`
+        <button type="button" class="sanctuary-dungeon-choice" data-sanctuary-dungeon="${esc(d)}">
+          <span class="sanctuary-dungeon-icon">✦</span>
+          <b>${esc(d)}</b>
+          <span>${d==='Corroded Decontamination Facility'?'NORMAL / HARD':'SANCTUARY · PVE'}</span>
+        </button>`).join('')}
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="backSanctuaryChoice">Retour</button>
+      <button class="btn" id="cancelSanctuaryChoice">Annuler</button>
+    </div>
+  </div></div>`;
+
+  document.getElementById('backSanctuaryChoice').onclick=()=>openSearchGroupCreate();
+  document.getElementById('cancelSanctuaryChoice').onclick=()=>overlay.innerHTML='';
+  document.querySelectorAll('[data-sanctuary-dungeon]').forEach(b=>{
+    b.onclick=()=>{
+      const dungeon=b.dataset.sanctuaryDungeon;
+      const modes=MCM_SANCTUARY_MODES[dungeon]||['Normal'];
+      if(modes.length===1)return createSearchGroup('Sanctuary','',dungeon,modes[0]);
+      openSanctuaryModeChoice(dungeon);
+    };
+  });
+}
+
+function openSanctuaryModeChoice(dungeon){
+  overlay.innerHTML=`<div class="modal-backdrop"><div class="modal">
+    <h3>${esc(dungeon)}</h3>
+    <div style="font-size:10px;color:#8e9db8;margin-bottom:12px">
+      Choisis le mode de difficulté.
+    </div>
+    <div class="sanctuary-mode-grid">
+      <button type="button" class="sanctuary-mode-choice normal" data-sanctuary-mode="Normal">
+        <b>Normal</b><span>Mode standard</span>
+      </button>
+      <button type="button" class="sanctuary-mode-choice hard" data-sanctuary-mode="Hard">
+        <b>Hard</b><span>Mode difficile</span>
+      </button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="backSanctuaryMode">Retour</button>
+      <button class="btn" id="cancelSanctuaryMode">Annuler</button>
+    </div>
+  </div></div>`;
+
+  document.getElementById('backSanctuaryMode').onclick=()=>openSanctuaryDungeonChoice();
+  document.getElementById('cancelSanctuaryMode').onclick=()=>overlay.innerHTML='';
+  document.querySelectorAll('[data-sanctuary-mode]').forEach(b=>{
+    b.onclick=()=>createSearchGroup('Sanctuary','',dungeon,b.dataset.sanctuaryMode);
+  });
+}
+
 
 function openExpeditionDungeonChoice(){
   overlay.innerHTML=`<div class="modal-backdrop"><div class="modal">
@@ -1167,15 +1378,25 @@ function openSearchGroupCreate(){
   document.querySelectorAll('[data-create-search-activity]').forEach(b=>b.onclick=()=>{
     const activity=b.dataset.createSearchActivity;
     if(activity==='Expéditions')return openExpeditionDungeonChoice();
+    if(activity==='Sanctuary')return openSanctuaryDungeonChoice();
+    if(activity==='Transcendances')return openTranscendenceDungeonChoice();
     createSearchGroup(activity);
   });
 }
-async function createSearchGroup(activity,expeditionDungeon=''){
+async function createSearchGroup(activity,expeditionDungeon='',sanctuaryDungeon='',sanctuaryMode='',transcendenceDungeon=''){
   if(!window.MCM_SEARCH_ACTIVITIES.includes(activity))return;
   const me=myPlayer();
   if(!me||!me.classId)return showToast('Configure d’abord ta classe');
   if(activity==='Expéditions'&&!MCM_EXPEDITION_DUNGEONS.includes(expeditionDungeon)){
     return openExpeditionDungeonChoice();
+  }
+  if(activity==='Sanctuary'){
+    if(!MCM_SANCTUARY_DUNGEONS.includes(sanctuaryDungeon))return openSanctuaryDungeonChoice();
+    const allowedModes=MCM_SANCTUARY_MODES[sanctuaryDungeon]||['Normal'];
+    if(!allowedModes.includes(sanctuaryMode))return openSanctuaryDungeonChoice();
+  }
+  if(activity==='Transcendances'&&!MCM_TRANSCENDENCE_DUNGEONS.includes(transcendenceDungeon)){
+    return openTranscendenceDungeonChoice();
   }
 
   // Sanctuary = activité à 10 joueurs : création automatique de deux groupes de 5.
@@ -1185,6 +1406,8 @@ async function createSearchGroup(activity,expeditionDungeon=''){
       const g={
         id:'sg_'+Date.now()+'_'+letter.toLowerCase(),
         activity:'Sanctuary',
+        sanctuaryDungeon,
+        sanctuaryMode,
         type:'pve',
         subgroup:letter,
         sanctuaryPairId:pairId,
@@ -1220,6 +1443,7 @@ async function createSearchGroup(activity,expeditionDungeon=''){
     id:'sg_'+Date.now(),
     activity,
     expeditionDungeon:activity==='Expéditions'?expeditionDungeon:'',
+    transcendenceDungeon:activity==='Transcendances'?transcendenceDungeon:'',
     type:window.MCM_ACTIVITY_TYPE(activity),
     sequence:max+1,
     createdAt:Date.now(),
@@ -1235,7 +1459,13 @@ async function createSearchGroup(activity,expeditionDungeon=''){
   SEARCH_GROUPS.push(g);
   await saveData();
   overlay.innerHTML='';
-  showToast(activity==='Expéditions'?`Expedition · ${expeditionDungeon} : recherche créée`:`${activity} : recherche créée`);
+  showToast(activity==='Expéditions'
+      ?`Expedition · ${expeditionDungeon} : recherche créée`
+      :activity==='Transcendances'
+        ?`Transcendence · ${transcendenceDungeon} : recherche créée`
+        :activity==='Sanctuary'
+          ?`Sanctuary · ${sanctuaryDungeon}${sanctuaryMode?` · ${sanctuaryMode}`:''} : groupes A+B créés`
+          :`${activity} : recherche créée`);
   window.MCM_RENDER();
 }
 function renderSearchGroups(){
@@ -1374,9 +1604,16 @@ async function postSearchGroupToDiscord(g,ev){
   const timestamp=ev&&ev.date&&ev.time?new Date(`${ev.date}T${ev.time}`).toISOString():undefined;
   const baseActivityLabel=ev?ev.activity:g.activity;
   const expeditionDungeon=(ev&&ev.expeditionDungeon)||g.expeditionDungeon||'';
+  const transcendenceDungeon=(ev&&ev.transcendenceDungeon)||g.transcendenceDungeon||'';
+  const sanctuaryDungeon=(ev&&ev.sanctuaryDungeon)||g.sanctuaryDungeon||'';
+  const sanctuaryMode=(ev&&ev.sanctuaryMode)||g.sanctuaryMode||'';
   const activityLabel=baseActivityLabel==='Expéditions'&&expeditionDungeon
     ? `Expéditions · ${expeditionDungeon}`
-    : baseActivityLabel;
+    : baseActivityLabel==='Transcendances'&&transcendenceDungeon
+      ? `Transcendances · ${transcendenceDungeon}`
+      : baseActivityLabel==='Sanctuary'&&sanctuaryDungeon
+        ? `Sanctuary · ${sanctuaryDungeon}${sanctuaryMode?` · ${sanctuaryMode}`:''}`
+        : baseActivityLabel;
   const embed={
     title:`🔍 ${activityLabel}`,
     description:`**RECHERCHE · ${members.length}/${totalMax}**\n\n${rosterBlocks}${ev&&ev.note?`\n\n📝 ${ev.note}`:''}\n\n👇 Clique sur les boutons ci-dessous pour indiquer ta disponibilité !`,
@@ -1470,7 +1707,7 @@ function openSearchEventPlanner(groupId){
       <div class="form-row"><label>Heure</label><input id="sgEventTime" type="time" value="20:30"></div>
     </div>
     <div class="form-row"><label>Note</label><input id="sgEventNote" placeholder="Optionnel"></div>
-    <div class="event-summary"><b>${esc(g.activity)}${g.expeditionDungeon?` · ${esc(g.expeditionDungeon)}`:''}</b> · ${members.length}/${g.activity==='Sanctuary'?10:5} joueurs<br>${g.activity==='Sanctuary'?'2 groupes : chacun 1 Tank · 3 DPS · 1 Heal':'Composition : 1 Tank · 3 DPS · 1 Heal'}</div>
+    <div class="event-summary"><b>${esc(g.activity)}${g.expeditionDungeon?` · ${esc(g.expeditionDungeon)}`:''}${g.transcendenceDungeon?` · ${esc(g.transcendenceDungeon)}`:''}${g.sanctuaryDungeon?` · ${esc(g.sanctuaryDungeon)}${g.sanctuaryMode?` · ${esc(g.sanctuaryMode)}`:''}`:''}</b> · ${members.length}/${g.activity==='Sanctuary'?10:5} joueurs<br>${g.activity==='Sanctuary'?'2 groupes : chacun 1 Tank · 3 DPS · 1 Heal':'Composition : 1 Tank · 3 DPS · 1 Heal'}</div>
     <div class="modal-actions"><button class="btn" id="cancelSgEvent">Annuler</button><button class="btn primary" id="saveSgEvent">Publier sur Discord</button></div>
   </div></div>`;
   document.getElementById('cancelSgEvent').onclick=()=>overlay.innerHTML='';
@@ -1488,6 +1725,9 @@ function openSearchEventPlanner(groupId){
       groupId:g.id,
       groupName:g.expeditionDungeon?`${g.activity} · ${g.expeditionDungeon}`:g.activity,
       expeditionDungeon:g.expeditionDungeon||'',
+      transcendenceDungeon:g.transcendenceDungeon||'',
+      sanctuaryDungeon:g.sanctuaryDungeon||'',
+      sanctuaryMode:g.sanctuaryMode||'',
       activity,
       type:window.MCM_ACTIVITY_TYPE(activity),
       date,time,note,
@@ -1731,6 +1971,8 @@ function dashboardSearchGroups(){
         kind:'sanctuary',
         id:a?.id||g.id,
         activity:'Sanctuary',
+        sanctuaryDungeon,
+        sanctuaryMode,
         type:'pve',
         a,b,members,
         count:members.length
@@ -1794,7 +2036,8 @@ function dashboardSearchTile(item){
     return `<div class="group-tile sanctuary-dashboard-tile">
       <span class="tag" style="border-color:${activityColor('Sanctuary')}88;color:${activityColor('Sanctuary')}">PVE · 10 JOUEURS</span>
       <div class="group-name">Sanctuary</div>
-      <div class="group-time">Groupe A ${ma.length}/5 · Groupe B ${mb.length}/5</div>
+      <div class="group-time">${item.sanctuaryDungeon?`${esc(item.sanctuaryDungeon)}${item.sanctuaryMode?` · ${esc(item.sanctuaryMode)}`:''}`:`Groupe A ${ma.length}/5 · Groupe B ${mb.length}/5`}</div>
+      ${item.sanctuaryDungeon?`<div class="group-count">Groupe A ${ma.length}/5 · Groupe B ${mb.length}/5</div>`:''}
       <div class="avatar-stack">${[...ma,...mb].slice(0,10).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div>
       <div class="group-count">${ma.length+mb.length}/10 joueurs</div>
       ${actionForPair()}
@@ -1805,7 +2048,7 @@ function dashboardSearchTile(item){
   return `<div class="group-tile">
     <span class="tag" style="border-color:${activityColor(g.activity)}88;color:${activityColor(g.activity)}">${activityTypeLabel(g.activity)}</span>
     <div class="group-name">${esc(g.activity)}</div>
-    <div class="group-time">${g.expeditionDungeon?esc(g.expeditionDungeon):'Recherche en cours'}</div>
+    <div class="group-time">${g.expeditionDungeon?esc(g.expeditionDungeon):g.transcendenceDungeon?esc(g.transcendenceDungeon):'Recherche en cours'}</div>
     <div class="avatar-stack">${item.members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div>
     <div class="group-count">${item.members.length}/5 joueurs</div>
     <div class="dashboard-group-actions">${dashboardSearchAction(g)}</div>
