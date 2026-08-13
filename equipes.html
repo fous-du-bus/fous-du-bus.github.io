@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MCM - MMO Connect Manager</title>
+<title>Gestion des groupes - Fous du bus</title>
 <link rel="apple-touch-icon" href="./icon-192.png">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
-* { scrollbar-width: thin; scrollbar-color: #168bff rgba(7,18,38,0.7); }
+* { scrollbar-width: thin; scrollbar-color: #8b6bff rgba(20,26,46,0.6); }
 *::-webkit-scrollbar { width: 10px; height: 10px; }
-*::-webkit-scrollbar-track { background: rgba(7,18,38,0.7); border-radius: 10px; }
-*::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #168bff, #00d9ff); border-radius: 10px; border: 2px solid rgba(7,18,38,0.7); }
-*::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #45a8ff, #4de5ff); }
+*::-webkit-scrollbar-track { background: rgba(20,26,46,0.6); border-radius: 10px; }
+*::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #8b6bff, #45c1ff); border-radius: 10px; border: 2px solid rgba(20,26,46,0.6); }
+*::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #a08bff, #6bd1ff); }
 *::-webkit-scrollbar-corner { background: transparent; }
 .gm-root {
   --bg: #090c16; --bg-2: #0d1220; --panel: rgba(24, 30, 51, 0.62); --panel-solid: #141a2e;
@@ -70,15 +70,15 @@ html, body { margin: 0; padding: 0; }
 .gm-brand-text span { display:block; font-size: 10px; color: var(--muted); font-family:'Inter'; font-weight:500; letter-spacing:0.08em; text-transform: uppercase; }
 .gm-nav { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
 .gm-nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: var(--muted); font-size: 13.5px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all .15s ease; user-select: none; text-decoration: none; }
-.gm-nav-item:hover { background: rgba(22,139,255,0.08); color: var(--text); }
+.gm-nav-item:hover { background: rgba(139,107,255,0.08); color: var(--text); }
 .gm-nav-badge { margin-left: auto; background: var(--danger); color: #fff; font-size: 10.5px; font-weight: 700; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
-.gm-nav-item.active { background: linear-gradient(90deg, rgba(22,139,255,0.20), rgba(118,87,255,0.06)); border-color: rgba(22,139,255,0.35); color: var(--text); box-shadow: inset 3px 0 0 var(--blue); }
+.gm-nav-item.active { background: rgba(139,107,255,0.14); border-color: var(--border-strong); color: var(--text); box-shadow: inset 2px 0 0 var(--violet); }
 .gm-nav-icon { width: 16px; text-align:center; opacity: 0.9; }
 .gm-nav-chevron { margin-left: auto; font-size: 11px; opacity: 0.6; }
 .gm-nav-item.expanded { color: var(--text); }
 .gm-nav-subitem { display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 30px; border-radius: 10px; color: var(--muted); font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all .15s ease; user-select: none; }
-.gm-nav-subitem:hover { background: rgba(22,139,255,0.08); color: var(--text); }
-.gm-nav-subitem.active { background: linear-gradient(90deg, rgba(22,139,255,0.20), rgba(118,87,255,0.06)); border-color: rgba(22,139,255,0.35); color: var(--text); box-shadow: inset 3px 0 0 var(--blue); }
+.gm-nav-subitem:hover { background: rgba(139,107,255,0.08); color: var(--text); }
+.gm-nav-subitem.active { background: rgba(139,107,255,0.14); border-color: var(--border-strong); color: var(--text); box-shadow: inset 2px 0 0 var(--violet); }
 .gm-role-box { margin-top: auto; background: var(--panel-solid); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
 .gm-role-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
 .gm-discord-account { display: flex; align-items: center; gap: 8px; }
@@ -92,14 +92,14 @@ html, body { margin: 0; padding: 0; }
 .gm-page-sub { color: var(--muted); font-size: 13px; margin-top: 3px; font-family:'Inter'; }
 .gm-search { position: relative; }
 .gm-search input { background: var(--panel-solid); border: 1px solid var(--border); border-radius: 10px; padding: 9px 14px 9px 32px; color: var(--text); font-size: 13px; width: 230px; outline: none; font-family: 'Inter'; }
-.gm-search input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(0,217,255,0.1); }
+.gm-search input:focus { border-color: var(--border-strong); }
 .gm-search:before { content: '⚲'; position: absolute; left: 12px; top: 50%; transform: translateY(-50%) rotate(90deg); color: var(--muted); font-size: 12px; }
-.gm-btn { border: 1px solid var(--border-strong); background: rgba(22,139,255,0.10); color: var(--text); padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter'; display: inline-flex; align-items: center; gap: 6px; transition: all .15s ease; white-space: nowrap; }
-.gm-btn:hover { background: rgba(22,139,255,0.2); box-shadow: 0 0 0 3px rgba(22,139,255,0.08); }
-.gm-btn-primary { background: linear-gradient(135deg, var(--blue), var(--violet)); border: none; color: #051019; box-shadow: 0 4px 16px rgba(22,139,255,0.25); }
-.gm-btn-primary:hover { filter: brightness(1.1); box-shadow: 0 4px 20px rgba(22,139,255,0.4); }
-.gm-btn-danger { background: rgba(255,85,112,0.12); border-color: rgba(255,85,112,0.4); color: #ff8b9c; }
-.gm-btn-danger:hover { background: rgba(255,85,112,0.22); }
+.gm-btn { border: 1px solid var(--border-strong); background: rgba(139,107,255,0.1); color: var(--text); padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter'; display: inline-flex; align-items: center; gap: 6px; transition: all .15s ease; white-space: nowrap; }
+.gm-btn:hover { background: rgba(139,107,255,0.2); }
+.gm-btn-primary { background: linear-gradient(135deg, var(--violet), var(--blue)); border: none; color: #060810; }
+.gm-btn-primary:hover { filter: brightness(1.08); }
+.gm-btn-danger { background: rgba(239,77,95,0.12); border-color: rgba(239,77,95,0.4); color: #ff8b96; }
+.gm-btn-danger:hover { background: rgba(239,77,95,0.22); }
 .gm-btn-ghost { background: transparent; border-color: var(--border); }
 .gm-btn-sm { padding: 6px 11px; font-size: 12px; border-radius: 8px; }
 .gm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -136,11 +136,11 @@ html, body { margin: 0; padding: 0; }
 .gm-emblem-glow-wrap { position: relative; flex-shrink: 0; align-self: center; margin-top: 14px; width: 108px; height: 108px; }
 .gm-emblem-glow-wrap .gm-player-emblem { margin-top: 0; position: absolute; inset: 0; }
 .gm-emblem-glow { position: absolute; inset: 8px; border-radius: 50%; filter: blur(22px); opacity: 0.5; z-index: 0; }
-.gm-player-card:hover { border-color: rgba(0,217,255,0.4); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,217,255,0.08); }
+.gm-player-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
 .gm-player-top { display: flex; gap: 10px; align-items: flex-start; }
 .gm-badge-new-ribbon { position: absolute; top: 10px; right: calc(18px + 108px/2); transform: translateX(50%); z-index: 2; }
 .gm-avatar { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; object-fit: cover; border: 2px solid var(--border-strong); background: #222840; }
-.gm-avatar-fallback { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; display:flex; align-items:center; justify-content:center; background: linear-gradient(135deg, var(--blue), var(--violet)); font-weight: 700; color: #051019; font-family:'Cinzel'; border: 2px solid var(--border-strong); }
+.gm-avatar-fallback { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; display:flex; align-items:center; justify-content:center; background: linear-gradient(135deg, var(--violet), var(--blue)); font-weight: 700; color: #0a0e1a; font-family:'Cinzel'; border: 2px solid var(--border-strong); }
 .gm-player-names { flex: 1; min-width: 0; }
 .gm-player-pseudo { font-weight: 600; font-size: 15.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gm-player-discord { color: var(--muted); font-size: 12px; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -208,7 +208,7 @@ html, body { margin: 0; padding: 0; }
 .gm-chat-empty { color: var(--muted-2); font-size: 12.5px; text-align: center; padding: 16px 0; }
 .gm-chat-msg { display: flex; align-items: flex-start; gap: 8px; padding: 4px 6px; border-radius: 8px; }
 .gm-chat-msg-mentioned { background: rgba(255,184,79,0.10); box-shadow: inset 2px 0 0 var(--new); }
-.gm-chat-mention { color: var(--cyan); font-weight: 600; }
+.gm-chat-mention { color: var(--violet); font-weight: 600; }
 .gm-chat-avatar { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; object-fit: cover; background: var(--bg-2); }
 .gm-chat-msg-body { flex: 1; min-width: 0; }
 .gm-chat-msg-head { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; }
@@ -219,7 +219,7 @@ html, body { margin: 0; padding: 0; }
 .gm-chat-msg:hover .gm-chat-msg-actions { opacity: 1; }
 .gm-chat-reactions { display: flex; align-items: center; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
 .gm-chat-reaction-pill { background: rgba(139,107,255,0.10); border: 1px solid var(--border); color: var(--muted); font-size: 11px; padding: 2px 7px; border-radius: 20px; cursor: pointer; }
-.gm-chat-reaction-pill.active { background: rgba(22,139,255,0.22); border-color: var(--blue); color: var(--text); }
+.gm-chat-reaction-pill.active { background: rgba(139,107,255,0.22); border-color: var(--violet); color: var(--text); }
 .gm-chat-reaction-pill:hover { border-color: var(--border-strong); }
 .gm-chat-reaction-picker { display: flex; gap: 2px; opacity: 0; transition: opacity .15s ease; }
 .gm-chat-msg:hover .gm-chat-reaction-picker { opacity: 1; }
@@ -258,7 +258,7 @@ html, body { margin: 0; padding: 0; }
 .gm-slot-wrapper { position: relative; }
 .gm-slot-wrapper .gm-slot-num { position: absolute; top: 14px; left: 18px; z-index: 2; background: var(--panel-solid); border: 1px solid var(--border); border-radius: 20px; padding: 2px 8px; }
 .gm-slot { border: 1.5px dashed var(--border); border-radius: 12px; padding: 10px; min-height: auto; display: flex; flex-direction: column; gap: 6px; position: relative; background: rgba(255,255,255,0.015); }
-.gm-slot.filled { border-style: solid; border-color: var(--border-strong); background: rgba(22,139,255,0.06); }
+.gm-slot.filled { border-style: solid; border-color: var(--border-strong); background: rgba(139,107,255,0.05); }
 .gm-slot-num { font-size: 10px; color: var(--muted-2); font-family:'JetBrains Mono'; margin-bottom: 0; }
 .gm-slot-empty { flex: 1; display: flex; align-items: center; justify-content: center; }
 .gm-slot select { width: 100%; background: var(--panel-solid); border: 1px solid var(--border); color: var(--text); padding: 7px 8px; border-radius: 8px; font-size: 12px; outline: none; font-family:'Inter'; cursor:pointer; }
@@ -274,13 +274,13 @@ html, body { margin: 0; padding: 0; }
 .gm-sub-chip button { background: none; border: none; color: var(--muted); cursor: pointer; margin-left: 2px; }
 .gm-add-sub select { background: var(--panel-solid); border: 1px dashed var(--border-strong); color: var(--muted); padding: 6px 10px; border-radius: 20px; font-size: 12px; cursor:pointer; }
 .gm-group-actions { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
-.gm-modal-overlay { position: fixed; inset: 0; background: rgba(2,5,12,0.78); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-.gm-modal { background: var(--panel-solid); border: 1px solid var(--border-strong); border-radius: 16px; padding: 24px; max-width: 480px; width: 100%; max-height: 88vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(22,139,255,0.08); }
-.gm-modal h3 { margin: 0 0 16px; font-size: 17px; font-family: 'Cinzel'; }
+.gm-modal-overlay { position: fixed; inset: 0; background: rgba(4,6,12,0.72); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+.gm-modal { background: var(--panel-solid); border: 1px solid var(--border-strong); border-radius: 16px; padding: 24px; max-width: 480px; width: 100%; max-height: 88vh; overflow-y: auto; }
+.gm-modal h3 { margin: 0 0 16px; font-size: 17px; }
 .gm-form-row { margin-bottom: 13px; }
 .gm-form-row label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
 .gm-form-row input, .gm-form-row select { width: 100%; background: var(--bg-2); border: 1px solid var(--border); color: var(--text); padding: 9px 11px; border-radius: 9px; font-size: 13px; outline: none; font-family:'Inter'; }
-.gm-form-row input:focus, .gm-form-row select:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(0,217,255,0.1); }
+.gm-form-row input:focus, .gm-form-row select:focus { border-color: var(--border-strong); }
 .gm-form-error { color: var(--danger); font-size: 11.5px; margin-top: 4px; }
 .gm-toggle-card { display: flex; align-items: center; gap: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; cursor: pointer; transition: border-color .15s ease, background .15s ease; }
 .gm-toggle-card:hover { border-color: var(--border-strong); }
@@ -304,7 +304,7 @@ html, body { margin: 0; padding: 0; }
 .gm-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .gm-table th { text-align: left; color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 10px; border-bottom: 1px solid var(--border); }
 .gm-table td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
-.gm-table tr:hover td { background: rgba(22,139,255,0.04); }
+.gm-table tr:hover td { background: rgba(255,255,255,0.02); }
 .gm-color-swatch { width: 16px; height: 16px; border-radius: 5px; display: inline-block; vertical-align: middle; }
 .gm-note { font-size: 11.5px; color: var(--muted-2); margin-top: 4px; line-height: 1.5; }
 .gm-scrollx { overflow-x: auto; }
@@ -322,108 +322,6 @@ html, body { margin: 0; padding: 0; }
   .gm-mobile-bottom-icon { font-size: 18px; line-height: 1; }
   .gm-mobile-bottom-label { font-size: 9.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 }
-
-
-/* =========================================================
-   MCM PREMIUM DASHBOARD — REFO NTE VISUELLE
-   Ajoutée sans modifier la logique Firebase / Discord
-   ========================================================= */
-.gm-root {
-  --bg: #030817; --bg-2: #071226; --panel: rgba(7,18,38,.86); --panel-solid: #071426;
-  --border: rgba(52,120,255,.18); --border-strong: rgba(55,145,255,.48);
-  --violet: #7657ff; --blue: #168bff; --cyan: #00d9ff;
-  --text: #f5f7ff; --muted: #94a3c4; --muted-2: #596781;
-  background:
-    radial-gradient(circle at 75% 0%, rgba(118,87,255,.14), transparent 35%),
-    radial-gradient(circle at 25% 10%, rgba(0,217,255,.09), transparent 32%),
-    #030817;
-}
-.gm-sidebar {
-  width: 285px; padding: 24px 18px;
-  background: linear-gradient(180deg, rgba(5,15,34,.97), rgba(3,9,23,.98));
-  border-right: 1px solid rgba(52,120,255,.18); box-shadow: 15px 0 45px rgba(0,0,0,.20);
-}
-.gm-brand { flex-direction: column; justify-content:center; text-align:center; padding:4px 0 14px; gap:8px; }
-.gm-brand-crest {
-  width:145px; height:145px; object-fit:contain; border-radius:0;
-  filter: drop-shadow(0 0 8px rgba(0,217,255,.20)) drop-shadow(0 0 18px rgba(118,87,255,.15));
-}
-.gm-brand-text { font-family:'Cinzel',serif; text-transform:uppercase; color:#f5f7ff; font-size:13px; letter-spacing:.08em; }
-.gm-brand-text span { margin-top:5px; font-size:9px; color:var(--cyan); letter-spacing:.22em; }
-.gm-nav { gap:6px; }
-.gm-nav-item,.gm-nav-subitem { min-height:42px; border-radius:10px; color:#8f9db8; transition:background .2s,color .2s,border-color .2s,transform .2s; }
-.gm-nav-item:hover,.gm-nav-subitem:hover { color:#fff; background:rgba(22,139,255,.07); }
-.gm-nav-item.active,.gm-nav-subitem.active {
-  color:#fff; background:linear-gradient(90deg,rgba(22,139,255,.20),rgba(118,87,255,.06));
-  border-color:rgba(22,139,255,.45); box-shadow:inset 3px 0 0 #168bff,0 0 18px rgba(22,139,255,.08);
-}
-.gm-nav-icon { width:22px; font-size:16px; }
-.gm-role-box { border:1px solid rgba(52,120,255,.18); background:rgba(8,20,42,.80); border-radius:13px; padding:11px; }
-.gm-discord-account img { width:34px; height:34px; border:2px solid rgba(0,217,255,.35); }
-.gm-main { padding:24px 32px 60px; }
-.gm-main-inner { max-width:1600px; }
-.gm-dashboard-hero {
-  min-height:170px; position:relative; overflow:hidden; border:1px solid rgba(52,120,255,.22);
-  border-radius:18px; margin-bottom:22px; padding:32px 34px;
-  background:
-    linear-gradient(90deg,rgba(2,8,22,.94) 0%,rgba(4,13,32,.72) 42%,rgba(4,10,29,.60) 100%),
-    url('./bg-aion2.webp') center 42% / cover no-repeat;
-  box-shadow:inset 0 -55px 90px rgba(3,8,23,.62);
-}
-.gm-dashboard-hero::after { content:''; position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg,transparent 45%,rgba(3,8,23,.76)); }
-.gm-dashboard-hero-content { position:relative; z-index:2; max-width:760px; }
-.gm-dashboard-title { margin:0; font-size:clamp(30px,3vw,44px); color:#f8faff; text-shadow:0 0 25px rgba(22,139,255,.24); }
-.gm-dashboard-subtitle { margin-top:8px; color:#a9b6cf; font-size:13px; }
-.gm-dashboard-clock { position:absolute; z-index:3; right:28px; top:28px; text-align:right; }
-.gm-panel {
-  background:linear-gradient(145deg,rgba(9,22,45,.94),rgba(5,14,31,.88));
-  border:1px solid rgba(52,120,255,.18); border-radius:14px; backdrop-filter:blur(12px);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 8px 25px rgba(0,0,0,.12);
-}
-.gm-panel:hover { border-color:rgba(52,140,255,.30); }
-.gm-stat-grid { grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-bottom:18px; }
-.gm-stat-card { position:relative; overflow:hidden; min-height:112px; padding:18px; }
-.gm-stat-card::before { content:''; position:absolute; width:95px; height:95px; border-radius:50%; right:-26px; top:-30px; background:rgba(22,139,255,.09); filter:blur(6px); }
-.gm-stat-value { position:relative; font-size:30px; color:#fff; background:none; -webkit-text-fill-color:initial; }
-.gm-stat-label { position:relative; margin-top:5px; text-transform:uppercase; letter-spacing:.05em; font-size:10px; color:#8fa0be; }
-.mcm-stat-note { margin-top:7px; font-size:10.5px; color:#5fdcb3; position:relative; }
-.mcm-dashboard-grid { display:grid; grid-template-columns:1.12fr 1.12fr .95fr; gap:14px; align-items:stretch; margin-bottom:14px; }
-.mcm-dashboard-panel { min-height:355px; }
-.mcm-dashboard-panel-title { display:flex; align-items:center; gap:8px; font-family:'Cinzel',serif; font-size:14px; color:#dce7ff; padding-bottom:12px; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,.06); }
-.mcm-activity-list { display:flex; flex-direction:column; }
-.mcm-activity-row { display:grid; grid-template-columns:30px 1fr auto; gap:9px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.045); }
-.mcm-activity-icon { width:28px; height:28px; border-radius:50%; display:grid; place-items:center; background:rgba(22,139,255,.10); color:#00d9ff; border:1px solid rgba(22,139,255,.24); }
-.mcm-activity-main { font-size:12px; color:#dfe6f5; }
-.mcm-activity-sub { font-size:10.5px; margin-top:3px; color:#71809c; }
-.mcm-activity-time { font-size:10px; color:#66758f; white-space:nowrap; }
-.mcm-member-total { display:flex; align-items:center; justify-content:center; gap:18px; margin:10px 0 18px; }
-.mcm-member-orb { width:106px; height:106px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(var(--cyan),var(--violet),rgba(255,255,255,.08) 70%); padding:8px; }
-.mcm-member-orb-inner { width:100%; height:100%; border-radius:50%; background:#071226; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-.mcm-member-orb-inner strong { font-family:'Cinzel'; font-size:28px; color:#fff; }
-.mcm-member-orb-inner span { font-size:9px; color:var(--muted); text-transform:uppercase; }
-.mcm-class-overview { margin-top:12px; }
-.mcm-event-mini { display:grid; grid-template-columns:1fr auto; gap:10px; padding:11px 0; border-bottom:1px solid rgba(255,255,255,.05); }
-.mcm-event-mini-title { color:#f1f5ff; font-weight:600; font-size:12.5px; }
-.mcm-event-mini-info { color:#7887a5; font-size:10.5px; margin-top:4px; }
-.mcm-event-date { min-width:52px; text-align:center; padding:5px 7px; border-radius:8px; background:rgba(118,87,255,.10); border:1px solid rgba(118,87,255,.25); color:#a995ff; font-size:10px; }
-.mcm-lower-grid { display:grid; grid-template-columns:1.15fr .85fr; gap:14px; margin-top:14px; }
-.mcm-stack { display:flex; flex-direction:column; gap:14px; }
-.mcm-section-card { min-height:170px; }
-.mcm-tonight-groups { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; }
-.mcm-tonight-card { padding:14px; border-radius:11px; background:rgba(5,16,35,.78); border:1px solid rgba(52,120,255,.15); transition:transform .2s,border-color .2s; }
-.mcm-tonight-card:hover { transform:translateY(-2px); border-color:rgba(22,139,255,.40); }
-.mcm-group-type { display:inline-flex; padding:3px 7px; border-radius:6px; font-size:9px; text-transform:uppercase; font-weight:700; color:#52c9ff; background:rgba(22,139,255,.12); border:1px solid rgba(22,139,255,.25); }
-.mcm-group-name { font-family:'Cinzel',serif; font-size:15px; margin-top:9px; }
-.mcm-group-time { color:#9ba8c1; font-size:12px; margin-top:4px; }
-.mcm-group-avatars { display:flex; margin-top:12px; }
-.mcm-group-avatars img { width:25px; height:25px; border-radius:50%; object-fit:cover; border:2px solid #081327; margin-left:-5px; }
-.mcm-group-avatars img:first-child { margin-left:0; }
-.mcm-empty-note { color:var(--muted); font-size:12px; padding:18px 0; text-align:center; }
-@media (max-width:1250px){ .gm-stat-grid{grid-template-columns:repeat(2,1fr)} .mcm-dashboard-grid{grid-template-columns:1fr 1fr} .mcm-dashboard-grid>:last-child{grid-column:1/-1} .mcm-lower-grid{grid-template-columns:1fr} }
-@media (max-width:900px){ .gm-sidebar{width:240px}.gm-brand-crest{width:118px;height:118px}.gm-main{padding:15px}.mcm-dashboard-grid{grid-template-columns:1fr}.mcm-dashboard-grid>:last-child{grid-column:auto}.gm-dashboard-hero{min-height:135px;padding:22px}.gm-dashboard-clock{display:none} }
-@media (max-width:700px){ .gm-sidebar{width:100%;position:static}.gm-shell{flex-direction:column}.gm-stat-grid{grid-template-columns:1fr 1fr} }
-@media (max-width:520px){ .gm-stat-grid{grid-template-columns:1fr}.gm-dashboard-hero{background-position:center}.mcm-tonight-groups{grid-template-columns:1fr} }
-
 </style>
 
 </head>
@@ -694,7 +592,7 @@ const I18N = {
     'gate.access_title': 'Accès réservé',
     'gate.access_msg': 'Connecte-toi avec Discord pour accéder à la Gestion des groupes (réservé aux membres avec le rôle Aion 2).',
     'gate.login_discord': 'Se connecter avec Discord',
-    'page.title': 'MCM - MMO Connect Manager',
+    'page.title': 'Gestion des groupes - Fous du bus',
   },
   en: {
     'nav.dashboard': 'Dashboard', 'nav.players': 'Players', 'nav.classes': 'Classes',
@@ -878,7 +776,7 @@ const I18N = {
     'gate.access_title': 'Restricted access',
     'gate.access_msg': 'Sign in with Discord to access Group Management (restricted to members with the Aion 2 role).',
     'gate.login_discord': 'Log in with Discord',
-    'page.title': 'MCM - MMO Connect Manager',
+    'page.title': 'Group Management - Fous du bus',
   },
 };
 function t(key){ return (I18N[LANG] && I18N[LANG][key]) || I18N.fr[key] || key; }
@@ -1935,7 +1833,7 @@ function renderShell(){
       <div class="gm-bg-stars-big"></div>
     </div>
     <div class="gm-mobile-topbar">
-      <div class="gm-brand"><img class="gm-brand-crest" src="./mcm-logo.png" alt="" /><div class="gm-brand-text">MCM</div></div>
+      <div class="gm-brand"><img class="gm-brand-crest" src="./logo-lfdb.webp" alt="" /><div class="gm-brand-text">Fous du Bus</div></div>
       <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="toggle-mobile-nav">${t('mobile.menu')}</button>
     </div>
     <div class="gm-shell">
@@ -1993,8 +1891,8 @@ function renderSidebar(){
   return `
     <div class="gm-sidebar ${MOBILE_NAV_OPEN ? 'open' : ''}">
       <div class="gm-brand">
-        <img class="gm-brand-crest" src="./mcm-logo.png" alt="" />
-        <div class="gm-brand-text">MCM<span>MMO CONNECT MANAGER</span></div>
+        <img class="gm-brand-crest" src="./logo-lfdb.webp" alt="" />
+        <div class="gm-brand-text">Fous du Bus<span>${t('brand.subtitle')}</span></div>
       </div>
       <div class="gm-global-search-wrap">
         <input type="text" id="global-search-input" data-action="global-search" placeholder="${t('search.global_placeholder')}" autocomplete="off" />
@@ -2059,29 +1957,25 @@ function renderTopbar(){
     auditlog: [t('topbar.auditlog.title'), t('topbar.auditlog.sub')],
   };
   const [title, sub] = titles[ACTIVE_TAB] || ['', ''];
-
-  if (ACTIVE_TAB === 'dashboard') {
-    return `
-      <div class="gm-dashboard-hero">
-        <div class="gm-dashboard-hero-content">
-          <h1 class="gm-dashboard-title gm-font-display">${LANG==='en'?'DASHBOARD':'TABLEAU DE BORD'}</h1>
-          <div class="gm-dashboard-subtitle">${esc(sub || (LANG==='en'?'Guild and activity overview':'Vue d’ensemble de la guilde et de l’activité'))}</div>
-        </div>
-        <div class="gm-dashboard-clock">
-          <div class="gm-page-title gm-font-display" id="gm-live-clock">--:--:--</div>
-          <div class="gm-page-sub" id="gm-live-date"></div>
-        </div>
-      </div>`;
-  }
-
   return `
     <div class="gm-topbar">
       <div><div class="gm-page-title gm-font-display">${esc(title)}</div><div class="gm-page-sub">${esc(sub)}</div></div>
-      ${ACTIVE_TAB==='players' ? `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;"><div class="gm-search"><input type="text" placeholder="${t('topbar.search_placeholder')}" value="${esc(PLAYER_FILTERS.search)}" data-action="filter-search" /></div></div>` : ''}
+      ${ACTIVE_TAB==='dashboard' ? `
+        <div style="text-align:right;">
+          <div class="gm-page-title gm-font-display" id="gm-live-clock">--:--:--</div>
+          <div class="gm-page-sub" id="gm-live-date"></div>
+        </div>
+      ` : ''}
+      ${ACTIVE_TAB==='players' ? `
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <div class="gm-search"><input type="text" placeholder="${t('topbar.search_placeholder')}" value="${esc(PLAYER_FILTERS.search)}" data-action="filter-search" /></div>
+        </div>
+      ` : ''}
       ${ACTIVE_TAB==='classes' && isAdminView() ? `<button class="gm-btn gm-btn-primary" data-action="open-class-modal">${t('topbar.new_class')}</button>` : ''}
       ${(ACTIVE_TAB==='pve'||ACTIVE_TAB==='pvp') ? `<button class="gm-btn gm-btn-primary" data-action="create-group" data-type="${ACTIVE_TAB}">${t('topbar.new_group')}</button>` : ''}
       ${ACTIVE_TAB==='events' && isAdminView() ? `<button class="gm-btn gm-btn-primary" data-action="open-event-modal">${t('topbar.new_event')}</button>` : ''}
-    </div>`;
+    </div>
+  `;
 }
 
 function renderTabContent(){
@@ -2102,9 +1996,15 @@ function renderTabContent(){
 /* ---- Dashboard ---- */
 function renderDashboard(){
   const totalPlayers = PLAYERS.length;
-  const pveGroups = GROUPS.filter(g => g.type === 'pve' && !g.open).length;
-  const pvpGroups = GROUPS.filter(g => g.type === 'pvp' && !g.open).length;
+  const pveCount = PLAYERS.filter(p => p.pve).length;
+  const pvpCount = PLAYERS.filter(p => p.pvp).length;
   const newCount = PLAYERS.filter(p => p.isNewPlayer).length;
+  const pveGroups = GROUPS.filter(g => g.type === 'pve').length;
+  const pvpGroups = GROUPS.filter(g => g.type === 'pvp').length;
+
+  const roleCounts = { Tank: 0, DPS: 0, Heal: 0, Flex: 0 };
+  PLAYERS.forEach(p => { const c = cls(p.classId); if (c && roleCounts[c.role] !== undefined) roleCounts[c.role]++; });
+  const maxRole = Math.max(1, ...Object.values(roleCounts));
 
   const classCounts = {};
   CLASSES.forEach(c => classCounts[c.id] = 0);
@@ -2112,96 +2012,124 @@ function renderDashboard(){
   const maxClass = Math.max(1, ...Object.values(classCounts));
 
   const now = Date.now();
-  const upcoming = EVENTS.filter(e => e.date && new Date(e.date + 'T' + (e.time || '00:00')).getTime() >= now)
+  const upcoming = EVENTS.filter(e => e.date && (new Date(e.date + 'T' + (e.time || '00:00')).getTime() >= now))
     .sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
+  const nextEvent = upcoming[0] || null;
   const myGroupEvents = myUpcomingGroupEvents();
-  const openGroups = GROUPS.filter(g => g.open && g.event && g.type !== 'sanctuary');
-  const fixedGroups = GROUPS.filter(g => !g.open && (g.type === 'pve' || g.type === 'pvp'));
-  const recentAudit = AUDIT_LOG.slice(0, 6);
-  const locale = LANG==='en' ? 'en-GB' : 'fr-FR';
-
-  const pairsById = {};
-  GROUPS.filter(g => g.type === 'sanctuary' && g.event).forEach(g => {
-    (pairsById[g.sanctuaryPairId] = pairsById[g.sanctuaryPairId] || []).push(g);
-  });
-  const sanctuaryPairs = Object.values(pairsById);
 
   return `
     <div class="gm-stat-grid">
-      <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${totalPlayers}</div><div class="gm-stat-label">${t('dash.stat.players')}</div><div class="mcm-stat-note">${LANG==='en'?'Guild roster':'Effectif de la guilde'}</div></div>
-      <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${pveGroups}</div><div class="gm-stat-label">${t('dash.stat.pve_groups')}</div><div class="mcm-stat-note">PvE</div></div>
-      <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${pvpGroups}</div><div class="gm-stat-label">${t('dash.stat.pvp_groups')}</div><div class="mcm-stat-note">PvP</div></div>
-      <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${upcoming.length}</div><div class="gm-stat-label">${LANG==='en'?'Upcoming events':'Événements à venir'}</div><div class="mcm-stat-note">${newCount} ${LANG==='en'?'new players':'nouveaux joueurs'}</div></div>
+      <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${totalPlayers}</div><div class="gm-stat-label">${t('dash.stat.players')}</div></div>
+      <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${pveGroups}</div><div class="gm-stat-label">${t('dash.stat.pve_groups')}</div></div>
+      <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${pvpGroups}</div><div class="gm-stat-label">${t('dash.stat.pvp_groups')}</div></div>
+      <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${newCount}</div><div class="gm-stat-label">${t('dash.stat.new_players')}</div></div>
     </div>
-
-    <div class="mcm-dashboard-grid">
-      <div class="gm-panel mcm-dashboard-panel">
-        <div class="mcm-dashboard-panel-title">⚡ ${LANG==='en'?'RECENT ACTIVITY':'ACTIVITÉ RÉCENTE'}</div>
-        ${recentAudit.length ? `<div class="mcm-activity-list">${recentAudit.map(a => {
-          const d = new Date(a.at);
-          const tm = isNaN(d.getTime()) ? '' : d.toLocaleTimeString(locale,{hour:'2-digit',minute:'2-digit'});
-          return `<div class="mcm-activity-row"><div class="mcm-activity-icon">•</div><div><div class="mcm-activity-main"><strong>${esc(a.actor || '—')}</strong> · ${esc(auditActionLabel(a.actionKey) || '')}</div><div class="mcm-activity-sub">${esc(a.targetLabel || '')}</div></div><div class="mcm-activity-time">${esc(tm)}</div></div>`;
-        }).join('')}</div>` : `<div class="mcm-empty-note">${LANG==='en'?'No recent activity.':'Aucune activité récente.'}</div>`}
-      </div>
-
-      <div class="gm-panel mcm-dashboard-panel">
-        <div class="mcm-dashboard-panel-title">👥 ${LANG==='en'?'MEMBERS OVERVIEW':'APERÇU DES MEMBRES'}</div>
-        <div class="mcm-member-total"><div class="mcm-member-orb"><div class="mcm-member-orb-inner"><strong>${totalPlayers}</strong><span>Total</span></div></div><div><div style="font-size:12px;color:var(--muted);">${CLASSES.length} ${LANG==='en'?'classes':'classes'}</div><div style="font-size:12px;color:var(--muted);margin-top:6px;">${fixedGroups.length} ${LANG==='en'?'fixed groups':'groupes fixes'}</div></div></div>
-        <div class="mcm-class-overview">
-          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">${t('dash.class_breakdown')}</div>
-          ${CLASSES.map(c => `<div class="gm-bar-row" style="gap:8px;margin-bottom:8px;"><div class="gm-bar-label" style="display:flex;align-items:center;gap:6px;font-size:12px;width:105px;"><img src="${c.icon}" style="width:16px;height:16px;object-fit:contain;" alt="" />${esc(c.name)}</div><div class="gm-bar-track" style="height:9px;"><div class="gm-bar-fill" style="width:${(classCounts[c.id]/maxClass)*100}%;background:${c.color};"></div></div><div class="gm-bar-value" style="font-size:12px;">${classCounts[c.id]}</div></div>`).join('')}
+    <div style="display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap;">
+      <div style="flex:1;min-width:280px;max-width:50%;display:flex;flex-direction:column;gap:24px;">
+        <div class="gm-panel">
+          <h3 style="font-size:14px;margin:0 0 12px;">${t('dash.class_breakdown')}</h3>
+            ${CLASSES.map(c => `
+              <div class="gm-bar-row" style="gap:8px;margin-bottom:8px;">
+                <div class="gm-bar-label" style="display:flex;align-items:center;gap:6px;font-size:13px;width:100px;"><img src="${c.icon}" style="width:16px;height:16px;border-radius:3px;" alt="" />${c.name}</div>
+                <div class="gm-bar-track" style="height:10px;"><div class="gm-bar-fill" style="width:${(classCounts[c.id]/maxClass)*100}%;background:${c.color};"></div></div>
+                <div class="gm-bar-value" style="font-size:13px;">${classCounts[c.id]}</div>
+              </div>
+            `).join('')}
+        </div>
+        ${(() => {
+          const openGroups = GROUPS.filter(g => g.open && g.event && g.type !== 'sanctuary');
+          return `
+          <div class="gm-panel" style="height:300px;display:flex;flex-direction:column;">
+            <h3 style="font-size:13px;margin:0 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">🔓 ${t('dashboard.open_groups')} (${openGroups.length})</h3>
+            ${!openGroups.length ? `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_open_groups')}</div>` : `
+            <div style="display:flex;flex-direction:column;gap:10px;max-height:230px;overflow-y:auto;padding-right:4px;">
+              ${openGroups.map(g => {
+                const neededRoles = computeNeededRoles(g);
+                const creator = g.createdById ? PLAYERS.find(p => p.discordId === g.createdById) : null;
+                const registeredPlayers = g.slots.filter(s => s.playerId).map(s => player(s.playerId)).filter(Boolean);
+                return `<div class="gm-open-group-mini">
+                <span class="gm-class-pill" style="border-color:${groupTypeColor(g.type)}66;background:${groupTypeColor(g.type)}1c;color:${groupTypeColor(g.type)}">${groupTypeLabel(g.type)}</span>
+                <div style="flex:1;min-width:0;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                    <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(g.event.title || g.name)}</div>
+                    ${neededRoles.length ? `<div style="display:flex;gap:4px;flex-shrink:0;">${neededRoles.map(role => `<button class="gm-role-pill gm-role-pill-clickable" data-action="quick-join-role" data-group="${g.id}" data-role="${role}" style="font-size:9.5px;padding:2px 7px;border-color:${roleColor(role)}66;background:${roleColor(role)}1c;color:${roleColor(role)}">${role} +</button>`).join('')}</div>` : ''}
+                  </div>
+                  <div style="font-size:11px;color:var(--muted);">${esc(g.name)} · ${g.slots.filter(s=>s.playerId).length}/5${creator ? ` · ${t('groups.created_by')}: ${esc(creator.discordUsername || creator.pseudo)}` : ''}</div>
+                  ${registeredPlayers.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">${registeredPlayers.map(p => { const pc = cls(p.classId); const rc = pc ? roleColor(pc.role) : 'var(--border)'; return `<div class="gm-mini-player-chip" style="border-color:${rc};">${avatarHtml(p, 18)}<span>${esc(p.discordUsername || p.pseudo)}</span></div>`; }).join('')}</div>` : ''}
+                </div>
+              </div>`;
+              }).join('')}
+            </div>`}
+          </div>`;
+        })()}
+        <div class="gm-panel">
+          <h3 style="font-size:13px;margin:0 0 12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">💬 ${t('nav.chat')}</h3>
+          ${discordUser ? `
+          <div class="gm-chat-panel" style="border:none;padding:0;">
+            <div class="gm-chat-messages" style="max-height:288px;">
+              ${GENERAL_CHAT_MESSAGES.length ? GENERAL_CHAT_MESSAGES.slice(-30).map(m => renderChatMessage(m, 'chatGeneral')).join('') : `<div class="gm-chat-empty">${t('chat.empty')}</div>`}
+            </div>
+            <div class="gm-chat-input-row">
+              <div class="gm-chat-input-wrap">
+                <input type="text" id="chat-input-general" data-action="chat-keydown-general" maxlength="500" placeholder="${t('chat.placeholder')}" autocomplete="off" />
+                <div class="gm-mention-dropdown" id="mention-dd-general"></div>
+              </div>
+              <button class="gm-btn gm-btn-primary" data-action="send-general-chat">${t('chat.send')}</button>
+            </div>
+          </div>` : `<div class="gm-empty">${t('mygroup.not_logged')}</div>`}
         </div>
       </div>
-
-      <div class="gm-panel mcm-dashboard-panel">
-        <div class="mcm-dashboard-panel-title">🗓️ ${LANG==='en'?'UPCOMING EVENTS':'ÉVÉNEMENTS À VENIR'}</div>
-        ${upcoming.length ? upcoming.slice(0,5).map(ev => `<div class="mcm-event-mini"><div><div class="mcm-event-mini-title">${esc(ev.title)}</div><div class="mcm-event-mini-info">${esc(ev.type || '')}${ev.time ? ' · '+esc(ev.time) : ''}</div></div><div class="mcm-event-date">${new Date(ev.date+'T00:00').toLocaleDateString(locale,{day:'2-digit',month:'short'})}</div></div>`).join('') : `<div class="mcm-empty-note">${t('dashboard.no_upcoming_event')}</div>`}
-        <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="nav" data-tab="events" style="width:100%;justify-content:center;margin-top:14px;">${LANG==='en'?'Open calendar':'Voir le calendrier'} →</button>
+      <div style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:24px;">
+        <div class="gm-panel gm-dashboard-event-card" style="height:270px;display:flex;flex-direction:column;">
+          <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.next_event')}</h3>
+          <div style="max-height:230px;overflow-y:auto;padding-right:4px;">
+            ${nextEvent ? renderEventCard(nextEvent) : `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_upcoming_event')}</div>`}
+          </div>
+        </div>
+        <div class="gm-panel gm-dashboard-event-card" style="height:530px;display:flex;flex-direction:column;">
+          <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.my_group_events')}</h3>
+          ${!myGroupEvents.length ? `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_group_events')}</div>` : `
+          <div style="display:flex;flex-direction:column;gap:14px;max-height:460px;overflow-y:auto;padding-right:4px;">
+            ${myGroupEvents.map(g => renderGroupEventCard(g)).join('')}
+          </div>`}
+        </div>
+        ${(() => {
+          const pairsById = {};
+          GROUPS.filter(g => g.type === 'sanctuary' && g.event).forEach(g => {
+            (pairsById[g.sanctuaryPairId] = pairsById[g.sanctuaryPairId] || []).push(g);
+          });
+          const pairs = Object.values(pairsById);
+          return `
+          <div class="gm-panel" style="height:250px;display:flex;flex-direction:column;">
+            <h3 style="font-size:13px;margin:0 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">🏛️ ${t('nav.sanctuary')} (${pairs.length})</h3>
+            ${!pairs.length ? `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_sanctuary')}</div>` : `
+            <div style="display:flex;flex-direction:column;gap:10px;max-height:180px;overflow-y:auto;padding-right:4px;">
+              ${pairs.map(pairGroups => {
+                const ev = pairGroups[0].event;
+                const combinedNeeded = [];
+                pairGroups.forEach(g => combinedNeeded.push(...computeNeededRoles(g)));
+                const creator = pairGroups[0].createdById ? PLAYERS.find(p => p.discordId === pairGroups[0].createdById) : null;
+                const registeredPlayers = pairGroups.flatMap(g => g.slots.filter(s => s.playerId).map(s => player(s.playerId))).filter(Boolean);
+                const totalFilled = registeredPlayers.length;
+                const totalSlots = pairGroups.reduce((sum, g) => sum + g.slots.length, 0);
+                return `<div class="gm-open-group-mini">
+                <span class="gm-class-pill" style="border-color:${groupTypeColor('sanctuary')}66;background:${groupTypeColor('sanctuary')}1c;color:${groupTypeColor('sanctuary')}">🏛️</span>
+                <div style="flex:1;min-width:0;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                    <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(ev.title)}</div>
+                    ${combinedNeeded.length ? `<div style="display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;">${combinedNeeded.map(role => `<span class="gm-role-pill" style="font-size:9.5px;padding:2px 7px;border-color:${roleColor(role)}66;background:${roleColor(role)}1c;color:${roleColor(role)}">${role}</span>`).join('')}</div>` : ''}
+                  </div>
+                  <div style="font-size:11px;color:var(--muted);">${totalFilled}/${totalSlots}${creator ? ` · ${t('groups.created_by')}: ${esc(creator.discordUsername || creator.pseudo)}` : ''}</div>
+                  ${registeredPlayers.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">${registeredPlayers.map(p => { const pc = cls(p.classId); const rc = pc ? roleColor(pc.role) : 'var(--border)'; return `<div class="gm-mini-player-chip" style="border-color:${rc};">${avatarHtml(p, 18)}<span>${esc(p.discordUsername || p.pseudo)}</span></div>`; }).join('')}</div>` : ''}
+                </div>
+              </div>`;
+              }).join('')}
+            </div>`}
+          </div>`;
+        })()}
       </div>
     </div>
-
-    <div class="gm-panel" style="margin-bottom:14px;">
-      <div class="mcm-dashboard-panel-title">⚔️ ${LANG==='en'?'FIXED GROUPS':'GROUPES FIXES'}</div>
-      ${fixedGroups.length ? `<div class="mcm-tonight-groups">${fixedGroups.slice(0,5).map(g => {
-        const members = g.slots.filter(s=>s.playerId).map(s=>player(s.playerId)).filter(Boolean);
-        return `<div class="mcm-tonight-card"><span class="mcm-group-type">${esc((g.type||'').toUpperCase())}</span><div class="mcm-group-name">${esc(g.name)}</div><div class="mcm-group-time">${members.length}/5 ${LANG==='en'?'players':'joueurs'}</div><div class="mcm-group-avatars">${members.map(p=>p.avatar?`<img src="${esc(p.avatar)}" alt="${esc(p.discordUsername || p.pseudo)}" />`:'').join('')}</div></div>`;
-      }).join('')}</div>` : `<div class="mcm-empty-note">${LANG==='en'?'No fixed group yet.':'Aucun groupe fixe pour le moment.'}</div>`}
-    </div>
-
-    <div class="mcm-lower-grid">
-      <div class="mcm-stack">
-        <div class="gm-panel mcm-section-card">
-          <div class="mcm-dashboard-panel-title">🔓 ${t('dashboard.open_groups')} (${openGroups.length})</div>
-          ${!openGroups.length ? `<div class="mcm-empty-note">${t('dashboard.no_open_groups')}</div>` : `<div style="display:flex;flex-direction:column;gap:10px;max-height:300px;overflow-y:auto;padding-right:4px;">${openGroups.map(g => {
-            const neededRoles = computeNeededRoles(g);
-            const creator = g.createdById ? PLAYERS.find(p => p.discordId === g.createdById) : null;
-            return `<div class="gm-open-group-mini"><span class="gm-class-pill" style="border-color:${groupTypeColor(g.type)}66;background:${groupTypeColor(g.type)}1c;color:${groupTypeColor(g.type)}">${groupTypeLabel(g.type)}</span><div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(g.event.title || g.name)}</div>${neededRoles.length?`<div style="display:flex;gap:4px;flex-shrink:0;">${neededRoles.map(role=>`<button class="gm-role-pill gm-role-pill-clickable" data-action="quick-join-role" data-group="${g.id}" data-role="${role}" style="font-size:9.5px;padding:2px 7px;border-color:${roleColor(role)}66;background:${roleColor(role)}1c;color:${roleColor(role)}">${role} +</button>`).join('')}</div>`:''}</div><div style="font-size:11px;color:var(--muted);">${esc(g.name)} · ${g.slots.filter(s=>s.playerId).length}/5${creator?` · ${t('groups.created_by')}: ${esc(creator.discordUsername || creator.pseudo)}`:''}</div></div></div>`;
-          }).join('')}</div>`}
-        </div>
-
-        <div class="gm-panel mcm-section-card">
-          <div class="mcm-dashboard-panel-title">💬 ${t('nav.chat')}</div>
-          ${discordUser ? `<div class="gm-chat-panel" style="border:none;padding:0;background:transparent;"><div class="gm-chat-messages" style="max-height:300px;">${GENERAL_CHAT_MESSAGES.length ? GENERAL_CHAT_MESSAGES.slice(-30).map(m => renderChatMessage(m,'chatGeneral')).join('') : `<div class="gm-chat-empty">${t('chat.empty')}</div>`}</div><div class="gm-chat-input-row"><div class="gm-chat-input-wrap"><input type="text" id="chat-input-general" data-action="chat-keydown-general" maxlength="500" placeholder="${t('chat.placeholder')}" autocomplete="off" /><div class="gm-mention-dropdown" id="mention-dd-general"></div></div><button class="gm-btn gm-btn-primary" data-action="send-general-chat">${t('chat.send')}</button></div></div>` : `<div class="mcm-empty-note">${t('mygroup.not_logged')}</div>`}
-        </div>
-      </div>
-
-      <div class="mcm-stack">
-        <div class="gm-panel mcm-section-card">
-          <div class="mcm-dashboard-panel-title">👥 ${t('dashboard.my_group_events')}</div>
-          ${!myGroupEvents.length ? `<div class="mcm-empty-note">${t('dashboard.no_group_events')}</div>` : `<div style="display:flex;flex-direction:column;gap:12px;max-height:420px;overflow-y:auto;padding-right:4px;">${myGroupEvents.map(g => renderGroupEventCard(g)).join('')}</div>`}
-        </div>
-
-        <div class="gm-panel mcm-section-card">
-          <div class="mcm-dashboard-panel-title">🏛️ ${t('nav.sanctuary')} (${sanctuaryPairs.length})</div>
-          ${!sanctuaryPairs.length ? `<div class="mcm-empty-note">${t('dashboard.no_sanctuary')}</div>` : `<div style="display:flex;flex-direction:column;gap:10px;max-height:300px;overflow-y:auto;">${sanctuaryPairs.map(pairGroups => {
-            const ev = pairGroups[0].event;
-            const registered = pairGroups.flatMap(g=>g.slots.filter(s=>s.playerId).map(s=>player(s.playerId))).filter(Boolean);
-            const totalSlots = pairGroups.reduce((sum,g)=>sum+g.slots.length,0);
-            return `<div class="gm-open-group-mini"><span class="gm-class-pill" style="border-color:${groupTypeColor('sanctuary')}66;background:${groupTypeColor('sanctuary')}1c;color:${groupTypeColor('sanctuary')}">🏛️</span><div style="flex:1;"><div style="font-weight:600;">${esc(ev.title)}</div><div style="font-size:11px;color:var(--muted);">${registered.length}/${totalSlots}</div></div></div>`;
-          }).join('')}</div>`}
-        </div>
-      </div>
-    </div>`;
+  `;
 }
 
 /* ---- Players ---- */
@@ -3199,7 +3127,7 @@ function renderGate(){
   } else {
     body = `
       <div style="text-align:center;max-width:360px;">
-        <img src="./mcm-logo.png" alt="" style="width:72px;height:72px;object-fit:contain;margin:0 auto 16px;display:block;" />
+        <img src="./logo-lfdb.webp" alt="" style="width:72px;height:72px;object-fit:contain;margin:0 auto 16px;display:block;" />
         <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;">${t('gate.access_title')}</div>
         <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px;">${t('gate.access_msg')}</div>
         <button class="gm-btn gm-btn-primary" style="background:#5865F2;border-color:#5865F2;color:#fff;" data-gate-action="login">${DISCORD_LOGO} ${t('gate.login_discord')}</button>
@@ -3316,7 +3244,7 @@ function checkEventReminders(){
     const diff = eventTime - now;
     if (diff > 0 && diff <= windowMs) {
       try {
-        new Notification(t('notif.reminder_title'), { body: t('notif.reminder_body').replace('{title}', item.title), icon: './mcm-logo.png' });
+        new Notification(t('notif.reminder_title'), { body: t('notif.reminder_body').replace('{title}', item.title), icon: './logo-lfdb.webp' });
       } catch(e){}
       NOTIFIED_EVENTS.add(item.id);
       changed = true;
