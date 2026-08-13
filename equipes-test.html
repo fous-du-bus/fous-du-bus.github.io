@@ -1123,7 +1123,7 @@ function renderDashboard(){
 
       <section class="card groups-card">
         <h3 class="card-title">${icon('swords','ui-icon')}GROUPES STATIC</h3>
-        <div class="dashboard-scroll-wrap"><div class="dashboard-scroll-wrap"><div class="groups-grid">${FIXED_GROUPS.map(g=>{normalizeFixedGroup(g);const members=groupMembers(g),ev=latestGroupEvent(g.id);return `<div class="group-tile"><span class="tag">STATIC</span><div class="group-name">${esc(g.name)}</div><div class="group-time">${ev?esc(ev.activity)+' · '+esc(ev.date)+' · '+esc(ev.time):'Aucun événement planifié'}</div><div class="avatar-stack">${members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div><div class="group-count">${members.length}/5 joueurs</div><div class="dashboard-group-actions">${dashboardFixedAction(g)}</div></div>`}).join('')||'<div class="group-count">Aucun groupe STATIC créé.</div>'}</div></div>
+        <div class="dashboard-scroll-wrap"><div class="dashboard-scroll-wrap"><div class="groups-grid">${FIXED_GROUPS.map(g=>{normalizeFixedGroup(g);const members=groupMembers(g),ev=latestGroupEvent(g.id);return `<div class="group-tile"><span class="tag">STATIC</span><div class="group-name">${esc(g.name)}</div><div class="group-time">${ev?esc(ev.activity)+' · '+esc(ev.date)+' · '+esc(ev.time):'Aucun événement planifié'}</div><div class="avatar-stack">${members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div><div class="group-count">${members.length}/5 joueurs</div></div>`}).join('')||'<div class="group-count">Aucun groupe STATIC créé.</div>'}</div></div>
         <div class="view-all" data-tab="fixed-all">Voir tous les groupes ›</div>
       </section>
     </div>
@@ -1159,8 +1159,6 @@ function bind(){
 
   document.querySelectorAll('[data-dash-join-search]').forEach(b=>b.addEventListener('click',()=>joinSearchSlot(b.dataset.dashJoinSearch,b.dataset.dashSlot)));
   document.querySelectorAll('[data-dash-leave-search]').forEach(b=>b.addEventListener('click',()=>leaveSearchGroup(b.dataset.dashLeaveSearch)));
-  document.querySelectorAll('[data-dash-join-fixed]').forEach(b=>b.addEventListener('click',()=>joinFixedSlot(b.dataset.dashJoinFixed,b.dataset.dashSlot)));
-  document.querySelectorAll('[data-dash-leave-fixed]').forEach(b=>b.addEventListener('click',()=>leaveFixedGroup(b.dataset.dashLeaveFixed)));
 
 }
 
