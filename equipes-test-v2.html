@@ -834,6 +834,13 @@ body{background:
 .class-member-row .member-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;border:1px solid rgba(110,151,219,.42)}
 .class-member-row .member-class-icon{width:24px;height:24px;object-fit:contain;margin-left:auto}
 .class-member-name{font-size:12px;font-weight:600}.class-member-status{font-size:9px;color:#8392ad;margin-top:3px}
+.activity-admin-btn{margin-left:auto;padding:5px 9px!important;font-size:9px!important}
+.activity-list{max-height:292px;overflow-y:auto;overflow-x:hidden;padding-right:6px;scrollbar-width:thin;scrollbar-color:rgba(82,126,194,.62) rgba(255,255,255,.03)}
+.activity-list::-webkit-scrollbar{width:7px}.activity-list::-webkit-scrollbar-track{background:rgba(255,255,255,.03);border-radius:999px}.activity-list::-webkit-scrollbar-thumb{background:rgba(82,126,194,.62);border-radius:999px}.activity-list::-webkit-scrollbar-thumb:hover{background:rgba(64,151,255,.78)}
+.activity-reset-list{display:flex;flex-direction:column;gap:7px;max-height:380px;overflow:auto;margin-top:10px;padding-right:4px}
+.activity-reset-row{display:grid;grid-template-columns:18px 32px minmax(0,1fr) auto;align-items:center;gap:9px;padding:8px;border:1px solid rgba(82,126,194,.24);background:rgba(5,16,34,.75);border-radius:9px;cursor:pointer}
+.activity-reset-row:hover{border-color:rgba(64,151,255,.5)}
+.activity-reset-row input{width:15px;height:15px}.activity-reset-row img{width:30px;height:30px;border-radius:50%;object-fit:cover}.activity-reset-main{font-size:10px;color:#dbe5f7}.activity-reset-sub{font-size:8px;color:#7887a2;margin-top:3px}.activity-reset-time{font-size:8px;color:#73819a;white-space:nowrap}
 @media(max-width:560px){.dashboard-class-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 .main-grid{
@@ -1577,10 +1584,11 @@ function openFixedGroupModal(id=''){
   function bindBuilder(){document.querySelectorAll('[data-builder-select]').forEach(sel=>sel.onchange=()=>{snapshot();const k=sel.dataset.builderSelect;draft.slots[k]=sel.value||'';const ids=Object.values(draft.slots).filter(Boolean);if(new Set(ids).size!==ids.length){draft.slots[k]='';showToast('Un joueur ne peut occuper qu’un seul slot')}draw()});document.querySelectorAll('[data-remove-builder]').forEach(b=>b.onclick=()=>{snapshot();draft.slots[b.dataset.removeBuilder]='';if(draft.leaderId&&!Object.values(draft.slots).includes(draft.leaderId))draft.leaderId='';draw()});document.getElementById('resetFixed').onclick=()=>{snapshot();draft.slots={tank:'',dps1:'',dps2:'',dps3:'',heal:''};draft.leaderId='';draw()};const del=document.getElementById('deleteFixedInline');if(del)del.onclick=async()=>{overlay.innerHTML='';await deleteFixedGroup(g.id)};document.getElementById('cancelFixed').onclick=()=>overlay.innerHTML='';document.getElementById('saveFixed').onclick=async()=>{snapshot();const name=(draft.name||'').trim();if(!name)return showToast('Donne un nom au groupe');const ids=Object.values(draft.slots).filter(Boolean);if(new Set(ids).size!==ids.length)return showToast('Un joueur ne peut occuper qu’un seul slot');for(const def of fixedSlotDefs()){const pid=draft.slots[def.key];if(pid){const p=PLAYERS.find(x=>x.id===pid);if(!p||!classCanRole(p.classId,def.role))return showToast(`${def.label} : classe incompatible`)}}if(draft.leaderId&&!ids.includes(draft.leaderId))return showToast('Le leader doit être dans la composition');g.name=name;g.type=draft.type;g.maxMembers=5;g.schedule=(draft.schedule||'').trim();g.description=(draft.description||'').trim();g.leaderId=draft.leaderId||'';g.slots={...draft.slots};g.memberIds=ids;if(creating)FIXED_GROUPS.push(g);await saveData();overlay.innerHTML='';ACTIVE=g.type==='pvp'?'fixed-pvp':'fixed-pve';showToast(creating?'Groupe fixe créé':'Groupe fixe enregistré');window.MCM_RENDER()}};
   draw();
 }
+function isFixedGroupCreator(g){const me=myPlayer();return !!(me&&g&&(g.createdByPlayerId===me.id||(g.createdById&&discordUser&&g.createdById===discordUser.id)))}
 async function deleteFixedGroup(id){
   const g=FIXED_GROUPS.find(x=>x.id===id),me=myPlayer();
   if(!g)return;
-  const allowed=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||(me&&g.createdByPlayerId===me.id);
+  const allowed=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||isFixedGroupCreator(g);
   if(!allowed)return showToast('Seul le créateur ou un admin peut supprimer ce groupe');
   if(!confirm(`Supprimer « ${g.name} » et ses événements associés ?`))return;
 
@@ -2086,6 +2094,24 @@ function addActivity(type,message,detail='',player=null){
 }
 function activitySymbol(type){return ({profile:'✎',group:'⚔',join:'+',leave:'−',event:'◆',delete:'×'})[type]||'•'}
 function activityTime(ts){const diff=Math.max(0,Date.now()-Number(ts||0));if(diff<60000)return 'Maintenant';if(diff<3600000)return `${Math.floor(diff/60000)} min`;if(diff<86400000)return `${Math.floor(diff/3600000)} h`;return new Date(ts).toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})}
+function openActivityResetModal(){
+  if(!(IS_ADMIN&&!PREVIEW_AS_MEMBER))return showToast('Action réservée aux administrateurs');
+  const activities=ACTIVITY_LOG.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  overlay.innerHTML=`<div class="modal-backdrop"><div class="modal" style="width:min(680px,100%)"><h3>Réinitialiser les activités récentes</h3><div style="font-size:10px;color:#8c9bb5">Sélectionne les activités à supprimer, ou utilise « Tout supprimer ».</div><div class="activity-reset-list">${activities.length?activities.map(a=>`<label class="activity-reset-row"><input type="checkbox" data-reset-activity="${esc(a.id)}">${a.avatar?`<img src="${esc(a.avatar)}" alt="">`:`<span class="act-ico">${activitySymbol(a.type)}</span>`}<span><span class="activity-reset-main">${esc(a.message||'Activité')}</span><span class="activity-reset-sub">${esc(a.detail||'MCM')}</span></span><span class="activity-reset-time">${activityTime(a.createdAt)}</span></label>`).join(''):'<div style="padding:18px;text-align:center;color:#8290aa">Aucune activité enregistrée.</div>'}</div><div class="modal-actions"><button class="btn" id="cancelActivityReset">Annuler</button>${activities.length?'<button class="btn danger" id="deleteAllActivities">Tout supprimer</button><button class="btn primary" id="deleteSelectedActivities">Supprimer la sélection</button>':''}</div></div></div>`;
+  document.getElementById('cancelActivityReset').onclick=()=>overlay.innerHTML='';
+  document.getElementById('deleteSelectedActivities')?.addEventListener('click',async()=>{
+    if(!(IS_ADMIN&&!PREVIEW_AS_MEMBER))return showToast('Action non autorisée');
+    const ids=new Set([...document.querySelectorAll('[data-reset-activity]:checked')].map(input=>input.dataset.resetActivity));
+    if(!ids.size)return showToast('Sélectionne au moins une activité');
+    if(!confirm(`Supprimer ${ids.size} activité${ids.size>1?'s':''} ?`))return;
+    ACTIVITY_LOG=ACTIVITY_LOG.filter(a=>!ids.has(a.id));await saveData();overlay.innerHTML='';showToast('Activités sélectionnées supprimées');window.MCM_RENDER();
+  });
+  document.getElementById('deleteAllActivities')?.addEventListener('click',async()=>{
+    if(!(IS_ADMIN&&!PREVIEW_AS_MEMBER))return showToast('Action non autorisée');
+    if(!confirm('Supprimer définitivement toutes les activités récentes ?'))return;
+    ACTIVITY_LOG=[];await saveData();overlay.innerHTML='';showToast('Activités récentes réinitialisées');window.MCM_RENDER();
+  });
+}
 function latestGroupEvent(groupId){
   const now=Date.now();
   return PLANNED_EVENTS.filter(e=>(e.groupId===groupId||e.sourceGroupId===groupId) && new Date(`${e.date}T${e.time||'00:00'}`).getTime()>=now)
@@ -2245,7 +2271,7 @@ async function createFixedGroupInstant(){
 async function deleteFixedGroup(id){
   const g=FIXED_GROUPS.find(x=>x.id===id),me=myPlayer();
   if(!g)return;
-  const allowed=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||(me&&g.createdByPlayerId===me.id);
+  const allowed=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||isFixedGroupCreator(g);
   if(!allowed)return showToast('Seul le créateur ou un admin peut supprimer ce groupe');
   if(!confirm(`Supprimer « ${g.name} » ?`))return;
   FIXED_GROUPS=FIXED_GROUPS.filter(x=>x.id!==id);
@@ -2363,7 +2389,7 @@ function fixedGroupCard(g){
   const members=groupMembers(g),leader=PLAYERS.find(p=>p.id===g.leaderId),me=myPlayer();
   const leaderInteractive=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||(me&&playerInFixedGroup(g,me.id));
   const event=latestGroupEvent(g.id);
-  const canDelete=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||(me&&g.createdByPlayerId===me.id);
+  const canDelete=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||isFixedGroupCreator(g);
   return `<article class="panel fixed-card" style="--gc:#168bff">
     <div class="fixed-head">
       <div>
@@ -2662,7 +2688,7 @@ function renderDashboard(){
 
     <div class="main-grid">
       <section class="card card-pad">
-        <h3 class="card-title">${icon('dashboard','ui-icon')}ACTIVITÉ RÉCENTE</h3>
+        <h3 class="card-title">${icon('dashboard','ui-icon')}ACTIVITÉ RÉCENTE ${IS_ADMIN&&!PREVIEW_AS_MEMBER?`<button class="btn ghost activity-admin-btn" id="manageActivitiesBtn">Gérer</button>`:''}</h3>
         <div class="activity-list">${recent.length?recent.map(a=>`<div class="activity-row"><div class="act-ico">${a.avatar?`<img src="${esc(a.avatar)}" alt="${esc(a.playerName||'Joueur')}" loading="lazy">`:activitySymbol(a.type)}</div><div><div class="act-main"><strong>${esc(a.message||'Nouvelle activité')}</strong></div><div class="act-sub">${esc(a.detail||'MCM')}</div></div><div class="act-time">${activityTime(a.createdAt)}</div></div>`).join(''):'<div class="act-sub">Aucune activité enregistrée pour le moment. Les prochaines créations, inscriptions et mises à jour apparaîtront ici.</div>'}</div>
       </section>
 
@@ -2719,6 +2745,7 @@ function bind(){
   document.getElementById('previewBtn')?.addEventListener('click',()=>{PREVIEW_AS_MEMBER=!PREVIEW_AS_MEMBER;window.MCM_RENDER()});
   document.getElementById('logoutBtn')?.addEventListener('click',logout);
   document.getElementById('addPlayerBtn')?.addEventListener('click',()=>openPlayerModal());
+  document.getElementById('manageActivitiesBtn')?.addEventListener('click',openActivityResetModal);
   document.querySelectorAll('[data-edit-player]').forEach(b=>b.addEventListener('click',()=>openPlayerModal(b.dataset.editPlayer)));
   document.querySelectorAll('[data-delete-player]').forEach(b=>b.addEventListener('click',()=>deletePlayer(b.dataset.deletePlayer)));
 
