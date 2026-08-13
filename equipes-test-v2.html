@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- MCM BUILD 2026-08-13 V2-SANCTUARY-UNIFIE -->
+<!-- MCM BUILD 2026-08-13 V2-DASH-SANCTUARY-SYNC-EVENTS -->
 <title>MCM — MMO Connect Manager</title>
 <link rel="apple-touch-icon" href="./icon-192.png">
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -478,6 +478,15 @@ body{background:
 .sanctuary-half-title{display:flex;justify-content:space-between;align-items:center;color:#7eeeed;font-size:10px;font-weight:800;margin-bottom:8px}
 .sanctuary-total{color:#9aabc8;font-size:9px}
 @media(max-width:900px){.sanctuary-unified{grid-column:span 1}.sanctuary-unified-groups{grid-template-columns:1fr}}
+
+.sanctuary-dashboard-tile{
+  min-width:300px!important;
+  width:300px!important;
+}
+.sanctuary-dashboard-tile .avatar-stack{
+  flex-wrap:wrap;
+  max-width:260px;
+}
 </style>
 </head>
 <body><div id="app"></div><div id="overlay"></div><div id="toast"></div>
@@ -834,11 +843,10 @@ async function deleteFixedGroup(id){
   if(!confirm(`Supprimer « ${g.name} » et ses événements associés ?`))return;
 
   FIXED_GROUPS=FIXED_GROUPS.filter(x=>x.id!==id);
-  PLANNED_EVENTS=PLANNED_EVENTS.filter(e=>!(
-    e.sourceGroupId===id ||
-    e.groupId===id ||
-    (e.source==='fixedGroup' && e.sourceGroupId===id)
-  ));
+  PLANNED_EVENTS=PLANNED_EVENTS.filter(e=>{
+    const sourceId=e.sourceGroupId||e.groupId||'';
+    return sourceId!==id && e.sourceGroupId!==id && e.groupId!==id;
+  });
 
   await saveData();
   showToast('Groupe et événements associés supprimés');
@@ -892,21 +900,22 @@ async function deleteSearchGroup(id){
   const allowed=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||(me&&g.createdByPlayerId===me.id);
   if(!allowed)return showToast('Seul le créateur ou un admin peut supprimer ce groupe');
 
-  // Sanctuary fonctionne par paire A+B.
   if(g.activity==='Sanctuary' && g.sanctuaryPairId){
     const pairId=g.sanctuaryPairId;
     if(!confirm('Supprimer Sanctuary Groupe A + Groupe B et tous les événements associés ?'))return;
 
-    const pairGroupIds=SEARCH_GROUPS
-      .filter(x=>x.sanctuaryPairId===pairId)
-      .map(x=>x.id);
+    const pairGroupIds=SEARCH_GROUPS.filter(x=>x.sanctuaryPairId===pairId).map(x=>x.id);
 
     SEARCH_GROUPS=SEARCH_GROUPS.filter(x=>x.sanctuaryPairId!==pairId);
-    PLANNED_EVENTS=PLANNED_EVENTS.filter(e=>!(
-      e.sanctuaryPairId===pairId ||
-      pairGroupIds.includes(e.sourceGroupId) ||
-      pairGroupIds.includes(e.groupId)
-    ));
+    PLANNED_EVENTS=PLANNED_EVENTS.filter(e=>{
+      const sourceId=e.sourceGroupId||e.groupId||'';
+      return !(
+        e.sanctuaryPairId===pairId ||
+        pairGroupIds.includes(sourceId) ||
+        pairGroupIds.includes(e.sourceGroupId) ||
+        pairGroupIds.includes(e.groupId)
+      );
+    });
 
     await saveData();
     showToast('Sanctuary A+B et événements associés supprimés');
@@ -917,11 +926,10 @@ async function deleteSearchGroup(id){
   if(!confirm(`Supprimer la recherche « ${g.activity} » et ses événements associés ?`))return;
 
   SEARCH_GROUPS=SEARCH_GROUPS.filter(x=>x.id!==id);
-  PLANNED_EVENTS=PLANNED_EVENTS.filter(e=>!(
-    e.sourceGroupId===id ||
-    e.groupId===id ||
-    (e.source==='searchGroup' && e.sourceGroupId===id)
-  ));
+  PLANNED_EVENTS=PLANNED_EVENTS.filter(e=>{
+    const sourceId=e.sourceGroupId||e.groupId||'';
+    return sourceId!==id && e.sourceGroupId!==id && e.groupId!==id;
+  });
 
   await saveData();
   showToast('Recherche et événements associés supprimés');
@@ -1488,13 +1496,130 @@ function canShowSanctuaryPublish(g){
   return g.subgroup==='A';
 }
 
+
+function eventSourceStillExists(ev){
+  if(!ev)return false;
+
+  // Événement provenant d'une recherche de groupe.
+  if(ev.source==='searchGroup' || ev.sourceGroupId || ev.sanctuaryPairId){
+    if(ev.sanctuaryPairId){
+      return SEARCH_GROUPS.some(g=>g.sanctuaryPairId===ev.sanctuaryPairId);
+    }
+    const id=ev.sourceGroupId||ev.groupId;
+    if(ev.source==='searchGroup') return !!SEARCH_GROUPS.find(g=>g.id===id);
+  }
+
+  // Événement provenant d'un groupe STATIC.
+  if(ev.source==='fixedGroup'){
+    const id=ev.sourceGroupId||ev.groupId;
+    return !!FIXED_GROUPS.find(g=>g.id===id);
+  }
+
+  // Compatibilité avec les anciens événements qui n'avaient pas "source".
+  if(ev.groupId){
+    return !!SEARCH_GROUPS.find(g=>g.id===ev.groupId) || !!FIXED_GROUPS.find(g=>g.id===ev.groupId);
+  }
+
+  // Événement autonome : on le garde.
+  return true;
+}
+
+function dashboardSearchGroups(){
+  const out=[];
+  const seenSanctuary=new Set();
+
+  for(const g of SEARCH_GROUPS){
+    normalizeSearchGroup(g);
+
+    if(g.activity==='Sanctuary' && g.sanctuaryPairId){
+      if(seenSanctuary.has(g.sanctuaryPairId))continue;
+      seenSanctuary.add(g.sanctuaryPairId);
+
+      const pair=SEARCH_GROUPS.filter(x=>x.sanctuaryPairId===g.sanctuaryPairId);
+      const a=pair.find(x=>x.subgroup==='A')||pair[0];
+      const b=pair.find(x=>x.subgroup==='B');
+      const members=[...(a?searchGroupMembers(a):[]),...(b?searchGroupMembers(b):[])];
+
+      out.push({
+        kind:'sanctuary',
+        id:a?.id||g.id,
+        activity:'Sanctuary',
+        type:'pve',
+        a,b,members,
+        count:members.length
+      });
+      continue;
+    }
+
+    out.push({
+      kind:'single',
+      id:g.id,
+      activity:g.activity,
+      type:g.type,
+      group:g,
+      members:searchGroupMembers(g),
+      count:searchGroupMembers(g).length
+    });
+  }
+  return out;
+}
+
+function dashboardSearchTile(item){
+  if(item.kind==='sanctuary'){
+    const a=item.a,b=item.b;
+    const ma=a?searchGroupMembers(a):[], mb=b?searchGroupMembers(b):[];
+    const me=myPlayer();
+
+    const actionForPair=()=>{
+      if(!me)return '';
+      const inA=a&&playerInSearchGroup(a,me.id);
+      const inB=b&&playerInSearchGroup(b,me.id);
+
+      if(inA)return `<button class="dashboard-join-btn leave" data-dash-leave-search="${a.id}">Se retirer du groupe A</button>`;
+      if(inB)return `<button class="dashboard-join-btn leave" data-dash-leave-search="${b.id}">Se retirer du groupe B</button>`;
+
+      const slotA=a?dashboardPreferredSlot(a,me,false):'';
+      const slotB=b?dashboardPreferredSlot(b,me,false):'';
+
+      if(slotA){
+        const def=fixedSlotDefs().find(d=>d.key===slotA);
+        return `<button class="dashboard-join-btn" data-dash-join-search="${a.id}" data-dash-slot="${slotA}">S’inscrire A · ${esc(def?.label||'Slot')}</button>`;
+      }
+      if(slotB){
+        const def=fixedSlotDefs().find(d=>d.key===slotB);
+        return `<button class="dashboard-join-btn" data-dash-join-search="${b.id}" data-dash-slot="${slotB}">S’inscrire B · ${esc(def?.label||'Slot')}</button>`;
+      }
+      return `<button class="dashboard-join-btn" disabled>Complet / incompatible</button>`;
+    };
+
+    return `<div class="group-tile sanctuary-dashboard-tile">
+      <span class="tag" style="border-color:${activityColor('Sanctuary')}88;color:${activityColor('Sanctuary')}">PVE · 10 JOUEURS</span>
+      <div class="group-name">Sanctuary</div>
+      <div class="group-time">Groupe A ${ma.length}/5 · Groupe B ${mb.length}/5</div>
+      <div class="avatar-stack">${[...ma,...mb].slice(0,10).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div>
+      <div class="group-count">${ma.length+mb.length}/10 joueurs</div>
+      <div class="dashboard-group-actions">${actionForPair()}</div>
+    </div>`;
+  }
+
+  const g=item.group;
+  return `<div class="group-tile">
+    <span class="tag" style="border-color:${activityColor(g.activity)}88;color:${activityColor(g.activity)}">${activityTypeLabel(g.activity)}</span>
+    <div class="group-name">${esc(g.activity)}</div>
+    <div class="group-time">Recherche en cours</div>
+    <div class="avatar-stack">${item.members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div>
+    <div class="group-count">${item.members.length}/5 joueurs</div>
+    <div class="dashboard-group-actions">${dashboardSearchAction(g)}</div>
+  </div>`;
+}
+
 function renderDashboard(){
   const total=PLAYERS.length,assigned=PLAYERS.filter(p=>p.classId).length,newc=PLAYERS.filter(p=>p.isNewPlayer).length;
   const roleCounts={Tank:0,Heal:0,DPS:0,Flex:0};
   PLAYERS.forEach(p=>{const c=cls(p.classId);if(c&&roleCounts[c.role]!=null)roleCounts[c.role]++});
   const activePct=total?Math.round(assigned/total*100):0,newPct=total?Math.round(newc/total*100):0;
   const recent=PLAYERS.slice(-5).reverse();
-  const upcoming=PLANNED_EVENTS.slice().filter(e=>new Date(`${e.date}T${e.time||'00:00'}`).getTime()>=Date.now()-3600000).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  const upcoming=PLANNED_EVENTS.slice().filter(e=>eventSourceStillExists(e)).filter(e=>new Date(`${e.date}T${e.time||'00:00'}`).getTime()>=Date.now()-3600000).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
 
   return `${hero()}<div class="content-wrap">
     <div class="stats">
@@ -1536,7 +1661,7 @@ function renderDashboard(){
 
       <section class="card groups-card">
         <h3 class="card-title">${icon('swords','ui-icon')}RECHERCHES DE GROUPE</h3>
-        <div class="dashboard-scroll-wrap"><div class="groups-grid">${SEARCH_GROUPS.map(g=>{normalizeSearchGroup(g);const members=searchGroupMembers(g);return `<div class="group-tile"><span class="tag" style="border-color:${activityColor(g.activity)}88;color:${activityColor(g.activity)}">${activityTypeLabel(g.activity)}</span><div class="group-name">${esc(g.activity)}${g.activity==='Sanctuary'&&g.subgroup?` · Groupe ${esc(g.subgroup)}`:''}</div><div class="group-time">Recherche en cours</div><div class="avatar-stack">${members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div><div class="group-count">${members.length}/5 joueurs</div><div class="dashboard-group-actions">${dashboardSearchAction(g)}</div></div>`}).join('')||'<div class="group-count">Aucune recherche active.</div>'}</div></div>
+        <div class="dashboard-scroll-wrap"><div class="groups-grid">${dashboardSearchGroups().map(dashboardSearchTile).join('')||'<div class="group-count">Aucune recherche active.</div>'}</div></div>
         <div class="view-all" data-tab="search-groups">Voir toutes les recherches ›</div>
       </section>
 
