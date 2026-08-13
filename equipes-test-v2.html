@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- MCM BUILD 2026-08-13-1149 V2 -->
+<!-- MCM BUILD 2026-08-13-1153 V2-FIX-ACTIVITIES -->
 <title>MCM — MMO Connect Manager</title>
 <link rel="apple-touch-icon" href="./icon-192.png">
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -651,6 +651,30 @@ async function deleteFixedGroup(id){
   showToast('Groupe et événements associés supprimés');
   render();
 };
+const SEARCH_PVE_ACTIVITIES=['Expéditions','Transcendances','Sanctuary'];
+const SEARCH_PVP_ACTIVITIES=['Rift','Abysse','Arena','Battleground'];
+const SEARCH_RVR_ACTIVITIES=['Artifact Abysses','300 VS 300'];
+const SEARCH_ACTIVITIES=[...SEARCH_PVE_ACTIVITIES,...SEARCH_PVP_ACTIVITIES,...SEARCH_RVR_ACTIVITIES];
+let SEARCH_FILTER='all';
+
+const ACTIVITY_COLORS={
+  'Expéditions':'#168bff',
+  'Transcendances':'#7c56ff',
+  'Sanctuary':'#00c7c7',
+  'Rift':'#ff4d67',
+  'Abysse':'#ff7a45',
+  'Arena':'#ff3dbf',
+  'Battleground':'#d9534f',
+  'Artifact Abysses':'#f5b84b',
+  '300 VS 300':'#00dca3'
+};
+
+function searchActivityType(activity){
+  if(SEARCH_RVR_ACTIVITIES.includes(activity)) return 'rvr';
+  if(SEARCH_PVP_ACTIVITIES.includes(activity)) return 'pvp';
+  return 'pve';
+}
+
 function activityColor(activity){return ACTIVITY_COLORS[activity]||'#168bff'}
 function activityTypeLabel(activity){const t=searchActivityType(activity);return t==='rvr'?'RVR':t.toUpperCase()}
 function normalizeSearchGroup(g){
