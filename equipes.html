@@ -2454,7 +2454,17 @@ const EN_TRANSLATIONS={
   'Recherche en cours':'Search in progress',
   'Se retirer':'Leave',
   'Si la publication sur Discord échoue, mets ce site en liste blanche (uBlock, Brave Shields, AdGuard...) pour autoriser ses requêtes.':'If publishing to Discord fails, whitelist this site (uBlock, Brave Shields, AdGuard...) to allow its requests.',
-  'New':'New'
+  'New':'New',
+  '● En ligne':'● Online',
+  'Crée une recherche pour une activité, puis laisse les membres remplir les 5 rôles.':'Create a search for an activity, then let members fill the 5 roles.',
+  'Se retirer A':'Leave A',
+  'Se retirer B':'Leave B',
+  'PVE · 10 JOUEURS':'PVE · 10 PLAYERS',
+  'RECHERCHE':'SEARCH',
+  'Aucun joueur ne correspond à ces filtres.':'No player matches these filters.',
+  'Aucun joueur pour le moment.':'No player yet.',
+  'Expéditions':'Expeditions',
+  'Transcendances':'Transcendences'
 };
 function translateTextToEnglish(text){
   const lead=text.match(/^\s*/)?.[0]||'',trail=text.match(/\s*$/)?.[0]||'',core=text.trim();
@@ -2468,7 +2478,18 @@ function translateTextToEnglish(text){
       return lead+translated+trail;
     }
   }
-  const rules=[[/^(\d+) profils complétés$/,'$1 completed profiles'],[/^(\d+) joueur\(s\)$/,'$1 player(s)'],[/^(\d+)\/(\d+) joueurs$/,'$1/$2 players'],[/^(\d+) joueurs$/,'$1 players'],[/^(\d+) joueur$/,'$1 player'],[/^Groupe supprimé$/,'Group deleted'],[/^Membre ajouté au groupe$/,'Member added to group'],[/^Emplacement libéré$/,'Slot cleared']];
+  const rules=[[/^(\d+) profils complétés$/,'$1 completed profiles'],[/^(\d+) joueur\(s\)$/,'$1 player(s)'],[/^(\d+)\/(\d+) joueurs$/,'$1/$2 players'],[/^(\d+) joueurs$/,'$1 players'],[/^(\d+) joueur$/,'$1 player'],[/^Groupe supprimé$/,'Group deleted'],[/^Membre ajouté au groupe$/,'Member added to group'],[/^Emplacement libéré$/,'Slot cleared'],
+    [/(\d{4}-\d{2}-\d{2}) à (\d{1,2}:\d{2})/,'$1 at $2'],
+    [/^(.+) a été supprimé par un administrateur$/,'$1 was deleted by an administrator'],
+    [/^(.+) a planifié un événement$/,'$1 scheduled an event'],
+    [/^(.+) a créé une recherche de groupe$/,'$1 created a group search'],
+    [/^(.+) a créé une recherche Sanctuary$/,'$1 created a Sanctuary search'],
+    [/^(.+) a créé son profil$/,'$1 created their profile'],
+    [/^(.+) a mis à jour son profil$/,'$1 updated their profile'],
+    [/^(.+) a rejoint une recherche$/,'$1 joined a search'],
+    [/^(.+) a créé (.+)$/,'$1 created $2'],
+    [/^(.+) a rejoint (.+)$/,'$1 joined $2'],
+  ];
   for(const [pattern,replacement] of rules)if(pattern.test(core))return lead+core.replace(pattern,replacement)+trail;
   return text;
 }
