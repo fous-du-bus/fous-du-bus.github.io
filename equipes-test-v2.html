@@ -1274,23 +1274,32 @@ async function postGroupEventToDiscord(g,ev){
 }
 async function postSearchGroupToDiscord(g,ev){
   normalizeSearchGroup(g);
-  const members=searchGroupMembers(g);
-  const roster=fixedSlotDefs().map(d=>{const p=PLAYERS.find(x=>x.id===g.slots[d.key]); const c=p?cls(p.classId):null; return `${d.icon} **${d.label}** : ${p?playerName(p)+' ('+(c?.name||'')+')':'Libre'}`;}).join('\n');
+  const isSanctuary=g.activity==='Sanctuary'&&g.sanctuaryPairId;
+  const pairGroups=isSanctuary?SEARCH_GROUPS.filter(x=>x.sanctuaryPairId===g.sanctuaryPairId).map(x=>{normalizeSearchGroup(x);return x}):[g];
+  const totalMax=pairGroups.length*5;
+  const members=[...new Map(pairGroups.flatMap(x=>searchGroupMembers(x)).map(p=>[p.id,p])).values()];
+  const rosterBlocks=pairGroups.map(pg=>{
+    const roster=fixedSlotDefs().map(d=>{const p=PLAYERS.find(x=>x.id===pg.slots[d.key]); const c=p?cls(p.classId):null; return `${d.icon} **${d.label}** : ${p?playerName(p)+' ('+(c?.name||'')+')':'Libre'}`;}).join('\n');
+    return pairGroups.length>1?`**Groupe ${pg.subgroup||''}**\n${roster}`:roster;
+  }).join('\n\n');
   const mentionIds=members.map(p=>p.discordId).filter(Boolean);
   const timestamp=ev&&ev.date&&ev.time?new Date(`${ev.date}T${ev.time}`).toISOString():undefined;
+  const activityLabel=ev?ev.activity:g.activity;
   const embed={
-    title:`🔍 ${ev?ev.activity:g.activity} — ${g.name}`,
-    description:`**RECHERCHE · ${members.length}/5**\n\n${roster}${ev&&ev.note?`\n\n📝 ${ev.note}`:''}\n\n👇 Clique sur les boutons ci-dessous pour indiquer ta disponibilité !`,
+    title:`🔍 ${activityLabel}`,
+    description:`**RECHERCHE · ${members.length}/${totalMax}**\n\n${rosterBlocks}${ev&&ev.note?`\n\n📝 ${ev.note}`:''}\n\n👇 Clique sur les boutons ci-dessous pour indiquer ta disponibilité !`,
     color:g.type==='pvp'?0xff4d67:0x00d9ff,
     fields:ev&&ev.date?[{name:'🗓️ Date',value:ev.date,inline:true},{name:'🕒 Heure',value:ev.time,inline:true}]:[],
     timestamp,
     footer:{text:'MCM · MMO Connect Manager'}
   };
-  const content=mentionIds.length?mentionIds.map(id=>`<@${id}>`).join(' '):`📣 ${g.name}`;
+  const content=mentionIds.length?mentionIds.map(id=>`<@${id}>`).join(' '):`📣 ${activityLabel}`;
+  const refType=isSanctuary?'sanctuary':'search';
+  const refId=isSanctuary?g.sanctuaryPairId:g.id;
   try{
     const res=await fetch(LFG_WORKER_URL+'/publish',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({channelId:LFG_CHANNEL_ID,content,embed,refType:'search',refId:g.id,docId:MCM_DOC_ID})
+      body:JSON.stringify({channelId:LFG_CHANNEL_ID,content,embed,refType,refId,docId:MCM_DOC_ID})
     });
     if(res.ok)showToast('Groupe publié sur Discord !');
     else showToast('Erreur lors de la publication Discord.');
