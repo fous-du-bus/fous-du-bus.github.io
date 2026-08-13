@@ -814,6 +814,20 @@ body{background:
   font-size:11px!important;
 }
 
+/* ===== RÉPARTITION DES CLASSES CLIQUABLE ===== */
+.dashboard-class-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.dashboard-class-item{min-width:0;border:1px solid color-mix(in srgb,var(--class-color) 42%,rgba(255,255,255,.08));background:color-mix(in srgb,var(--class-color) 10%,rgba(5,16,34,.92));border-radius:9px;padding:7px 4px;color:#eef4ff;cursor:pointer;text-align:center;transition:transform .16s ease,border-color .16s ease,background .16s ease}
+.dashboard-class-item:hover{transform:translateY(-2px);border-color:var(--class-color);background:color-mix(in srgb,var(--class-color) 18%,rgba(5,16,34,.92))}
+.dashboard-class-item img{display:block;width:30px;height:30px;object-fit:contain;margin:0 auto 4px;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--class-color) 52%,transparent))}
+.dashboard-class-name{font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#aebbd1}
+.dashboard-class-count{font-family:Cinzel,serif;font-size:14px;line-height:1.1;color:#fff}
+.class-members-list{display:flex;flex-direction:column;gap:8px;max-height:380px;overflow:auto}
+.class-member-row{display:flex;align-items:center;gap:10px;padding:9px;border:1px solid rgba(91,132,198,.24);background:rgba(5,16,34,.76);border-radius:9px}
+.class-member-row .member-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;border:1px solid rgba(110,151,219,.42)}
+.class-member-row .member-class-icon{width:24px;height:24px;object-fit:contain;margin-left:auto}
+.class-member-name{font-size:12px;font-weight:600}.class-member-status{font-size:9px;color:#8392ad;margin-top:3px}
+@media(max-width:560px){.dashboard-class-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
 .main-grid{
   gap:14px!important;
 }
@@ -2521,6 +2535,19 @@ function dashboardSearchTile(item){
   </div>`;
 }
 
+function openDashboardClassMembers(classId){
+  const c=CLASSES.find(item=>item.id===classId);
+  if(!c)return;
+  const members=PLAYERS.filter(p=>p.classId===classId);
+  overlay.innerHTML=`<div class="modal-backdrop"><div class="modal">
+    <h3 style="display:flex;align-items:center;gap:10px"><img src="${c.icon}" alt="" style="width:38px;height:38px;object-fit:contain">${esc(c.name)} · ${members.length} joueur${members.length>1?'s':''}</h3>
+    <div class="class-members-list">${members.length?members.map(p=>`<div class="class-member-row">${p.discordAvatar?`<img class="member-avatar" src="${esc(p.discordAvatar)}" alt="">`:`<div class="member-avatar avatar-fallback">${esc(playerName(p).slice(0,2).toUpperCase())}</div>`}<div><div class="class-member-name">${esc(playerName(p))}</div><div class="class-member-status">${p.isNewPlayer?'Nouveau joueur':'Membre'}</div></div><img class="member-class-icon" src="${c.icon}" alt="${esc(c.name)}"></div>`).join(''):`<div style="padding:18px;text-align:center;color:#8290aa">Aucun joueur n’utilise encore cette classe.</div>`}</div>
+    <div class="modal-actions"><button class="btn primary" id="closeClassMembers">Fermer</button></div>
+  </div></div>`;
+  document.getElementById('closeClassMembers').onclick=()=>overlay.innerHTML='';
+  overlay.querySelector('.modal-backdrop').addEventListener('click',e=>{if(e.target===e.currentTarget)overlay.innerHTML=''})
+}
+
 function renderDashboard(){
   const total=PLAYERS.length,assigned=PLAYERS.filter(p=>p.classId).length,newc=PLAYERS.filter(p=>p.isNewPlayer).length;
   const roleCounts={Tank:0,Heal:0,DPS:0,Flex:0};
@@ -2547,8 +2574,8 @@ function renderDashboard(){
       <section class="card members-card">
         <h3 class="card-title">${icon('users','ui-icon')}APERÇU DES MEMBRES</h3>
         <div class="members-top"><div class="donut" style="--a:${activePct}%;--b:${Math.min(100,activePct+newPct)}%"><div class="donut-inner"><div><b>${total}</b><span>Total</span></div></div></div><div class="legend"><div class="legend-row"><span class="dot" style="background:#00d99f"></span><span>Classe définie</span><b>${assigned}</b></div><div class="legend-row"><span class="dot" style="background:#f0a641"></span><span>Nouveaux</span><b>${newc}</b></div><div class="legend-row"><span class="dot" style="background:#7657ff"></span><span>À compléter</span><b>${Math.max(0,total-assigned)}</b></div></div></div>
-        <div class="split-title">RÉPARTITION PAR RÔLE</div>
-        <div class="role-grid">${[['Tank','🛡'],['Heal','✚'],['DPS','➶'],['Flex','♟']].map(([r,s])=>`<div class="role-item"><div class="role-icon">${s}</div><div class="role-count">${roleCounts[r]||0}</div><div class="role-name">${r==='Heal'?'Soigneurs':r==='Flex'?'Supports':r+'s'}</div></div>`).join('')}</div>
+        <div class="split-title">RÉPARTITION DES CLASSES</div>
+        <div class="dashboard-class-grid">${CLASSES.map(c=>{const count=PLAYERS.filter(p=>p.classId===c.id).length;return `<button class="dashboard-class-item" style="--class-color:${c.color||'#168bff'}" data-dashboard-class="${esc(c.id)}" title="Voir les joueurs ${esc(c.name)}"><img src="${c.icon}" alt="${esc(c.name)}"><div class="dashboard-class-count">${count}</div><div class="dashboard-class-name">${esc(c.name)}</div></button>`}).join('')}</div>
         <div class="card-footer" data-tab="players">Voir tous les joueurs ›</div>
       </section>
 
@@ -2621,6 +2648,7 @@ function bind(){
   document.querySelectorAll('[data-dashboard-leave-search]').forEach(b=>b.addEventListener('click',()=>leaveSearchGroup(b.dataset.dashboardLeaveSearch)));
   document.querySelectorAll('[data-dashboard-join-fixed]').forEach(b=>b.addEventListener('click',()=>joinFixedSlot(b.dataset.dashboardJoinFixed,b.dataset.dashboardSlot)));
   document.querySelectorAll('[data-dashboard-leave-fixed]').forEach(b=>b.addEventListener('click',()=>leaveFixedGroup(b.dataset.dashboardLeaveFixed)));
+  document.querySelectorAll('[data-dashboard-class]').forEach(b=>b.addEventListener('click',()=>openDashboardClassMembers(b.dataset.dashboardClass)));
 
 
   document.querySelectorAll('[data-dash-join-search]').forEach(b=>b.addEventListener('click',()=>joinSearchSlot(b.dataset.dashJoinSearch,b.dataset.dashSlot)));
