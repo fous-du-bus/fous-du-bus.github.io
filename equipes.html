@@ -1506,11 +1506,23 @@ function setGroupEventRsvp(groupId, status){
   if (g.event.rsvps[me.id] === undefined) delete g.event.rsvps[me.id];
   saveTeams(); render();
 }
+function setSanctuaryRsvp(pairId, status){
+  const me = myPlayerRecord();
+  if (!me) { toast(t('rsvp.no_profile'), 'danger'); return; }
+  const pairGroups = GROUPS.filter(g => g.sanctuaryPairId === pairId && g.event);
+  if (!pairGroups.length) return;
+  pairGroups.forEach(g => {
+    g.event.rsvps = g.event.rsvps || {};
+    g.event.rsvps[me.id] = (g.event.rsvps[me.id] === status) ? undefined : status;
+    if (g.event.rsvps[me.id] === undefined) delete g.event.rsvps[me.id];
+  });
+  saveTeams(); render();
+}
 function renderRsvpBlock(rsvps, refType, refId){
   const me = myPlayerRecord();
   const mine = me ? (rsvps || {})[me.id] : null;
-  const yesAction = refType === 'event' ? 'rsvp-event-yes' : 'rsvp-group-yes';
-  const noAction = refType === 'event' ? 'rsvp-event-no' : 'rsvp-group-no';
+  const yesAction = refType === 'event' ? 'rsvp-event-yes' : (refType === 'sanctuary' ? 'rsvp-sanctuary-yes' : 'rsvp-group-yes');
+  const noAction = refType === 'event' ? 'rsvp-event-no' : (refType === 'sanctuary' ? 'rsvp-sanctuary-no' : 'rsvp-group-no');
   const yesPlayers = [], noPlayers = [];
   Object.entries(rsvps || {}).forEach(([pid, status]) => {
     const p = player(pid);
@@ -2109,6 +2121,7 @@ function renderDashboard(){
                   </div>
                   <div style="font-size:11px;color:var(--muted);">${totalFilled}/${totalSlots}${creator ? ` · ${t('groups.created_by')}: ${esc(creator.discordUsername || creator.pseudo)}` : ''}</div>
                   ${registeredPlayers.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">${registeredPlayers.map(p => { const pc = cls(p.classId); const rc = pc ? roleColor(pc.role) : 'var(--border)'; return `<div class="gm-mini-player-chip" style="border-color:${rc};">${avatarHtml(p, 18)}<span>${esc(p.discordUsername || p.pseudo)}</span></div>`; }).join('')}</div>` : ''}
+                  ${renderRsvpBlock(ev.rsvps, 'sanctuary', pairGroups[0].sanctuaryPairId)}
                 </div>
               </div>`;
               }).join('')}
@@ -2533,6 +2546,7 @@ function renderSanctuaryPair(pairGroups){
       </div>
     </div>
     ${creator ? `<div class="gm-group-creator">${t('groups.created_by')}: ${esc(creator.discordUsername || creator.pseudo)}</div>` : ''}
+    ${pairGroups[0].event ? renderRsvpBlock(pairGroups[0].event.rsvps, 'sanctuary', pairId) : ''}
     <div class="gm-sanctuary-pair-groups">
       ${pairGroups.map(g => renderSanctuarySubGroupCard(g)).join('')}
     </div>
@@ -3049,6 +3063,10 @@ function bindEvents(){
       el.addEventListener('click', () => setGroupEventRsvp(el.dataset.id, 'yes'));
     } else if (action === 'rsvp-group-no'){
       el.addEventListener('click', () => setGroupEventRsvp(el.dataset.id, 'no'));
+    } else if (action === 'rsvp-sanctuary-yes'){
+      el.addEventListener('click', () => setSanctuaryRsvp(el.dataset.id, 'yes'));
+    } else if (action === 'rsvp-sanctuary-no'){
+      el.addEventListener('click', () => setSanctuaryRsvp(el.dataset.id, 'no'));
     } else if (action === 'events-view'){
       el.addEventListener('click', () => { EVENTS_VIEW = el.dataset.view; render(); });
     } else if (action === 'select-cal-day'){
