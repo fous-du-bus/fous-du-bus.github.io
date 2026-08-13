@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- MCM BUILD 2026-08-13 V2-FIX-SANCTUARY-SINGULAR -->
+<!-- MCM BUILD 2026-08-13 V2-LISIBILITE-AMELIOREE -->
 <title>MCM — MMO Connect Manager</title>
 <link rel="apple-touch-icon" href="./icon-192.png">
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -643,6 +643,397 @@ body{background:
 }
 @media(max-width:600px){
   .transcendence-dungeon-grid{grid-template-columns:1fr}
+}
+
+
+/* ===== V2 LISIBILITE AMELIOREE ===== */
+/* Agrandissement global sans changer la logique ni la structure */
+:root{
+  font-size:17px;
+}
+
+.shell{
+  grid-template-columns:280px minmax(0,1fr)!important;
+}
+
+.sidebar{
+  padding:18px 18px 20px!important;
+}
+
+.brand img{
+  width:136px!important;
+  height:136px!important;
+}
+
+.profile{
+  padding:12px 13px!important;
+}
+.profile img{
+  width:40px!important;
+  height:40px!important;
+}
+.profile-name{font-size:13px!important}
+.profile-status{font-size:10px!important}
+.profile-role{font-size:10px!important}
+
+.nav-section{
+  font-size:10px!important;
+  margin-top:14px!important;
+}
+.nav button{
+  min-height:44px!important;
+  font-size:12px!important;
+  padding:0 12px!important;
+}
+.nav-icon{
+  width:19px!important;
+  height:19px!important;
+}
+
+.main{
+  padding:0 24px 48px!important;
+}
+
+.dashboard-hero{
+  margin-left:-24px!important;
+  margin-right:-24px!important;
+  height:166px!important;
+}
+.hero-content{
+  left:32px!important;
+  top:28px!important;
+}
+.hero-copy h2{
+  font-size:32px!important;
+}
+.hero-copy p{
+  font-size:13px!important;
+}
+.hero-tool{
+  height:40px!important;
+  font-size:12px!important;
+  padding:0 14px!important;
+}
+
+.stats{
+  gap:14px!important;
+  margin-bottom:16px!important;
+}
+.metric{
+  min-height:118px!important;
+  padding:16px 17px!important;
+  grid-template-columns:58px 1fr!important;
+  gap:13px!important;
+}
+.metric-icon{
+  width:52px!important;
+  height:52px!important;
+}
+.metric-icon svg{
+  width:26px!important;
+  height:26px!important;
+}
+.metric-value{
+  font-size:30px!important;
+}
+.metric-label{
+  font-size:11px!important;
+}
+.metric-note{
+  font-size:10px!important;
+}
+
+.main-grid{
+  gap:14px!important;
+}
+.card{
+  border-radius:12px!important;
+}
+.card-pad,.members-card,.events-card{
+  padding:17px!important;
+}
+.card-title{
+  font-size:14px!important;
+  min-height:24px!important;
+  margin-bottom:12px!important;
+}
+.card-title .ui-icon{
+  width:20px!important;
+  height:20px!important;
+  flex-basis:20px!important;
+}
+.card-title .ui-icon svg{
+  width:20px!important;
+  height:20px!important;
+}
+
+.activity-row{
+  min-height:54px!important;
+  padding:10px 0!important;
+}
+.act-ico{
+  width:32px!important;
+  height:32px!important;
+}
+.act-main{
+  font-size:12px!important;
+}
+.act-sub{
+  font-size:10px!important;
+}
+.act-time{
+  font-size:9px!important;
+}
+
+.members-top{
+  grid-template-columns:145px 1fr!important;
+  min-height:130px!important;
+}
+.donut{
+  width:124px!important;
+  height:124px!important;
+}
+.donut-inner b{
+  font-size:27px!important;
+}
+.donut-inner span{
+  font-size:11px!important;
+}
+.legend-row{
+  font-size:11px!important;
+}
+.split-title{
+  font-size:10px!important;
+}
+.role-icon{
+  width:38px!important;
+  height:38px!important;
+}
+.role-count{
+  font-size:17px!important;
+}
+.role-name{
+  font-size:9px!important;
+}
+
+.events-card .event-row{
+  min-height:56px!important;
+  padding:9px 0!important;
+}
+.event-icon{
+  width:34px!important;
+  height:34px!important;
+}
+.event-title{
+  font-size:12px!important;
+}
+.event-sub{
+  font-size:9.5px!important;
+}
+.event-date{
+  font-size:8px!important;
+  padding:5px 3px!important;
+}
+.event-date b{
+  font-size:15px!important;
+}
+.card-footer{
+  font-size:10px!important;
+  padding:10px!important;
+}
+
+.groups-card{
+  padding:16px!important;
+}
+.dashboard-scroll-wrap .groups-grid,
+.groups-scroll .groups-grid{
+  grid-auto-columns:250px!important;
+}
+.dashboard-scroll-wrap .group-tile,
+.groups-scroll .group-tile{
+  width:250px!important;
+  min-width:250px!important;
+}
+.group-tile{
+  min-height:145px!important;
+  padding:14px!important;
+}
+.tag{
+  font-size:8.5px!important;
+  padding:3px 7px!important;
+}
+.group-name{
+  font-size:15px!important;
+}
+.group-time{
+  font-size:11px!important;
+}
+.avatar-stack img,.avatar-dot{
+  width:27px!important;
+  height:27px!important;
+}
+.group-count{
+  font-size:9px!important;
+}
+.dashboard-join-btn{
+  min-height:34px!important;
+  font-size:9.5px!important;
+}
+.view-all{
+  font-size:10px!important;
+}
+
+.page-head h2,
+.fixed-toolbar h2,
+.search-toolbar h2{
+  font-size:28px!important;
+}
+.page-head p,
+.fixed-toolbar p,
+.search-toolbar p{
+  font-size:12px!important;
+}
+
+.btn{
+  font-size:12px!important;
+  padding:9px 13px!important;
+}
+
+.filters input,.filters select,.form-row input,.form-row select{
+  font-size:12px!important;
+  padding:10px 12px!important;
+}
+
+.player-card{
+  min-height:184px!important;
+  padding:17px!important;
+}
+.avatar-line img,.avatar-fallback{
+  width:46px!important;
+  height:46px!important;
+}
+.player-name{
+  font-size:15px!important;
+}
+.player-discord{
+  font-size:10px!important;
+}
+.class-pill{
+  font-size:10.5px!important;
+}
+.emblem{
+  width:128px!important;
+  height:128px!important;
+}
+
+.class-card{
+  padding:16px!important;
+}
+.class-card img{
+  width:56px!important;
+  height:56px!important;
+}
+.class-name{
+  font-size:15px!important;
+}
+.class-role{
+  font-size:10.5px!important;
+}
+
+.fixed-card,.search-card{
+  padding:18px!important;
+}
+.fixed-name,.search-activity{
+  font-size:18px!important;
+}
+.fixed-meta,.search-meta{
+  font-size:10.5px!important;
+}
+.fixed-desc{
+  font-size:11.5px!important;
+}
+.fixed-slot{
+  padding:9px 7px!important;
+}
+.fixed-slot-role,.search-slot-role{
+  font-size:8.5px!important;
+}
+.fixed-slot-avatar,.search-slot-avatar{
+  width:38px!important;
+  height:38px!important;
+}
+.fixed-slot-name,.search-slot-name{
+  font-size:9.5px!important;
+}
+.fixed-slot-status,.search-slot-status{
+  font-size:8px!important;
+}
+.search-slot{
+  min-height:116px!important;
+}
+
+.activity-choice{
+  min-height:88px!important;
+  padding:15px 10px!important;
+}
+.activity-choice b{
+  font-size:13px!important;
+}
+.activity-choice span{
+  font-size:8.5px!important;
+}
+
+.modal{
+  width:min(520px,96vw)!important;
+  padding:22px!important;
+}
+.modal h3{
+  font-size:20px!important;
+}
+.form-row label{
+  font-size:10.5px!important;
+}
+
+.mcm-loading-card{
+  width:min(560px,94vw)!important;
+  padding:32px!important;
+}
+.mcm-loading-logo{
+  width:165px!important;
+  height:165px!important;
+}
+.mcm-loading-title{
+  font-size:24px!important;
+}
+.mcm-loading-status{
+  font-size:12px!important;
+}
+.mcm-loading-step{
+  font-size:11px!important;
+}
+
+/* On retire les hauteurs desktop trop rigides qui rendaient certains panneaux tassés */
+@media(min-width:1101px){
+  .main-grid>.card{
+    height:390px!important;
+  }
+  .activity-list{
+    height:292px!important;
+  }
+}
+
+@media(max-width:1100px){
+  .shell{grid-template-columns:250px minmax(0,1fr)!important}
+  .main{padding-left:18px!important;padding-right:18px!important}
+  .dashboard-hero{margin-left:-18px!important;margin-right:-18px!important}
+}
+
+@media(max-width:820px){
+  .shell{grid-template-columns:1fr!important}
+  .sidebar{height:auto!important}
+  .main{padding:0 14px 34px!important}
+  .dashboard-hero{margin:0 -14px!important}
+  .hero-copy h2{font-size:26px!important}
 }
 
 </style>
