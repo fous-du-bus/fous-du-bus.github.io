@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- MCM BUILD 2026-08-13 V2-FIX-SANCTUARY-GLOBAL -->
+<!-- MCM BUILD 2026-08-13 V2-FIX-SANCTUARY-SINGULAR -->
 <title>MCM — MMO Connect Manager</title>
 <link rel="apple-touch-icon" href="./icon-192.png">
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -1975,8 +1975,8 @@ function dashboardSearchGroups(){
         kind:'sanctuary',
         id:a?.id||g.id,
         activity:'Sanctuary',
-        sanctuaryDungeon,
-        sanctuaryMode,
+        sanctuaryDungeon:a?.sanctuaryDungeon||b?.sanctuaryDungeon||'',
+        sanctuaryMode:a?.sanctuaryMode||b?.sanctuaryMode||'',
         type:'pve',
         a,b,members,
         count:members.length
