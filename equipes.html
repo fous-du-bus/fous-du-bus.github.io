@@ -109,6 +109,11 @@ html, body { margin: 0; padding: 0; }
 .gm-stat-card { padding: 16px; }
 .gm-stat-value { font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 600; background: linear-gradient(135deg, #fff, var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .gm-stat-label { color: var(--muted); font-size: 12px; margin-top: 4px; }
+.gm-stat-card-v2 { padding: 18px; display: flex; align-items: center; gap: 14px; }
+.gm-stat-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.gm-activity-row { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--border); }
+.gm-activity-row:last-child { border-bottom: none; }
+.gm-activity-icon { width: 30px; height: 30px; border-radius: 9px; background: var(--bg-2); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
 .gm-dash-row { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; margin-bottom: 16px; }
 @media (max-width: 900px) { .gm-dash-row { grid-template-columns: 1fr; } }
 .gm-bar-row { display: flex; align-items: center; gap: 10px; margin: 9px 0; font-size: 12.5px; }
@@ -506,6 +511,9 @@ const I18N = {
     'access.admin_only': 'Accès réservé aux administrateurs.',
     'dash.stat.players': 'Joueurs inscrits', 'dash.stat.pve_groups': 'Groupes PvE',
     'dash.stat.pvp_groups': 'Groupes PvP', 'dash.stat.new_players': 'Nouveaux joueurs',
+    'dash.stat.classes': 'Classes disponibles', 'dash.stat.groups_created': 'Groupes créés', 'dash.stat.upcoming_events': 'Événements à venir',
+    'dash.recent_activity': 'Activité récente', 'dash.no_activity': 'Aucune activité récente.',
+    'time.now': "à l'instant", 'time.min_ago': 'il y a {n} min', 'time.hour_ago': 'il y a {n} h', 'time.day_ago': 'il y a {n} j',
     'dash.class_breakdown': 'Répartition par classe', 'dash.availability': 'Disponibilité',
     'players.empty_title': 'Aucun joueur pour le moment.',
     'players.empty_sub': 'Les joueurs apparaissent automatiquement en se connectant avec Discord.',
@@ -690,6 +698,9 @@ const I18N = {
     'access.admin_only': 'Access restricted to administrators.',
     'dash.stat.players': 'Registered players', 'dash.stat.pve_groups': 'PvE groups',
     'dash.stat.pvp_groups': 'PvP groups', 'dash.stat.new_players': 'New players',
+    'dash.stat.classes': 'Available classes', 'dash.stat.groups_created': 'Groups created', 'dash.stat.upcoming_events': 'Upcoming events',
+    'dash.recent_activity': 'Recent activity', 'dash.no_activity': 'No recent activity.',
+    'time.now': 'just now', 'time.min_ago': '{n} min ago', 'time.hour_ago': '{n}h ago', 'time.day_ago': '{n}d ago',
     'dash.class_breakdown': 'Class breakdown', 'dash.availability': 'Availability',
     'players.empty_title': 'No players yet.',
     'players.empty_sub': 'Players appear automatically when they sign in with Discord.',
@@ -794,6 +805,16 @@ let ACCESS_STATE = 'checking'; // 'checking' | 'gate' | 'denied' | 'granted'
 
 /* ---------- utils ---------- */
 function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function formatTimeAgo(timestamp){
+  const diffMs = Date.now() - timestamp;
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1) return t('time.now');
+  if (min < 60) return t('time.min_ago').replace('{n}', min);
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return t('time.hour_ago').replace('{n}', hr);
+  const days = Math.floor(hr / 24);
+  return t('time.day_ago').replace('{n}', days);
+}
 function cls(id){ return CLASSES.find(c => c.id === id); }
 function player(id){ return PLAYERS.find(p => p.id === id); }
 
@@ -2017,12 +2038,45 @@ function renderDashboard(){
   const nextEvent = upcoming[0] || null;
   const myGroupEvents = myUpcomingGroupEvents();
 
+  const upcomingEventsCount = upcoming.length;
+
   return `
-    <div class="gm-stat-grid">
-      <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${totalPlayers}</div><div class="gm-stat-label">${t('dash.stat.players')}</div></div>
-      <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${pveGroups}</div><div class="gm-stat-label">${t('dash.stat.pve_groups')}</div></div>
-      <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${pvpGroups}</div><div class="gm-stat-label">${t('dash.stat.pvp_groups')}</div></div>
-      <div class="gm-panel gm-stat-card"><div class="gm-stat-value">${newCount}</div><div class="gm-stat-label">${t('dash.stat.new_players')}</div></div>
+    <div class="gm-stat-grid gm-stat-grid-v2">
+      <div class="gm-panel gm-stat-card-v2">
+        <div class="gm-stat-icon" style="background:rgba(139,107,255,0.14);color:var(--violet);">👥</div>
+        <div><div class="gm-stat-value">${totalPlayers}</div><div class="gm-stat-label">${t('dash.stat.players')}</div></div>
+      </div>
+      <div class="gm-stat-card-v2 gm-panel">
+        <div class="gm-stat-icon" style="background:rgba(69,193,255,0.14);color:var(--blue);">🛡️</div>
+        <div><div class="gm-stat-value">${CLASSES.length}</div><div class="gm-stat-label">${t('dash.stat.classes')}</div></div>
+      </div>
+      <div class="gm-stat-card-v2 gm-panel">
+        <div class="gm-stat-icon" style="background:rgba(53,210,154,0.14);color:var(--success);">⚔️</div>
+        <div><div class="gm-stat-value">${GROUPS.length}</div><div class="gm-stat-label">${t('dash.stat.groups_created')}</div></div>
+      </div>
+      <div class="gm-stat-card-v2 gm-panel">
+        <div class="gm-stat-icon" style="background:rgba(255,184,79,0.14);color:var(--new);">🗓️</div>
+        <div><div class="gm-stat-value">${upcomingEventsCount}</div><div class="gm-stat-label">${t('dash.stat.upcoming_events')}</div></div>
+      </div>
+    </div>
+    <div class="gm-panel" style="margin-bottom:24px;">
+      <h3 style="font-size:13px;margin:0 0 12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">📡 ${t('dash.recent_activity')}</h3>
+      ${!AUDIT_LOG.length ? `<div style="color:var(--muted);font-size:13px;">${t('dash.no_activity')}</div>` : `
+      <div style="display:flex;flex-direction:column;gap:2px;max-height:210px;overflow-y:auto;">
+        ${AUDIT_LOG.slice(0, 8).map(entry => {
+          const icons = { player_deleted: '🗑️', class_created: '➕', class_updated: '✏️', class_deleted: '🗑️', group_reset: '♻️', group_deleted: '🗑️', event_created: '🗓️', event_updated: '✏️', event_deleted: '🗑️' };
+          const icon = icons[entry.actionKey] || '📌';
+          const timeAgo = formatTimeAgo(entry.at);
+          return `<div class="gm-activity-row">
+            <span class="gm-activity-icon">${icon}</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;">${esc(t('audit.' + entry.actionKey) || entry.actionKey)} <strong>${esc(entry.targetLabel)}</strong></div>
+              <div style="font-size:11px;color:var(--muted-2);">${esc(entry.actor)}</div>
+            </div>
+            <span style="font-size:11px;color:var(--muted-2);white-space:nowrap;">${timeAgo}</span>
+          </div>`;
+        }).join('')}
+      </div>`}
     </div>
     <div style="display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap;">
       <div style="flex:1;min-width:280px;max-width:50%;display:flex;flex-direction:column;gap:24px;">
