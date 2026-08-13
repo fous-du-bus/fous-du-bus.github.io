@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- MCM BUILD 2026-08-13 V2-FIX-SANCTUARY-DUNGEONS -->
+<!-- MCM BUILD 2026-08-13 V2-FIX-SANCTUARY-GLOBAL -->
 <title>MCM — MMO Connect Manager</title>
 <link rel="apple-touch-icon" href="./icon-192.png">
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -649,6 +649,12 @@ body{background:
 </head>
 <body><div id="app"></div><div id="overlay"></div><div id="toast"></div>
 <script>
+window.sanctuaryDungeons=[
+  'Eternal Ludra',
+  'Chalice of Muspel',
+  'Corroded Decontamination Facility'
+];
+console.info('MCM BUILD: V2-FIX-SANCTUARY-GLOBAL');
 const firebaseConfig={apiKey:"AIzaSyCcfWoW_0IWkAopHrlXnKUiZJViss9FSpU",authDomain:"routine-aion-2.firebaseapp.com",projectId:"routine-aion-2",storageBucket:"routine-aion-2.firebasestorage.app",messagingSenderId:"400230415217",appId:"1:400230415217:web:c75da7cea4b0305f4014d0"};
 firebase.initializeApp(firebaseConfig); const db=firebase.firestore(); const fbAuth=firebase.auth(); const docRef=db.collection('teamComps').doc('guildManagerTest'); const firebaseAuthReady=fbAuth.signInAnonymously().catch(console.error);
 
@@ -1228,14 +1234,8 @@ const MCM_EXPEDITION_DUNGEONS=[
   'Encroached Deus Research Base'
 ];
 
-const MCM_SANCTUARY_DUNGEONS=[
-  'Eternal Ludra',
-  'Chalice of Muspel',
-  'Corroded Decontamination Facility'
-];
+const MCM_SANCTUARY_DUNGEONS=window.sanctuaryDungeons;
 
-// Compatibilité avec les anciennes fonctions de rendu.
-const sanctuaryDungeons=MCM_SANCTUARY_DUNGEONS;
 
 
 const MCM_SANCTUARY_MODES={
