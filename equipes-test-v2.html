@@ -1267,7 +1267,7 @@ async function postGroupEventToDiscord(g,ev){
   try{
     const res=await fetch(LFG_WORKER_URL+'/publish',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({channelId:LFG_CHANNEL_ID,content,embed,refType:'fixed',refId:g.id,docId:MCM_DOC_ID})
+      body:JSON.stringify({channelId:LFG_CHANNEL_ID,content,embed,refType:'fixed',refId:g.id,docId:MCM_DOC_ID,threadName:`${ev.activity} — ${g.name}`})
     });
     return res.ok?'posted':'error';
   }catch(e){console.error('Discord publish failed',e);return 'error'}
@@ -1299,7 +1299,7 @@ async function postSearchGroupToDiscord(g,ev){
   try{
     const res=await fetch(LFG_WORKER_URL+'/publish',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({channelId:LFG_CHANNEL_ID,content,embed,refType,refId,docId:MCM_DOC_ID})
+      body:JSON.stringify({channelId:LFG_CHANNEL_ID,content,embed,refType,refId,docId:MCM_DOC_ID,threadName:activityLabel})
     });
     if(res.ok)showToast('Groupe publié sur Discord !');
     else showToast('Erreur lors de la publication Discord.');
