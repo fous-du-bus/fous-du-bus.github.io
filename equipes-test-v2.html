@@ -1138,6 +1138,9 @@ function renderSearchGroups(){
 let PLANNED_EVENTS=[];
 const STATIC_EVENT_TYPES=['Expéditions','Transcendances','Sanctuary','Rift','Abysse','Arena'];
 const DISCORD_GROUP_EVENT_WEBHOOK_URL='https://discord.com/api/webhooks/1536673660251668574/AyuydDHDwmxBfpsdu0ZATHAPB7b0VIAbWNLr0onaFBMjgsdyrPC5i3_C2tqIhe887VgP';
+const LFG_WORKER_URL='https://lfg-reactions.aegrim-midgard.workers.dev';
+const LFG_CHANNEL_ID='1529305584845852792';
+const MCM_DOC_ID='guildManagerTest';
 
 async function loadData(){
   const snap=await docRef.get();
@@ -1210,23 +1213,51 @@ function openGroupEventPlanner(groupId){
   draw();
 }
 async function postGroupEventToDiscord(g,ev){
-  if(!DISCORD_GROUP_EVENT_WEBHOOK_URL)return 'not_configured';
   const leader=PLAYERS.find(p=>p.id===g.leaderId); const members=groupMembers(g);
   const roster=fixedSlotDefs().map(d=>{const p=PLAYERS.find(x=>x.id===g.slots[d.key]); const c=p?cls(p.classId):null; return `${d.icon} **${d.label}** : ${p?playerName(p)+' ('+(c?.name||'')+')':'Libre'}`;}).join('\n');
   const timestamp=new Date(`${ev.date}T${ev.time}`).toISOString();
-  const payload={username:'MCM · MMO Connect Manager',embeds:[{
+  const mentionIds=fixedSlotDefs().map(d=>PLAYERS.find(x=>x.id===g.slots[d.key])).filter(Boolean).map(p=>p.discordId).filter(Boolean);
+  const embed={
     title:`📅 ${ev.activity} — ${g.name}`,
-    description:`**STATIC · ${members.length}/5**\n\n${roster}${ev.note?`\n\n📝 ${ev.note}`:''}`,
+    description:`**STATIC · ${members.length}/5**\n\n${roster}${ev.note?`\n\n📝 ${ev.note}`:''}\n\n👇 Clique sur les boutons ci-dessous pour indiquer ta disponibilité !`,
     color:g.type==='pvp'?0xff4d67:0x168bff,
     fields:[{name:'👑 Leader',value:leader?playerName(leader):'À définir',inline:true},{name:'🗓️ Date',value:ev.date,inline:true},{name:'🕒 Heure',value:ev.time,inline:true}],
     timestamp,
     footer:{text:'MCM · MMO Connect Manager'}
-  }]};
+  };
+  const content=mentionIds.length?mentionIds.map(id=>`<@${id}>`).join(' '):`📣 ${g.name}`;
   try{
-    const fd=new FormData(); fd.append('payload_json',JSON.stringify(payload));
-    await fetch(DISCORD_GROUP_EVENT_WEBHOOK_URL,{method:'POST',mode:'no-cors',body:fd});
-    return 'posted';
+    const res=await fetch(LFG_WORKER_URL+'/publish',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({channelId:LFG_CHANNEL_ID,content,embed,refType:'fixed',refId:g.id,docId:MCM_DOC_ID})
+    });
+    return res.ok?'posted':'error';
   }catch(e){console.error('Discord publish failed',e);return 'error'}
+}
+async function postSearchGroupToDiscord(g,ev){
+  normalizeSearchGroup(g);
+  const members=searchGroupMembers(g);
+  const roster=fixedSlotDefs().map(d=>{const p=PLAYERS.find(x=>x.id===g.slots[d.key]); const c=p?cls(p.classId):null; return `${d.icon} **${d.label}** : ${p?playerName(p)+' ('+(c?.name||'')+')':'Libre'}`;}).join('\n');
+  const mentionIds=members.map(p=>p.discordId).filter(Boolean);
+  const timestamp=ev&&ev.date&&ev.time?new Date(`${ev.date}T${ev.time}`).toISOString():undefined;
+  const embed={
+    title:`🔍 ${ev?ev.activity:g.activity} — ${g.name}`,
+    description:`**RECHERCHE · ${members.length}/5**\n\n${roster}${ev&&ev.note?`\n\n📝 ${ev.note}`:''}\n\n👇 Clique sur les boutons ci-dessous pour indiquer ta disponibilité !`,
+    color:g.type==='pvp'?0xff4d67:0x00d9ff,
+    fields:ev&&ev.date?[{name:'🗓️ Date',value:ev.date,inline:true},{name:'🕒 Heure',value:ev.time,inline:true}]:[],
+    timestamp,
+    footer:{text:'MCM · MMO Connect Manager'}
+  };
+  const content=mentionIds.length?mentionIds.map(id=>`<@${id}>`).join(' '):`📣 ${g.name}`;
+  try{
+    const res=await fetch(LFG_WORKER_URL+'/publish',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({channelId:LFG_CHANNEL_ID,content,embed,refType:'search',refId:g.id,docId:MCM_DOC_ID})
+    });
+    if(res.ok)showToast('Groupe publié sur Discord !');
+    else showToast('Erreur lors de la publication Discord.');
+    return res.ok?'posted':'error';
+  }catch(e){console.error('Discord publish failed',e);showToast('Erreur lors de la publication Discord.');return 'error'}
 }
 
 /* ===== PATCH FONCTIONNEL GROUPES ===== */
@@ -1328,6 +1359,7 @@ function openSearchEventPlanner(groupId){
     };
     PLANNED_EVENTS.push(ev);
     await saveData();
+    postSearchGroupToDiscord(g,ev);
     overlay.innerHTML='';
     showToast('Événement ajouté aux événements à venir');
     window.MCM_RENDER();
