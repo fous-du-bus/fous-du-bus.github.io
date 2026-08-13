@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- MCM BUILD 2026-08-13 V2-EXPEDITIONS-10-DONJONS -->
+<!-- MCM BUILD 2026-08-13 V2-FIX-SANCTUARY-DUNGEONS -->
 <title>MCM — MMO Connect Manager</title>
 <link rel="apple-touch-icon" href="./icon-192.png">
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -1233,6 +1233,10 @@ const MCM_SANCTUARY_DUNGEONS=[
   'Chalice of Muspel',
   'Corroded Decontamination Facility'
 ];
+
+// Compatibilité avec les anciennes fonctions de rendu.
+const sanctuaryDungeons=MCM_SANCTUARY_DUNGEONS;
+
 
 const MCM_SANCTUARY_MODES={
   'Eternal Ludra':['Normal'],
