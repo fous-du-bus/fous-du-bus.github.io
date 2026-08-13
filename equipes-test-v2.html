@@ -1211,7 +1211,7 @@ function login(){
   location.href=`https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${redirect}&response_type=token&scope=identify%20guilds.members.read`;
 }
 function logout(){
-  clearRoleCache();localStorage.removeItem('mcm-discord-session');location.hash='';session=null;discordUser=null;discordMember=null;renderGate()}
+  if(LIVE_DATA_UNSUB){LIVE_DATA_UNSUB();LIVE_DATA_UNSUB=null}clearRoleCache();localStorage.removeItem('mcm-discord-session');location.hash='';session=null;discordUser=null;discordMember=null;renderGate()}
 
 const MCM_LOADING_STEPS=[
   'Connexion à Discord',
@@ -2058,6 +2058,8 @@ function renderSearchGroups(){
 let PLANNED_EVENTS=[];
 let ACTIVITY_LOG=[];
 let REMOVED_LEGACY_DISCORD_IDS=[];
+let LIVE_DATA_UNSUB=null;
+let LIVE_DATA_FINGERPRINT='';
 const STATIC_EVENT_TYPES=['Expéditions','Transcendances','Sanctuary','Rift','Abysse','Arena'];
 const DISCORD_GROUP_EVENT_WEBHOOK_URL='https://discord.com/api/webhooks/1536673660251668574/AyuydDHDwmxBfpsdu0ZATHAPB7b0VIAbWNLr0onaFBMjgsdyrPC5i3_C2tqIhe887VgP';
 const LFG_WORKER_URL='https://lfg-reactions.aegrim-midgard.workers.dev';
@@ -2092,6 +2094,27 @@ async function loadData(){
       await saveData();
     }
   }catch(err){console.warn('Import des anciens membres indisponible',err)}
+  startRealtimeDataSync();
+}
+function dataFingerprint(d){return JSON.stringify([d.players||[],d.fixedGroups||[],d.searchGroups||[],d.plannedEvents||[],d.activityLog||[]])}
+function startRealtimeDataSync(){
+  if(LIVE_DATA_UNSUB)return;
+  LIVE_DATA_FINGERPRINT=dataFingerprint({players:PLAYERS,fixedGroups:FIXED_GROUPS,searchGroups:SEARCH_GROUPS,plannedEvents:PLANNED_EVENTS,activityLog:ACTIVITY_LOG});
+  LIVE_DATA_UNSUB=docRef.onSnapshot(snap=>{
+    if(!snap.exists)return;
+    const d=snap.data(),fingerprint=dataFingerprint(d);
+    if(fingerprint===LIVE_DATA_FINGERPRINT)return;
+    LIVE_DATA_FINGERPRINT=fingerprint;
+    PLAYERS=Array.isArray(d.players)?d.players:[];
+    FIXED_GROUPS=Array.isArray(d.fixedGroups)?d.fixedGroups:[];
+    SEARCH_GROUPS=Array.isArray(d.searchGroups)?d.searchGroups:[];
+    PLANNED_EVENTS=Array.isArray(d.plannedEvents)?d.plannedEvents:[];
+    ACTIVITY_LOG=Array.isArray(d.activityLog)?d.activityLog:[];
+    REMOVED_LEGACY_DISCORD_IDS=Array.isArray(d.removedLegacyDiscordIds)?d.removedLegacyDiscordIds:REMOVED_LEGACY_DISCORD_IDS;
+    if(Array.isArray(d.classes)&&d.classes.length)CLASSES=d.classes;
+    normalizeClassRoles();
+    if(document.querySelector('.shell'))window.MCM_RENDER();
+  },err=>console.error('Synchronisation Firebase en temps réel indisponible',err));
 }
 function saveData(){
   return docRef.set({players:PLAYERS,classes:CLASSES,fixedGroups:FIXED_GROUPS,searchGroups:SEARCH_GROUPS,plannedEvents:PLANNED_EVENTS,activityLog:ACTIVITY_LOG,removedLegacyDiscordIds:REMOVED_LEGACY_DISCORD_IDS},{merge:true})
