@@ -414,96 +414,170 @@ function showToast(t){toastEl.innerHTML=`<div class="toast">${esc(t)}</div>`;set
 function login(){
   const redirect=encodeURIComponent(location.origin+location.pathname);
   localStorage.removeItem('mcm-discord-session');
-  const scope=encodeURIComponent('identify guilds.members.read');
-  location.href=`https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${redirect}&response_type=token&scope=${scope}&prompt=consent`;
+  location.href=`https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${redirect}&response_type=token&scope=identify%20guilds.members.read`;
 }
 function logout(){localStorage.removeItem('mcm-discord-session');location.hash='';session=null;discordUser=null;discordMember=null;renderGate()}
 async function initAuth(){
-  const hash=new URLSearchParams(location.hash.replace(/^#/,''));
-
-  if(hash.get('error')){
-    localStorage.removeItem('mcm-discord-session');
-    history.replaceState(null,'',location.pathname);
-    return renderGate(`Discord a refusé l’autorisation : ${hash.get('error_description')||hash.get('error')}`);
-  }
-
-  if(hash.get('access_token')){
-    session={
-      accessToken:hash.get('access_token'),
-      expiresAt:Date.now()+Number(hash.get('expires_in')||3600)*1000,
-      scope:hash.get('scope')||''
-    };
-    localStorage.setItem('mcm-discord-session',JSON.stringify(session));
-    history.replaceState(null,'',location.pathname);
-  }else{
-    try{
-      session=JSON.parse(localStorage.getItem('mcm-discord-session')||'null');
-    }catch{
-      session=null;
-    }
-  }
-
-  if(!session||!session.accessToken||!session.expiresAt||session.expiresAt<=Date.now()){
-    localStorage.removeItem('mcm-discord-session');
-    return renderGate();
-  }
+  const diag={steps:[],roles:[],scope:'',userId:'',memberStatus:'',firebase:'EN ATTENTE'};
+  const step=(name,status,detail='')=>diag.steps.push({name,status,detail});
 
   try{
-    await firebaseAuthReady;
+    const hash=new URLSearchParams(location.hash.replace(/^#/,''));
+    diag.scope=hash.get('scope')||'';
+
+    if(hash.get('error')){
+      step('Autorisation OAuth Discord','ERREUR',hash.get('error_description')||hash.get('error'));
+      return renderConnectionDiagnostic(diag);
+    }
+
+    if(hash.get('access_token')){
+      session={
+        accessToken:hash.get('access_token'),
+        expiresAt:Date.now()+Number(hash.get('expires_in')||3600)*1000
+      };
+      localStorage.setItem('mcm-discord-session',JSON.stringify(session));
+      step('Token OAuth Discord','OK',`scope: ${diag.scope||'non indiqué'}`);
+      history.replaceState(null,'',location.pathname);
+    }else{
+      try{session=JSON.parse(localStorage.getItem('mcm-discord-session')||'null')}catch{session=null}
+      step('Session locale',session?.accessToken?'OK':'ABSENTE',session?.expiresAt?`expire: ${new Date(session.expiresAt).toLocaleString('fr-FR')}`:'');
+    }
+
+    if(!session?.accessToken){
+      step('Token Discord','ERREUR','Aucun access_token');
+      return renderConnectionDiagnostic(diag);
+    }
+    if(session.expiresAt && session.expiresAt<Date.now()){
+      step('Token Discord','ERREUR','Token expiré');
+      localStorage.removeItem('mcm-discord-session');
+      return renderConnectionDiagnostic(diag);
+    }
+
+    try{
+      await firebaseAuthReady;
+      diag.firebase='OK';
+      step('Firebase','OK');
+    }catch(e){
+      diag.firebase='ERREUR';
+      step('Firebase','ERREUR',String(e?.message||e));
+      return renderConnectionDiagnostic(diag);
+    }
+
     const headers={Authorization:`Bearer ${session.accessToken}`};
 
-    const u=await fetch('https://discord.com/api/users/@me',{headers});
-    if(u.status===401||u.status===403){
-      localStorage.removeItem('mcm-discord-session');
-      session=null;
-      return renderGate('Ta session Discord a expiré. Reconnecte-toi.');
+    let u;
+    try{
+      u=await fetch('https://discord.com/api/users/@me',{headers});
+      step('Discord /users/@me',u.ok?'OK':`HTTP ${u.status}`,u.statusText||'');
+    }catch(e){
+      step('Discord /users/@me','ERREUR RÉSEAU',String(e?.message||e));
+      return renderConnectionDiagnostic(diag);
     }
-    if(!u.ok)throw new Error(`Discord /users/@me : ${u.status}`);
-    discordUser=await u.json();
+    if(!u.ok)return renderConnectionDiagnostic(diag);
 
-    const m=await fetch(`https://discord.com/api/users/@me/guilds/${GUILD_ID}/member`,{headers});
-    if(m.status===401||m.status===403){
-      localStorage.removeItem('mcm-discord-session');
-      session=null;
-      return renderGate('Discord doit de nouveau autoriser la lecture de ton rôle sur le serveur.');
+    discordUser=await u.json();
+    diag.userId=discordUser.id||'';
+    step('Utilisateur Discord','OK',`${discordUser.username||'Utilisateur'} · ID ${diag.userId}`);
+
+    let m;
+    try{
+      m=await fetch(`https://discord.com/api/users/@me/guilds/${GUILD_ID}/member`,{headers});
+      diag.memberStatus=`HTTP ${m.status}`;
+      step('Discord membre du serveur',m.ok?'OK':`HTTP ${m.status}`,m.statusText||'');
+    }catch(e){
+      step('Discord membre du serveur','ERREUR RÉSEAU',String(e?.message||e));
+      return renderConnectionDiagnostic(diag);
     }
-    if(m.status===404){
-      return renderDenied('Ton compte Discord n’est pas reconnu comme membre du serveur.');
+
+    if(!m.ok){
+      try{
+        const body=await m.text();
+        if(body)step('Réponse API membre','INFO',body.slice(0,500));
+      }catch{}
+      return renderConnectionDiagnostic(diag);
     }
-    if(!m.ok)throw new Error(`Discord guild member : ${m.status}`);
 
     discordMember=await m.json();
-    const roles=Array.isArray(discordMember.roles)?discordMember.roles.map(String):[];
-    const hasMemberRole=roles.includes(String(REQUIRED_ROLE_ID));
-    const hasAdminRole=roles.includes(String(ADMIN_ROLE_ID));
+    diag.roles=Array.isArray(discordMember.roles)?discordMember.roles.map(String):[];
+    step('Rôles Discord','OK',`${diag.roles.length} rôle(s) reçu(s)`);
 
-    IS_ADMIN=hasAdminRole;
+    const hasMember=diag.roles.includes(String(REQUIRED_ROLE_ID));
+    const hasAdmin=diag.roles.includes(String(ADMIN_ROLE_ID));
+    step('Rôle membre requis',hasMember?'OK':'NON',String(REQUIRED_ROLE_ID));
+    step('Rôle admin',hasAdmin?'OK':'NON',String(ADMIN_ROLE_ID));
 
-    if(!hasMemberRole&&!hasAdminRole){
-      console.warn('MCM Discord roles reçus :',roles);
-      return renderDenied('Ton compte est bien connecté, mais aucun des rôles autorisés n’a été trouvé.');
-    }
+    if(!hasMember&&!hasAdmin)return renderConnectionDiagnostic(diag);
 
+    IS_ADMIN=hasAdmin;
     await loadData();
-    await syncOwnPlayer();
+    step('Chargement des données','OK');
+    syncOwnPlayer();
     render();
+
   }catch(e){
-    console.error('MCM initAuth error:',e);
-    renderGate('La connexion Discord a rencontré une erreur. Clique sur Se connecter avec Discord pour réessayer.');
+    step('Erreur JavaScript','ERREUR',`${e?.name||'Error'}: ${e?.message||e}`);
+    console.error(e);
+    renderConnectionDiagnostic(diag);
   }
 }
 async function loadData(){const snap=await docRef.get();if(snap.exists){const d=snap.data();PLAYERS=Array.isArray(d.players)?d.players:[];FIXED_GROUPS=Array.isArray(d.fixedGroups)?d.fixedGroups:[];if(Array.isArray(d.classes)&&d.classes.length)CLASSES=d.classes}}
 function saveData(){return docRef.set({players:PLAYERS,classes:CLASSES,fixedGroups:FIXED_GROUPS},{merge:true})}
-async function syncOwnPlayer(){if(!discordUser)return;let p=PLAYERS.find(x=>x.discordId===discordUser.id);const serverName=discordMember?.nick||discordUser.global_name||discordUser.username;const avatar=discordMember?.avatar?`https://cdn.discordapp.com/guilds/${GUILD_ID}/users/${discordUser.id}/avatars/${discordMember.avatar}.png?size=128`:discordAvatar(discordUser);if(!p){p={id:'p_'+Date.now(),pseudo:serverName,classId:'',secondaryClassId:'',isNewPlayer:true,discordId:discordUser.id,discordUsername:discordUser.username,discordAvatar:avatar,serverName};PLAYERS.push(p);await saveData();setTimeout(()=>openPlayerModal(p.id),300)}else{p.discordUsername=discordUser.username;p.discordAvatar=avatar;p.serverName=serverName;await saveData()}}
+function syncOwnPlayer(){if(!discordUser)return;let p=PLAYERS.find(x=>x.discordId===discordUser.id);const serverName=discordMember?.nick||discordUser.global_name||discordUser.username;const avatar=discordMember?.avatar?`https://cdn.discordapp.com/guilds/${GUILD_ID}/users/${discordUser.id}/avatars/${discordMember.avatar}.png?size=128`:discordAvatar(discordUser);if(!p){p={id:'p_'+Date.now(),pseudo:serverName,classId:'',secondaryClassId:'',isNewPlayer:true,discordId:discordUser.id,discordUsername:discordUser.username,discordAvatar:avatar,serverName};PLAYERS.push(p);saveData();setTimeout(()=>openPlayerModal(p.id),300)}else{p.discordUsername=discordUser.username;p.discordAvatar=avatar;p.serverName=serverName;saveData()}}
 function renderGate(msg=''){app.innerHTML=`<div class="gate"><div class="gate-card"><img src="./mcm-logo.png" alt="MCM"><h1>MMO CONNECT MANAGER</h1><p>${msg||'Connecte-toi avec Discord pour accéder à la gestion des personnages. L’accès nécessite le rôle Aion 2 du serveur.'}</p><button class="discord-btn" id="loginBtn">Se connecter avec Discord</button></div></div>`;document.getElementById('loginBtn').addEventListener('click',login)}
-function renderDenied(msg=''){
-  app.innerHTML=`<div class="gate"><div class="gate-card">
+function renderConnectionDiagnostic(diag){
+  const rows=(diag.steps||[]).map(s=>{
+    const ok=s.status==='OK';
+    const col=ok?'#00dca3':s.status==='INFO'?'#55aaff':'#ff6178';
+    return `<div style="display:grid;grid-template-columns:1fr auto;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.06)">
+      <div><b>${esc(s.name)}</b>${s.detail?`<div style="font-size:10px;color:#8fa0bd;margin-top:3px;word-break:break-word">${esc(s.detail)}</div>`:''}</div>
+      <strong style="color:${col};font-size:10px">${esc(s.status)}</strong>
+    </div>`;
+  }).join('');
+
+  app.innerHTML=`<div class="gate"><div class="gate-card" style="width:min(680px,95vw)">
     <img src="./mcm-logo.png" alt="MCM">
-    <h1>Accès refusé</h1>
-    <p>${msg||'Ton compte Discord ne possède pas le rôle requis pour cette page.'}</p>
-    <button class="discord-btn" id="retryDiscord">Réautoriser Discord</button>
+    <h1>DIAGNOSTIC CONNEXION DISCORD</h1>
+    <p>Cette page indique exactement l’étape qui bloque.</p>
+    <div style="text-align:left;background:#061126;border:1px solid rgba(92,139,225,.25);border-radius:10px;padding:14px;margin:14px 0">
+      ${rows||'<div>Aucune étape enregistrée.</div>'}
+      <div style="margin-top:12px;font-size:10px;color:#8fa0bd">Rôles reçus : ${esc((diag.roles||[]).join(', ')||'aucun')}</div>
+    </div>
+    <button class="discord-btn" id="diagRetry">Réautoriser Discord</button>
+    <button class="btn" style="width:100%;margin-top:8px" id="diagLogout">Effacer la session et recommencer</button>
+  </div></div>`;
+  document.getElementById('diagRetry').onclick=login;
+  document.getElementById('diagLogout').onclick=logout;
+}
+
+function renderDenied(info={}){
+  const roles=Array.isArray(info.roles)?info.roles:[];
+  const roleLines=roles.length
+    ? roles.map(r=>`<div style="font-family:monospace;font-size:11px;padding:3px 0">${esc(r)}</div>`).join('')
+    : '<div style="color:#7f8ca7">Aucun rôle reçu.</div>';
+
+  app.innerHTML=`<div class="gate"><div class="gate-card" style="width:min(650px,100%)">
+    <img src="./mcm-logo.png" alt="MCM">
+    <h1>Diagnostic Discord</h1>
+    <p>${esc(info.reason||'Accès refusé')}</p>
+
+    <div style="text-align:left;background:#061126;border:1px solid rgba(92,139,225,.25);border-radius:10px;padding:14px;margin-top:15px">
+      <div style="font-size:11px;color:#96a5c2;margin-bottom:7px">RÔLE MEMBRE ATTENDU</div>
+      <div style="font-family:monospace;font-size:12px;color:#13d7ff">${esc(String(REQUIRED_ROLE_ID))}</div>
+
+      <div style="font-size:11px;color:#96a5c2;margin:14px 0 7px">RÔLE ADMIN ATTENDU</div>
+      <div style="font-family:monospace;font-size:12px;color:#7c56ff">${esc(String(ADMIN_ROLE_ID))}</div>
+
+      <div style="font-size:11px;color:#96a5c2;margin:14px 0 7px">RÔLES RENVOYÉS PAR DISCORD</div>
+      ${roleLines}
+
+      ${info.apiBody?`<div style="font-size:11px;color:#96a5c2;margin:14px 0 7px">RÉPONSE API</div><div style="font-family:monospace;font-size:10px;word-break:break-all">${esc(info.apiBody)}</div>`:''}
+    </div>
+
+    <p style="margin-top:14px">Fais-moi une capture de cet écran : avec ces IDs je pourrai corriger le contrôle de rôle sans deviner.</p>
+    <button class="discord-btn" id="retryDiscord">Réessayer Discord</button>
     <button class="btn" style="width:100%;margin-top:8px" id="logoutGate">Changer de compte</button>
   </div></div>`;
+
   document.getElementById('retryDiscord').addEventListener('click',login);
   document.getElementById('logoutGate').addEventListener('click',logout);
 }
