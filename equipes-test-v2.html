@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- MCM BUILD 2026-08-13 V2-RENDER-DEFINITIF -->
+<!-- MCM BUILD 2026-08-13 V3-LOADING -->
 <title>MCM — MMO Connect Manager</title>
 <link rel="apple-touch-icon" href="./icon-192.png">
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -386,12 +386,120 @@ body{background:
   color:#00c7c7;
 }
 
+
+/* ===== ECRAN DE CHARGEMENT ===== */
+.mcm-loading-screen{
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  background:
+    radial-gradient(circle at 50% 20%,rgba(22,139,255,.12),transparent 30%),
+    radial-gradient(circle at 70% 25%,rgba(118,87,255,.10),transparent 28%),
+    #020817;
+}
+.mcm-loading-card{
+  width:min(520px,94vw);
+  border:1px solid rgba(80,135,220,.28);
+  background:rgba(6,17,38,.94);
+  border-radius:18px;
+  padding:28px;
+  box-shadow:0 22px 70px rgba(0,0,0,.35);
+  text-align:center;
+}
+.mcm-loading-logo{
+  width:150px;
+  height:150px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 18px rgba(0,217,255,.18));
+}
+.mcm-loading-title{
+  margin:10px 0 5px;
+  font-family:Cinzel,serif;
+  font-size:22px;
+  color:#f7f9ff;
+}
+.mcm-loading-status{
+  color:#9fb0cc;
+  font-size:11px;
+  min-height:18px;
+  margin-top:8px;
+}
+.mcm-loading-track{
+  height:7px;
+  margin:20px 0 10px;
+  border-radius:999px;
+  overflow:hidden;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(84,130,206,.18);
+}
+.mcm-loading-bar{
+  height:100%;
+  width:8%;
+  border-radius:999px;
+  background:linear-gradient(90deg,#168bff,#00d9ff,#7657ff);
+  transition:width .3s ease;
+  box-shadow:0 0 16px rgba(0,217,255,.28);
+}
+.mcm-loading-steps{
+  display:grid;
+  gap:8px;
+  margin-top:17px;
+  text-align:left;
+}
+.mcm-loading-step{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  color:#72819f;
+  font-size:10px;
+}
+.mcm-loading-step.active{color:#dce7ff}
+.mcm-loading-step.done{color:#37d8aa}
+.mcm-loading-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  border:1px solid currentColor;
+  flex:0 0 auto;
+}
+.mcm-loading-step.active .mcm-loading-dot{
+  background:currentColor;
+  box-shadow:0 0 10px currentColor;
+}
+.mcm-loading-step.done .mcm-loading-dot{
+  background:currentColor;
+}
+
 </style>
 </head>
 <body><div id="app"></div><div id="overlay"></div><div id="toast"></div>
 <script>
 const firebaseConfig={apiKey:"AIzaSyCcfWoW_0IWkAopHrlXnKUiZJViss9FSpU",authDomain:"routine-aion-2.firebaseapp.com",projectId:"routine-aion-2",storageBucket:"routine-aion-2.firebasestorage.app",messagingSenderId:"400230415217",appId:"1:400230415217:web:c75da7cea4b0305f4014d0"};
 firebase.initializeApp(firebaseConfig); const db=firebase.firestore(); const fbAuth=firebase.auth(); const docRef=db.collection('teamComps').doc('guildManagerTest'); const firebaseAuthReady=fbAuth.signInAnonymously().catch(console.error);
+
+/* ===== MCM ACTIVITY TAXONOMY — defined early to avoid runtime scope/order issues ===== */
+window.MCM_SEARCH_PVE=['Expéditions','Transcendances','Sanctuary'];
+window.MCM_SEARCH_PVP=['Rift','Abysse','Arena','Battleground'];
+window.MCM_SEARCH_RVR=['Artifact Abysses','300 VS 300'];
+window.MCM_SEARCH_ACTIVITIES=[...window.MCM_SEARCH_PVE,...window.MCM_SEARCH_PVP,...window.MCM_SEARCH_RVR];
+window.MCM_ACTIVITY_COLORS={
+  'Expéditions':'#168bff',
+  'Transcendances':'#7c56ff',
+  'Sanctuary':'#00c7c7',
+  'Rift':'#ff4d67',
+  'Abysse':'#ff7a45',
+  'Arena':'#ff3dbf',
+  'Battleground':'#d9534f',
+  'Artifact Abysses':'#f5b84b',
+  '300 VS 300':'#00dca3'
+};
+window.MCM_ACTIVITY_TYPE=function(activity){
+  if(window.MCM_SEARCH_RVR.includes(activity))return 'rvr';
+  if(window.MCM_SEARCH_PVP.includes(activity))return 'pvp';
+  return 'pve';
+};
+
 const DISCORD_CLIENT_ID='1532248812771606691', GUILD_ID='1355632831333798200', REQUIRED_ROLE_ID='1443636744267501618', ADMIN_ROLE_ID='1397018334590926929';
 let CLASSES=[{"id": "templar", "name": "Templar", "role": "Tank", "color": "#5870a8", "icon": "data:image/webp;base64,UklGRk4DAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSEUBAAABkLNtmyHZ2mttxra9m25m2/Zmtm0zPI5s2/bJbNvnVL1BT1XXRMQEELXuSTpEq8Zb3jpoQddu4BPFz+1hhlIMAjsPf2JQ/r21GGWuwqxmy/N/EGbfD3d4ieRC8y8K4Bs0b9QRGOXQHxB9bCQwwVH51FhgSs4zkWlJJjzva3J+pPMGIfmGHqdJ1hVdTgV+ytlGuIkUckd5dl8klfB0j8n54c4jPQCOb6ICd9f+AxcNBNz/APeNinm7zeYA1BFB3RsAC87T8JPisPFL4EeQCCljwMt1wCrD1gd4uY0B23WEbO8DeEIR+Qct5/GNAn8iiHg2A+hnTNz43fj7NwWwWU+F/iko2a9/v6D8FkzUhn9WCPYQ1TqlVOighTqis54J3HUiMk238J76E7lGW5iGpz5EtukGxR1/Il+//Qv2OxJt6sTUmhOVAFZQOCDiAQAAEAoAnQEqIAAgAD5tMJNGJCMhoTAYCACADYlmAJ0yhH4i0SFWj9RoFcBKgkID05czvz77An8i/svWS9E39blvjLeoqM/OBHDcjls1H/tOUsxUKVkImnr9XQAA/vnCXOL/H+15B42afAdH1w7YzvNEIXuo12H7Mv/877feLw8y/EkaMkvK8fvU2yzfquaN8a3RVsRMWSPzCCM0fvX4uZ5iflLxwABGPrQImmQfH/riwzc7/f8jmhcj0SUl0HaysmDtY7AZ0WEXSQ71v+KF5WdUcX0jRvGU27gkxTPkXltHK9qB6VLgQhXkXfOZ8JbPt7jRplMmcq8/vsfQREmw6/LDTAJusu0rmbxG4eSFwKHyAvznfi3PMBXxy+rFeBQPHpN3wBJHcClXG0nqK1ivrb/iTRuOp/9LYEc3CH62kIXx5+sSA9TrV6XPz06Yz/MkeVwO5NZm+a8ZGhzfcr/n9E5Ysvr//CU/9NXPorMg1J+wVb3PWfCuePH6RBAG+qHjDJFSwzx2mWC4dclqv8Sm6tKDLe5SciQh9idDYAlnj7RQTz+0OoXhKlJFMiKDNi7Z2m8Q0Bg2vZvP5U0o+Oa4vG9KISW8c1LNAAgmGqXe2bifwsHOwwA9vr2zYSuvcb+tWzAAAAA="}, {"id": "gladiator", "name": "Gladiator", "role": "Tank", "extraRoles": ["DPS"], "color": "#305058", "icon": "data:image/webp;base64,UklGRkYEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSAQCAAABkG3btiFJJyLbtm1br9WPtm3btm3btm3bttNGZKxGZFbmH0TEBEhii1WR+Cqb9yrxKeZwVY5PZ13vEZ9NsCUmyWunFFEG5pOtsEOyTUkqkqJ5iigybb2WUcR0boRRp+9pRNKe2JY2gjLjV34RSfPugLofDimzrDlFJOuHFapR/t87RUQ6hM+YjsAJdTHDFRHZ4qlo1JD1IklaOFiX9BxcSToRd89kIqtpZ1Rb3yopdgRg+hYf+A8O19HOpJcNtDbKZ79pyvATQi4MXUGw5lAv+8oYqfucxfJ9wIl/swVsG938wl6qgP1qciNpyJu3mHcwKI8N3IXaaXvf8/U+3SViNjM/mDXDnLmSDtRI+WVVb37iLBCppCX83VW4gzehFkD9yq7hWX+8D7tqRlDar13P+wvzPN/2/7fnUXDFucccmjhOMep7/GKIQ5vDRBneMhPtzompRo2e6jAr2RIdvOADViQfCLzqaCTpV+scT5ruvI4GGlzJatoIe3NI5JR30Q5WyPoKw9fZym7S+JxDom0RBufM/KPNYBmbb5Qd9F4SdaoFPzGHp5o2wzZ1TOAbjuXpoxPJNPQbnn69oU8XNz9G5ZYYFjrB6x7Q9TZni0lsM5zzT4Ihv29nllgneJfDIk8jiXkehxcCrlKxS9Y3BNrAFLETta3D2TepxHXjHkXiW6CSJBZWUDggHAIAADALAJ0BKiAAIAA+ZSqSRaQioZgGAEAGRLEAWIZVeEDeZqwB0GfoL13yAFcC6H/8BqFP1a9VvMs7j+4T/Fv6x/yfVu9e/ogfrkmTOrwgkWUbStVCEU2Q1GFVqA2H32F5+OQAAP7+zWu1G5nGrbzNRD0LlkLBKt8Yfos3tpGRgYvEv9y/agIPJ25Fu6/lUazr0wafJNrAfNil76XesHv0EURiP+KN3fiQX2jnM8tu3XeCaQuRG5T5oVfsPb7F/KrrqcLMsVIJIQoWAyiFxHE9QT7Lo/ATX6LqNfaQR5CB9xPyQR5+o7cuNiUnaVxFIxLscp7gsEq2oVBR30FfA8i3WYFZN1uOLiGkH+9jQfHuomLC2zSpz0Ohw3l2ZlkTX2fTuqHYGktzknLQDiXM5zXSmD/diLNZ9HTtNK2DyP2VZgZg3TxPyalhgnZvxOu/8PGqdJTCQNVNH/gdi7QkMvwQkRXE0FvlPg8U8Xiygy7VY0jZRedRq1yLXSs5M64iJ4qHkHpj+K1C7r8fT/W9NsbUB59PuRzIu1E+qxr/9TmEq30MJR64C+YUGyeOcehWGT/KPA721iO30Wsmz7tUwrtRtjWxT7h06vwMzMAxf+n4AfFvip4NESi983wAep0lh009dhX9v9crAXOY17EIE/K+dVGqklpIkyDnPnBm13LFvS4aAXtjV3or7hMtgDFm2T3Y9eNBqkLujQyAyAAAAA=="}, {"id": "assassin", "name": "Assassin", "role": "DPS", "color": "#709870", "icon": "data:image/webp;base64,UklGRggEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSNABAAABkCvbtmlbY+vy2bZt2zYj25ltv8i2bdu2bb9jnzWCrdp/EBETALv5qsDhufudWvVCtiW36zM7u1nhH6E2ZlKDFo3SAeqlGOuZJOwnX2Y1SfkY85UEUj+RR1KNBsRIrlYMpBFkrDqgLflFsVoF5CKFv5NkuG1uFZB6+Rl9XwkAcu9hdIKCTF9fkP7/5Of3eSEPCPJ9k0QYpu4XkZ2FEu+RF0vl2B3nv2x5NgT5thTM0x8mL5f6wlfZgeTT9FY/Tl7NC6sF/pGuOE9KY5piC4WLdFWBxWb50/f4TZJrS77+2GABSbq6pM/dQTGSl7u/Pgzr1r0l3y3RRR5+/X880QipS0M0vDHm699uR3VkdFN6mCutbxswfOKph4ZPe2uwKI14bcSQn8a/ZyRamuo2sejfls4KUPo7Rehd3CjsYbidBJujRewvTb1/uE+B3YyPadldGrZTL1l7ncmWNC6ui94/G9GJZZKdch6SdDVT5MrPSDLY0Ia8hfTeEDyWPd20CO//J69p1or6xYXaqdfJ9y/I3/mKHxPhatZGhGalANVcJBkbCCQO88+w1r6fDECaojuqAZB69rJmmvYa+b0onKzii/SFsxvfqA4tPASHq7S0BVZQOCASAgAA8AoAnQEqIAAgAD5tKJFFpCIhmAwGAEAGxLGATplB5FFgVIB8nxfGiCnOf4z/r+TL6H/5/93+AL9Tv+F2B/R3/WAtzCsm6PdQTvz4zqByudpDaKieocrwbT8D5qtSSpQAAP7781fYHzYtB4Y8Cl6bN0qMis7cEa6AbyAD94nMYw9Pcbuv7IMq/HFFT/a8w1lNnQlZgcI3pr4r+3BaSzoo3HaGIu8TfXsvAubAzA/kkF+Yf17D+h7NMAs04Rx9EQzvWvasrjyHdMthuCHrb+St+5No+K+zZxRBNnGU+mGm7/zKy9idH5VD0BoMGiEWtKkkhdfG5jb0yxVmAcq7ILefP/4fUOa/+P5EZTE3swh81uhJ5IhaUebivuoMgCyzdYu/J7REXBP1QzNil6Tyeb2faSV0EWEcP4cpN55ZOhsvfiYwlIBH9Tf7P/BJhWJ2UO48oWwP7q2Rawc70AfAtJehx65KFNredJ8zYtIBWtgV7nwt1xhypln/6uerNw5aQUiso9+FXWvRtKMLRA+RgO1FHxO2S6/o6exXytNign4PXuBy6RIqTRorZrCVUVBXAcGJTJUd47xVFbvHFcFEy8/r5Lu7/6I2K/xQBonnH+Grtx/Lh2AlPgoW06gxm7jxA+o2Am2iret7okf+U8bgfAChtPMNmPHF0o2b7qNcmkW2O3t5YkaGKlLTFgqeWRHcUg27IAA="}, {"id": "ranger", "name": "Ranger", "role": "DPS", "color": "#305848", "icon": "data:image/webp;base64,UklGRgIEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSP4BAAABkG3btulK66hs27Zt27Zt27Zt27Zt23WNEycHez5EO38QERNAwYoKhbjHuVShSfDOqBgKiTLFYTIJIq8cx1O0ZTgtjhnCq5TW8DCgFny6UeCT9i76/AMw5Y+9nsBBbvqRWSt28uBUrgNQl2QKKscRHVC/Rxuw//8J4GNdIbDa/+FtWACPC96OSUoAct1Y+Hy21MC5fboXzKUZBD+j3QCgxQP2eOMe4LLB+096P60AaCcrZer5FwBz7yyefUQYgA2yn2Ju4G0CpVqyshYAK+ViOWgbgLHktzFgDKL8lofVLgHxjZc7J1LJMOCg5Es5DfxISUIf9qmaysbtw9XkRPMAZxlf/TQ8LE9EGVXMOqW1taEHEeVZDlxL6JUnSsOrvERStj8RL2PY9/9m/SRE8izYMVYgSn4eLkfY1z6prkZq8Q7AiMC/L40r7Hf/ZrBXpUT7TOhry/x2tlp6MSz+JWB7zG7s6f6QTaypAt8KFf35Y0EFmbq+s7QWtnsmRpmLvkZkynrDsjgz5R7yIqyHkDgReSffb+1f9IvOoDk6FHj6s5FARKQkkch/0h32GcUeALbepb68y0c8xZHuVTV07GgV/SgD8RWH2a/b2HnroRTEW2ymAbiQlPi3AoBLEj9hn5ealV+y715mZ34J+w+MY2uGVeVHROO+p6bQJspIwQJWUDgg3gEAAPAJAJ0BKiAAIAA+bS6URyQiIiEoCqiADYlAGd9EAR599A5+NUG9EeiGpHf7P9u8x30j7AX6tdW70KFpzs/atSx5dXynWJHqnMhMw47WTtGV2Bjpk4+eGAAA/v+dcevkCFI/4IM/q7jtsTVTWiUfXPsBrysn+Zvob3Tx/qjuHX340jYOkjc/ibx8815MPzZg2PAZbtWgLTqg0HUMsqAuXHdDvtELlqju/sUBvf0m0aQ9tB3Sj9O03XjnrPOujz5nzRZwAdjCQgEPSNNB5e4PqqLJbs9tBHu9zQLThgF/Jqz1HHJ7M8zKYEVLPEKWt3toJ34fyN6tneBhKAr5+YWJ2mOf469W38HOblJdbTaH7SG0+KxX9KwH3ZN+FH8FyMyqy6QHznuSZvvx1F8t/4pbZHe6WREEHFmUqO0kmrwRSkYFlNGB+UnsiN/AtIoGVEQqS34m3QsxEspN7zoV0nl/jVYZlceM1hJ/ToNSO/Lo47yd1rIG7F6PPLiEIw1np/8Xnnw8f+i0GvsESGZN2h0Qx2hlwQ1nSbHyZUzyyCnYLhma9emsF+48Swj5N01/znb6yhLzPI2NAamt5z7vI/mXsZ3XWqxrN8t5p8x6hKfn5MfP/FtqTqFDNXWIcALKYAA="}, {"id": "sorcerer", "name": "Sorcerer", "role": "DPS", "color": "#584878", "icon": "data:image/webp;base64,UklGRnoEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSC4CAAABkHXbmiHJ+iOqxrZt27Zt27Zt2zbebNtWcdTunlYh2RH3oVIdERNAzGavRFK5/wOaOhkeiQ1Shc4H3ueyKP/QkLkpeJXbon6O9ISQCgGssVlj2yFUJ7T4R0AYlsaS2gG8aXPmLwAIr9YVpuayPsd/BfoxUzObsh8A5x6mESaBP2+dwZhtloIPg5ZD83Pz2xzq85yG+im++IRWf4FgOMCmp5ssAAuMFA2D44SzJxDoWegFcJHQCTL+5NGzXQTny/edga9bvmJ5niGqKrEdAB+hVyheuuoosIphBV3vLFrOB1dlUiQGp6nOKDxu/+8DkFx0toA3I48D8Wf6bERkJi16DEuL3FEAV30RUGdPAfBnWFsmVdBK84H1blKuhxdy58o31dFZXkDcXrpNjSA6a6V3cYeaNLfKHXwtXnxv1nWI79z0DY8Q0F8r7UseA/Cn9W7hY4n0q1Piu60IAskGyjugGT3+D8LuMnXpbQbNxWk0tolgEgD4DgkA7r8EAFUBc+QPyXaFQQgLQfAtEO9BaGIMeHgrQoh9C4wKMpJg1FWUkMJ+FuJzOWMZtAW3M0IjuIyQNBXPvkxW+fb0afKt1fpWOa19dAr3ea/3zU1C0+TpnahMs5OMm/9x+C7WJLS7nx/Ll4ESg92S5fV5aJqO/7EjF829KsBv5CLGaYcwRJ2aJaqx/NLBMC7tyUBMFz8UBMBlAOxNVxuxkJZb+8GncsFzoXtaYnWaQj03F89CjANWUDggJgIAANAKAJ0BKiAAIAA+bS6SRiQioaEwGAgAgA2JQBOl9hKA3jE0oTGP7vUgfLm1BTDfFl88/7r+zfAH+o//D4En9mVtztPVMzqDhjqrewaR66xyLbfuGKzGcae6iOxZ5qwAAP7/0cztBmprrzd7rs7x/qsm/wD3ua/+6T0k4jeGqNf0K/W4IFZQd8w+QOE967/tZt/3z9/Dr/cg/+343GRlyJI/XdG67+VwyCpeQH+XOmL9MYjkARxRZiG/lbfNzT894P/iV7+wdV7/wnEjl4eP501RKiqMKzVljqG+q6K2ghnMw8mC/d8hB+tUlSzAYexpH42FoI6/xAgayO9oLi7bLgl2Q9naj+T1JeRU8Whw5Y72/fqk56Dhe3Wa0eQXgFL6Kkd8xne1IGAS/D8KZQrvDwt04joLA9x+gG456F+8WXL2daWHMxfUPZvSOErhs29k+6oPbazD/0VAf1xu5+Qm1CrzZMyydux7MhKbE3GwrMBlusBqxd3E5/RQbEKd1ARbVbaSVvR8oY68uL7/P/x6DSFMCcoNbbJ/uhDe5WW70/gxED2bom5AO+IqZBG/OfmYp5euyDOqxjpWi+l3mSUQHhpUHVOPNTSBuHda7RbkZqyOAGkvJ4JbSUWX6tv9U1fANM6EYFNPTyXhbsL/rcL1kelFrDjDkDW+uxzFLm+U9zyqJC1uyK2Hl2hB25KCznfQjajeB3J5wMzIDvDhOGzasClxU4bgAAA="}, {"id": "spiritmaster", "name": "Spiritmaster", "role": "Flex", "color": "#603860", "icon": "data:image/webp;base64,UklGRpwDAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSKMBAAABkHRrmyHJ4qPHtm1jZ8+sbdvYzpm1Z2nbtm3bbdsoZkbEs0hVRcQECK8j54kon3xbKTo1k0pbR2ewEZwbjcrtD8C9XjUi1WDNuxCAil3fPBIxo35oHHXKjCqeKq0rxbXaXtVDzNQwZKbaZcdq5MbK7oYUoz4l4pj3TBKe5Cam5l14nqH/mxb1Rxbc1fxr6GLSMU3qe/691Ba+pql/31E7JjtUvpkMT2T2CzCkMuBrAq8Vvt+17BpllVOWgAJKSs1cQJGTiy+7q13/wjxME9BpAAUGoAyUHGc3WklslWHROC+yqXfcCNoRtPiV05s+lrGGkshCS76lUAI+H6DnWypfB3QFIQX5ReE0IECFBP7Vs4gBPiDPV3gXxw8JRgFgzhK2lXYC+Utj0+8rm7uFFWtTgKfV7US7/CC8HRRbbBPKrph7XoM5RjgvN4FXCyuwNTZcAvT+GBfVzwCUJdoVFwF8bCDcNvmC59guwn2rZ9qd/tRFeK29vdyNua+hiGDnnUnSogqOjhCRjak3YrXUW8c0iRGRrxlX0kpE9/C7mCiNGi+8AgBWUDgg0gEAALAJAJ0BKiAAIAA+bSqTRqQiIaEwGAgAgA2JYgCdLzkkGFBwAEe+evY9TRBTHfFN9O+wN5Onrk/Yz2AFqzsM8Wz25m2CmS+S5yp5MoAiOoRkj4lV1IpAAP7/ubU5sxLp9QRHSrFE+jdZbqPANE0sPTPICdSIew6g/L6H6qfrnjuGNRyt3Xcrbu4W6nTMVJk5HgfYTzw+7+GfRw9nafnycDJjPJhUtrII3H1/bOXUs6QbdzQqbkRl5xuDOfCgIDhjzyquldMu4MWV9cfq/prMMcbIv+ZskS31zN7jVj9JohzaYdLxAYvz9S5dpZfUqARqUpYZI9B1If79Ii9+JfT/5uw84zwqxHxSQ8HR+YCtNt5fMl7GhPzhWRx592H/lIcciuomHx5nwDo36acrQb9ac9FixqpB96DZVygCqZHtzYVJ27hrNjrDPmgTMMHb6d/7NM3ON3eAKTUUS23PdsfOYZ3zcn/yWsn1rx+VdXXxPhoryVgbaBt4t7CcAd3zDeUSxKXA1R6OFk2l849mJKaC40vgRYi3lJ9AFIgVuPi/25LFYJb5MkyfY2vEkWbLjQvzgX1S5BnEPCwFa89daHxk6+RNbd7Ugyku5L+RmFn2qNgAAAA="}, {"id": "cleric", "name": "Cleric", "role": "Heal", "color": "#a09870", "icon": "data:image/webp;base64,UklGRoYEAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSB4CAAABkCzJtmlbc+veZ9u2bdu27ZZt22jZtm2/d23bd++zcbRG4/gPImICyFO/cuTjXq857/ECEc3JLEPEiZ40q0FUZ9Obz1PESik4y1W78vvUdH/iuhRyViX+LLVPAmAZU/gLm1noFQDb1ULF4444m6/06BQDx8B+R00jNgFmAzhb71BGGSc7YBhgOgAwO2xw1MFMdq2GkxFmALawxBAD+g8WDsSnBKcDwBvJibAg0QAyK1TLhf1c+lvgVtElAHKfVSWXvXWw01xnAB8zE4HfUs0o4JVArtcBv4vTNvYEW6NSrbmZ1WmagdyyrriPyO5CxaP+zUAkWMh02yoSdgIzndWb0DaWzSNabg/IsWYp7wL8byeXozIR2DtyZCGiVmnQzEnFqWM+9JdKlD0ogB/Brom0DHmM3ZZoGwDcpgK3kTW+l3LV/jZAGJKpjaDmBmBNKklLwMx4zm+y2Wb691DWZFwPqCEzxNdtJNs0I7oolT1xcAdMPZ7BmnB3gHI8/WpAbR2wTL6I/JUPZ5HjGiBqpQ7IU5VL8ueks7lAwGkL5Krk/DoAKwNShisXGYOjlQFqAxfDLXD6p5/pBdz9XNQFt8hwYv0At4MqkWt+ZoaDh+/qk9vtn+e4x77vKUwe8o0j3LGdLsiR5xVu2lzEzZDIq+KgjwyAfKIceb1Stt2Myxx5v2RKznGcIR8Kj5jFOtMX1C4Ll0Sf0GGtPvm2xR7OE1ZQOCBCAgAAsAoAnQEqIAAgAD5pKJFFpCKhmAYAQAaEoAnTNktmfPh+ND868z3TWMrtWuFj6RGZP5z/7fuB/qt1h/RL/ZUdqepgWrBm09QOV5hdpB9ME7NVm0zSYI3Dac01blx8AAD+8rGds35TX0zF5pBc7yFzS8ma67y/mC/n55vgjddEW8RZ/Fau8N749FxPZpa8BsMyDNGyxIsV5GVtRZ31D3/R6etmbviS3NqfjVvIXm9w4GCoX/91qlf6/4frTCMuv530uIQEw9XNJ1kf4yMaYBLPp8oTzq88xZIzKEv3vhn9aNgUs/g56M6PUfwyYNE0l467FOGj5yrcid2SHcfM7c6fS1urH52bckAO//4xCAmiELeQ8DXNwDdaYHADAIrni5D2/AKImeozbAt/IqLA+mLiK/HzJUYkZh4aF4pVo8y2Jyi8N2QTeoDnkbANFIf4Lh/pRb7n2oO+SZvyNFaWXkAOeKwyKvUSUtRYJSrHUGqByew72d/+/Jpm/uKYpXM8VjKbmCeaqrn/8DlS0WrGZH8brfKE02Q8jGdhRLxWEP0T22dBL9PFtmpn/7YbWMvRwuZ5xJCNuck2dPAVYp7XYg40be1ChuwGO3+hdOj9uL0nh/xTaSPoXXjV47vNJNxjleL0wO2drMnS6SSZ/T/8vJVa8f07+311XFaTSsPIlSrU/biOClFvvUIVE8uSOX4oMWGWhSn6jqaQN1vdZy8KOntgcvBDbFAE5+fgCezOten7xGCirS9oW6aMS130KVD+XvflAAA="}, {"id": "chanter", "name": "Chanter", "role": "Flex", "color": "#685030", "icon": "data:image/webp;base64,UklGRuwDAABXRUJQVlA4WAoAAAAQAAAAHwAAHwAAQUxQSJsBAAABkCvbtmlb6+g+27bt9zLbtjIzs21bkW3btm1762j3YK+tP4iICRBu05QOCH8H/irqT9H3HMroR+g4MNKPunHgfSYvco+ZUE0IMQtrByEiHaeMiDjq+guliwiekAwQ4TXJxOtsjoJtQel17b/k/cmxcf6WFs77A+OSyD/vAbo7y/wY2P7Z5uZtYGfISWAjwLtjnySP9v8HYp2cdE9Y1M0NNOBHnbtxgJ/l7bK+w7ry95IYoN19cd3C3pDNIKw/6z81kR4fFbf8LWCz3HK12ifzexKI/+NIkx8AA2XBi8CvMmtZX/AWMLvsJXr3s8yUpXkFXFqsYBhJIKbHeT/xI7BIlva1ASZuTTAXyyJPkSd2mMDPoybS2DyZOKpE4fzYBB8sisbnwU8gzlRZYCMK/Lv5AvvrjxIQY4KscQyv74Qk6bsfNiRv534GHq3RJOrK5sI23PCyhRiAmQAwNpYOCKehFtdxnFhfMyDc1v7i6HQq4WFb04FWSHgZrrzCkCijiguPg+3+QfJ2qYDwPu9dNqUWvvb9mVf4W3BwyA0AVlA4ICoCAABwDACdASogACAAPm0skkakIiGhMBgIAIANiWYArDKEdF+7RIDbV3ZzHgVT57NjsfIA9BniBiy/+P9qvss+b/+Z7gX8k/qX+v6+H7Hexh+uy2539Yr5EhmOfD4xJkd970eOu5Y4dleKZ71I3gAA/v9wdVPLbFgei8VYNpXJZ0BOagFMDEAz583LJ4WqC/e8j5f+1Epn3LX3bO77ePEx1s4SxdTGxPvFGOd8Z55W2C2B+DUuokljH3WqPyrHCvyy/9P37b2ON0Bf2MR8xe+JlTvldOtvjDyq1B32wpgE8sr3SBamWEHNPK0+GPxxLiZFY7PypN/E/kmrUrWHm5wr9WRzo3M7/zcf/14NWCJo8jaX5j8TG1mUtryX8ncDYrJUws1t4ZSx5iNYmqha5+qtmVUvs39vZsEjBEwMY5tb6bU16ry40NXiag44HcRBRR8xPGSfSi4mjHA18LQxX9b8bnfMeCCSF2dthG9S4MKPc5uXy6YFhupzeFo1VR6HtwPBbb33XzYXmxqX5zBwARUP4WldgNl/ubC3WvGD/yhyzS2EU+e9h0M3o2JgMv3xeFphlIVY/FtWz5foICskqh2naZllZeKq2bog37iqprCfH+igrNJd1R0T0TANCzaIdXEigqI4+D8vzdPMek3l1GBQBmtEPvGk6l808s0vBx8GE1McLS294D75n82IEOYGbCBZCxcvemQc2REKzp6ATSHNcKlxhCrHGt1KH26AAA=="}];
 const CLASS_EMBLEMS={
@@ -418,7 +526,34 @@ function login(){
   location.href=`https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${redirect}&response_type=token&scope=identify%20guilds.members.read`;
 }
 function logout(){localStorage.removeItem('mcm-discord-session');location.hash='';session=null;discordUser=null;discordMember=null;renderGate()}
+
+const MCM_LOADING_STEPS=[
+  'Connexion à Discord',
+  'Vérification des rôles',
+  'Chargement des joueurs',
+  'Préparation du tableau de bord'
+];
+
+function renderLoading(stepIndex=0,status='Initialisation…'){
+  if(!app)return;
+  const pct=[12,38,72,94][Math.max(0,Math.min(stepIndex,3))]||12;
+  app.innerHTML=`<div class="mcm-loading-screen">
+    <div class="mcm-loading-card">
+      <img class="mcm-loading-logo" src="./mcm-logo.png" alt="MCM">
+      <div class="mcm-loading-title">MMO CONNECT MANAGER</div>
+      <div class="mcm-loading-status">${esc(status)}</div>
+      <div class="mcm-loading-track"><div class="mcm-loading-bar" style="width:${pct}%"></div></div>
+      <div class="mcm-loading-steps">
+        ${MCM_LOADING_STEPS.map((s,i)=>`<div class="mcm-loading-step ${i<stepIndex?'done':i===stepIndex?'active':''}">
+          <span class="mcm-loading-dot"></span><span>${esc(s)}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
 async function initAuth(){
+  renderLoading(0,'Connexion à Discord…');
   const diag={steps:[],roles:[],scope:'',userId:'',memberStatus:'',firebase:'EN ATTENTE'};
   const step=(name,status,detail='')=>diag.steps.push({name,status,detail});
 
@@ -477,6 +612,7 @@ async function initAuth(){
     if(!u.ok)return renderConnectionDiagnostic(diag);
 
     discordUser=await u.json();
+    renderLoading(1,'Vérification des rôles Discord…');
     diag.userId=discordUser.id||'';
     step('Utilisateur Discord','OK',`${discordUser.username||'Utilisateur'} · ID ${diag.userId}`);
 
@@ -522,7 +658,9 @@ async function initAuth(){
     if(!hasMember&&!hasAdmin)return renderConnectionDiagnostic(diag);
 
     IS_ADMIN=hasAdmin;
+    renderLoading(2,'Chargement des joueurs et des classes…');
     await loadData();
+    renderLoading(3,'Préparation du tableau de bord…');
     step('Chargement des données','OK');
     syncOwnPlayer();
     window.MCM_RENDER();
@@ -651,38 +789,15 @@ async function deleteFixedGroup(id){
   showToast('Groupe et événements associés supprimés');
   window.MCM_RENDER();
 };
-const SEARCH_PVE_ACTIVITIES=['Expéditions','Transcendances','Sanctuary'];
-const SEARCH_PVP_ACTIVITIES=['Rift','Abysse','Arena','Battleground'];
-const SEARCH_RVR_ACTIVITIES=['Artifact Abysses','300 VS 300'];
-const SEARCH_ACTIVITIES=[...SEARCH_PVE_ACTIVITIES,...SEARCH_PVP_ACTIVITIES,...SEARCH_RVR_ACTIVITIES];
 let SEARCH_FILTER='all';
-
-const ACTIVITY_COLORS={
-  'Expéditions':'#168bff',
-  'Transcendances':'#7c56ff',
-  'Sanctuary':'#00c7c7',
-  'Rift':'#ff4d67',
-  'Abysse':'#ff7a45',
-  'Arena':'#ff3dbf',
-  'Battleground':'#d9534f',
-  'Artifact Abysses':'#f5b84b',
-  '300 VS 300':'#00dca3'
-};
-
-function searchActivityType(activity){
-  if(SEARCH_RVR_ACTIVITIES.includes(activity)) return 'rvr';
-  if(SEARCH_PVP_ACTIVITIES.includes(activity)) return 'pvp';
-  return 'pve';
-}
-
-function activityColor(activity){return ACTIVITY_COLORS[activity]||'#168bff'}
-function activityTypeLabel(activity){const t=searchActivityType(activity);return t==='rvr'?'RVR':t.toUpperCase()}
+function activityColor(activity){return window.MCM_ACTIVITY_COLORS[activity]||'#168bff'}
+function activityTypeLabel(activity){const t=window.MCM_ACTIVITY_TYPE(activity);return t==='rvr'?'RVR':t.toUpperCase()}
 function normalizeSearchGroup(g){
   if(!g.slots||typeof g.slots!=='object')g.slots={};
   for(const d of fixedSlotDefs())if(typeof g.slots[d.key]!=='string')g.slots[d.key]='';
   g.memberIds=fixedSlotDefs().map(d=>g.slots[d.key]).filter(Boolean);
-  g.activity=SEARCH_ACTIVITIES.includes(g.activity)?g.activity:'Expéditions';
-  g.type=searchActivityType(g.activity);
+  g.activity=window.MCM_SEARCH_ACTIVITIES.includes(g.activity)?g.activity:'Expéditions';
+  g.type=window.MCM_ACTIVITY_TYPE(g.activity);
   return g;
 }
 function searchGroupMembers(g){normalizeSearchGroup(g);return fixedSlotDefs().map(d=>PLAYERS.find(p=>p.id===g.slots[d.key])).filter(Boolean)}
@@ -793,11 +908,11 @@ function openSearchGroupCreate(){
   const me=myPlayer();
   if(!me)return showToast('Ton profil joueur est introuvable');
   if(!me.classId)return showToast('Configure d’abord ta classe dans Joueurs');
-  const activities=SEARCH_FILTER==='pve'?SEARCH_PVE_ACTIVITIES:SEARCH_FILTER==='pvp'?SEARCH_PVP_ACTIVITIES:SEARCH_FILTER==='rvr'?SEARCH_RVR_ACTIVITIES:SEARCH_ACTIVITIES;
+  const activities=SEARCH_FILTER==='pve'?window.MCM_SEARCH_PVE:SEARCH_FILTER==='pvp'?window.MCM_SEARCH_PVP:SEARCH_FILTER==='rvr'?window.MCM_SEARCH_RVR:window.MCM_SEARCH_ACTIVITIES;
   overlay.innerHTML=`<div class="modal-backdrop"><div class="modal">
     <h3>Créer une recherche de groupe</h3>
     <div style="font-size:10px;color:#8e9db8">Choisis simplement l’activité. Le groupe sera créé immédiatement et tu seras placé automatiquement dans un rôle compatible.</div>
-    <div class="activity-choice-grid">${activities.map(a=>`<button type="button" class="activity-choice ${searchActivityType(a)}" style="border-color:${activityColor(a)}55" data-create-search-activity="${esc(a)}"><b style="color:${activityColor(a)}">${esc(a)}</b><span>${activityTypeLabel(a)}</span></button>`).join('')}</div>
+    <div class="activity-choice-grid">${activities.map(a=>`<button type="button" class="activity-choice ${window.MCM_ACTIVITY_TYPE(a)}" style="border-color:${activityColor(a)}55" data-create-search-activity="${esc(a)}"><b style="color:${activityColor(a)}">${esc(a)}</b><span>${activityTypeLabel(a)}</span></button>`).join('')}</div>
     <div class="search-create-note">Composition : 1 Tank · 3 DPS · 1 Heal. Gladiator peut être Tank ou DPS. Chanter peut être Heal ou DPS.</div>
     <div class="modal-actions"><button class="btn" id="cancelSearchCreate">Annuler</button></div>
   </div></div>`;
@@ -805,7 +920,7 @@ function openSearchGroupCreate(){
   document.querySelectorAll('[data-create-search-activity]').forEach(b=>b.onclick=()=>createSearchGroup(b.dataset.createSearchActivity));
 }
 async function createSearchGroup(activity){
-  if(!SEARCH_ACTIVITIES.includes(activity))return;
+  if(!window.MCM_SEARCH_ACTIVITIES.includes(activity))return;
   const me=myPlayer();
   if(!me||!me.classId)return showToast('Configure d’abord ta classe');
 
@@ -850,7 +965,7 @@ async function createSearchGroup(activity){
   const g={
     id:'sg_'+Date.now(),
     activity,
-    type:searchActivityType(activity),
+    type:window.MCM_ACTIVITY_TYPE(activity),
     sequence:max+1,
     createdAt:Date.now(),
     createdByPlayerId:me.id,
@@ -885,7 +1000,7 @@ function renderSearchGroups(){
         <button class="btn primary" id="createSearchBtn">${icon('plus','ui-icon')}Créer une recherche</button>
       </div>
     </div>
-    <div class="activity-color-legend">${SEARCH_ACTIVITIES.map(a=>`<span class="activity-color-chip" style="--ac:${activityColor(a)}"><i class="activity-color-dot"></i>${esc(a)}</span>`).join('')}</div>
+    <div class="activity-color-legend">${window.MCM_SEARCH_ACTIVITIES.map(a=>`<span class="activity-color-chip" style="--ac:${activityColor(a)}"><i class="activity-color-dot"></i>${esc(a)}</span>`).join('')}</div>
     <div class="search-grid">${groups.map(searchGroupCard).join('')||'<div class="panel" style="padding:22px;color:#8998b5">Aucune recherche active dans cette catégorie.</div>'}</div>`;
 }
 
@@ -1050,7 +1165,7 @@ function openSearchEventPlanner(groupId){
   const tomorrow=new Date(Date.now()+86400000).toISOString().slice(0,10);
   overlay.innerHTML=`<div class="modal-backdrop"><div class="modal">
     <h3>Publier sur Discord</h3>
-    <div class="form-row"><label>Activité</label><select id="sgEventActivity">${SEARCH_ACTIVITIES.map(a=>`<option value="${esc(a)}" ${a===g.activity?'selected':''}>${esc(a)}</option>`).join('')}</select></div>
+    <div class="form-row"><label>Activité</label><select id="sgEventActivity">${window.MCM_SEARCH_ACTIVITIES.map(a=>`<option value="${esc(a)}" ${a===g.activity?'selected':''}>${esc(a)}</option>`).join('')}</select></div>
     <div class="event-plan-grid">
       <div class="form-row"><label>Date</label><input id="sgEventDate" type="date" value="${tomorrow}"></div>
       <div class="form-row"><label>Heure</label><input id="sgEventTime" type="time" value="20:30"></div>
@@ -1074,7 +1189,7 @@ function openSearchEventPlanner(groupId){
       groupId:g.id,
       groupName:g.activity,
       activity,
-      type:searchActivityType(activity),
+      type:window.MCM_ACTIVITY_TYPE(activity),
       date,time,note,
       leaderId:g.leaderId||'',
       memberIds:members.map(p=>p.id),
@@ -1280,7 +1395,7 @@ function renderDashboard(){
     <div class="stats">
       <div class="metric blue"><div class="metric-icon">${icon('users','ui-icon')}</div><div><div class="metric-value">${total}</div><div class="metric-label">MEMBRES ACTIFS</div><div class="metric-note good">${assigned} profils complétés</div></div></div>
       <div class="metric violet"><div class="metric-icon">${icon('shield','ui-icon')}</div><div><div class="metric-value">${CLASSES.length}</div><div class="metric-label">CLASSES DISPONIBLES</div><div class="metric-note">Système Aion 2</div></div></div>
-      <div class="metric green"><div class="metric-icon">${icon('swords','ui-icon')}</div><div><div class="metric-value">${SEARCH_GROUPS.length}</div><div class="metric-label">RECHERCHES ACTIVES</div><div class="metric-note good">${SEARCH_GROUPS.filter(g=>searchActivityType(g.activity)==='pve').length} PvE · ${SEARCH_GROUPS.filter(g=>searchActivityType(g.activity)==='pvp').length} PvP · ${SEARCH_GROUPS.filter(g=>searchActivityType(g.activity)==='rvr').length} RVR</div></div></div>
+      <div class="metric green"><div class="metric-icon">${icon('swords','ui-icon')}</div><div><div class="metric-value">${SEARCH_GROUPS.length}</div><div class="metric-label">RECHERCHES ACTIVES</div><div class="metric-note good">${SEARCH_GROUPS.filter(g=>window.MCM_ACTIVITY_TYPE(g.activity)==='pve').length} PvE · ${SEARCH_GROUPS.filter(g=>window.MCM_ACTIVITY_TYPE(g.activity)==='pvp').length} PvP · ${SEARCH_GROUPS.filter(g=>window.MCM_ACTIVITY_TYPE(g.activity)==='rvr').length} RVR</div></div></div>
       <div class="metric gold"><div class="metric-icon">${icon('calendar','ui-icon')}</div><div><div class="metric-value">${upcoming.length}</div><div class="metric-label">ÉVÉNEMENTS À VENIR</div><div class="metric-note">Planifiés depuis les groupes</div></div></div>
     </div>
 
@@ -1375,5 +1490,6 @@ function bind(){
 
 }
 
+renderLoading(0,'Initialisation…');
 initAuth();
 </script></body></html>
