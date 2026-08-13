@@ -2121,7 +2121,6 @@ function renderDashboard(){
                   </div>
                   <div style="font-size:11px;color:var(--muted);">${totalFilled}/${totalSlots}${creator ? ` · ${t('groups.created_by')}: ${esc(creator.discordUsername || creator.pseudo)}` : ''}</div>
                   ${registeredPlayers.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">${registeredPlayers.map(p => { const pc = cls(p.classId); const rc = pc ? roleColor(pc.role) : 'var(--border)'; return `<div class="gm-mini-player-chip" style="border-color:${rc};">${avatarHtml(p, 18)}<span>${esc(p.discordUsername || p.pseudo)}</span></div>`; }).join('')}</div>` : ''}
-                  ${renderRsvpBlock(ev.rsvps, 'sanctuary', pairGroups[0].sanctuaryPairId)}
                 </div>
               </div>`;
               }).join('')}
@@ -2546,7 +2545,6 @@ function renderSanctuaryPair(pairGroups){
       </div>
     </div>
     ${creator ? `<div class="gm-group-creator">${t('groups.created_by')}: ${esc(creator.discordUsername || creator.pseudo)}</div>` : ''}
-    ${pairGroups[0].event ? renderRsvpBlock(pairGroups[0].event.rsvps, 'sanctuary', pairId) : ''}
     <div class="gm-sanctuary-pair-groups">
       ${pairGroups.map(g => renderSanctuarySubGroupCard(g)).join('')}
     </div>
