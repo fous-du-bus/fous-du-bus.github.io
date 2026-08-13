@@ -2179,7 +2179,7 @@ async function createSearchGroup(activity,expeditionDungeon='',sanctuaryDungeon=
 function renderSearchGroups(){
   const groups=SEARCH_GROUPS.map(normalizeSearchGroup).filter(g=>SEARCH_FILTER==='all'||g.type===SEARCH_FILTER);
   const title='Recherche de groupe';
-  const sub='Crée une recherche pour une activité, puis laisse les membres remplir les 5 rôles.';
+  const sub='Crée une recherche pour une activité, puis laisse les membres remplir les 5 rôles. ⚠️ Si la publication sur Discord échoue, mets ce site en liste blanche sur ton bloqueur de publicités (uBlock, Brave Shields, etc.).';
   return `${hero(title.toUpperCase(),sub)}
     <div class="search-toolbar">
       <div><h2>${title}</h2><p>${sub}</p></div>
@@ -2665,7 +2665,7 @@ function fixedGroupCard(g){
 }
 function renderFixedGroups(){
   const groups=FIXED_GROUPS.map(normalizeFixedGroup);
-  return `${hero('GROUPES STATIC','Groupes permanents de 5 : 1 Tank · 3 DPS · 1 Heal.')}
+  return `${hero('GROUPES STATIC','Groupes permanents de 5 : 1 Tank · 3 DPS · 1 Heal. ⚠️ Si la publication sur Discord échoue, mets ce site en liste blanche sur ton bloqueur de publicités (uBlock, Brave Shields, etc.).')}
     <div class="fixed-toolbar">
       <div><h2>Groupes STATIC</h2><p>Chaque membre peut créer un groupe puis laisser les autres s’inscrire.</p></div>
       <button class="btn primary" id="addFixedBtn">${icon('plus','ui-icon')}Créer un groupe</button>
