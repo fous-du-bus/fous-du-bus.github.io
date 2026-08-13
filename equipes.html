@@ -126,6 +126,31 @@ html, body { margin: 0; padding: 0; }
 .gm-activity-row { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--border); }
 .gm-activity-row:last-child { border-bottom: none; }
 .gm-activity-icon { width: 30px; height: 30px; border-radius: 9px; background: var(--bg-2); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.gm-dash-3col { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 20px; align-items: stretch; }
+@media (max-width: 1100px) { .gm-dash-3col { grid-template-columns: 1fr; } }
+.gm-dash-col-activity, .gm-dash-col-members, .gm-dash-col-events { display: flex; flex-direction: column; }
+.gm-donut-wrap { display: flex; align-items: center; gap: 20px; }
+.gm-donut { width: 110px; height: 110px; border-radius: 50%; flex-shrink: 0; position: relative; }
+.gm-donut-hole { position: absolute; inset: 16px; border-radius: 50%; background: var(--panel-solid); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.gm-donut-total { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: var(--text); }
+.gm-donut-total-label { font-size: 8.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.gm-donut-legend { display: flex; flex-direction: column; gap: 8px; }
+.gm-donut-legend-row { font-size: 12.5px; color: var(--text); display: flex; align-items: center; gap: 7px; }
+.gm-donut-legend-row strong { margin-left: auto; font-family: 'JetBrains Mono'; }
+.gm-donut-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.gm-upcoming-row { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--border); }
+.gm-upcoming-row:last-child { border-bottom: none; }
+.gm-upcoming-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.gm-upcoming-date { text-align: center; flex-shrink: 0; line-height: 1.1; }
+.gm-upcoming-date-wd { font-size: 9px; color: var(--muted-2); font-weight: 700; letter-spacing: 0.03em; }
+.gm-upcoming-date-day { font-family: 'JetBrains Mono'; font-size: 16px; font-weight: 700; color: var(--text); }
+.gm-upcoming-date-mo { font-size: 9px; color: var(--muted-2); }
+.gm-tonight-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+.gm-tonight-card { background: var(--panel-solid); border: 1px solid var(--border); border-radius: 14px; padding: 16px; transition: border-color .2s ease, transform .2s ease; }
+.gm-tonight-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+.gm-avatar-stack { display: flex; }
+.gm-avatar-stack img, .gm-avatar-stack .gm-avatar-fallback { margin-left: -10px; border: 2px solid var(--panel-solid); }
+.gm-avatar-stack > *:first-child { margin-left: 0; }
 .gm-dash-row { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; margin-bottom: 16px; }
 @media (max-width: 900px) { .gm-dash-row { grid-template-columns: 1fr; } }
 .gm-bar-row { display: flex; align-items: center; gap: 10px; margin: 9px 0; font-size: 12.5px; }
@@ -525,6 +550,10 @@ const I18N = {
     'dash.stat.pvp_groups': 'Groupes PvP', 'dash.stat.new_players': 'Nouveaux joueurs',
     'dash.stat.classes': 'Classes disponibles', 'dash.stat.groups_created': 'Groupes créés', 'dash.stat.upcoming_events': 'Événements à venir',
     'dash.recent_activity': 'Activité récente', 'dash.no_activity': 'Aucune activité récente.',
+    'dash.members_overview': 'Aperçu des membres',
+    'dash.view_full_calendar': 'Voir le calendrier complet',
+    'dash.tonight_groups': 'Groupes ce soir',
+    'dash.no_tonight_groups': "Aucun groupe prévu aujourd'hui.",
     'time.now': "à l'instant", 'time.min_ago': 'il y a {n} min', 'time.hour_ago': 'il y a {n} h', 'time.day_ago': 'il y a {n} j',
     'dash.class_breakdown': 'Répartition par classe', 'dash.availability': 'Disponibilité',
     'players.empty_title': 'Aucun joueur pour le moment.',
@@ -712,6 +741,10 @@ const I18N = {
     'dash.stat.pvp_groups': 'PvP groups', 'dash.stat.new_players': 'New players',
     'dash.stat.classes': 'Available classes', 'dash.stat.groups_created': 'Groups created', 'dash.stat.upcoming_events': 'Upcoming events',
     'dash.recent_activity': 'Recent activity', 'dash.no_activity': 'No recent activity.',
+    'dash.members_overview': 'Members overview',
+    'dash.view_full_calendar': 'View full calendar',
+    'dash.tonight_groups': 'Groups tonight',
+    'dash.no_tonight_groups': 'No group scheduled today.',
     'time.now': 'just now', 'time.min_ago': '{n} min ago', 'time.hour_ago': '{n}h ago', 'time.day_ago': '{n}d ago',
     'dash.class_breakdown': 'Class breakdown', 'dash.availability': 'Availability',
     'players.empty_title': 'No players yet.',
@@ -2030,15 +2063,11 @@ function renderTabContent(){
 /* ---- Dashboard ---- */
 function renderDashboard(){
   const totalPlayers = PLAYERS.length;
-  const pveCount = PLAYERS.filter(p => p.pve).length;
-  const pvpCount = PLAYERS.filter(p => p.pvp).length;
   const newCount = PLAYERS.filter(p => p.isNewPlayer).length;
-  const pveGroups = GROUPS.filter(g => g.type === 'pve').length;
-  const pvpGroups = GROUPS.filter(g => g.type === 'pvp').length;
 
   const roleCounts = { Tank: 0, DPS: 0, Heal: 0, Flex: 0 };
   PLAYERS.forEach(p => { const c = cls(p.classId); if (c && roleCounts[c.role] !== undefined) roleCounts[c.role]++; });
-  const maxRole = Math.max(1, ...Object.values(roleCounts));
+  const roleTotal = Math.max(1, Object.values(roleCounts).reduce((a,b) => a+b, 0));
 
   const classCounts = {};
   CLASSES.forEach(c => classCounts[c.id] = 0);
@@ -2048,61 +2077,146 @@ function renderDashboard(){
   const now = Date.now();
   const upcoming = EVENTS.filter(e => e.date && (new Date(e.date + 'T' + (e.time || '00:00')).getTime() >= now))
     .sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
-  const nextEvent = upcoming[0] || null;
   const myGroupEvents = myUpcomingGroupEvents();
-
   const upcomingEventsCount = upcoming.length;
+
+  const todayStr = new Date().toISOString().slice(0,10);
+  const tonightGroups = [];
+  const seenPairIds = new Set();
+  GROUPS.forEach(g => {
+    if (!g.event || g.event.date !== todayStr) return;
+    if (g.type === 'sanctuary') {
+      if (seenPairIds.has(g.sanctuaryPairId)) return;
+      seenPairIds.add(g.sanctuaryPairId);
+      const pairGroups = GROUPS.filter(x => x.sanctuaryPairId === g.sanctuaryPairId);
+      const players = pairGroups.flatMap(x => x.slots.filter(s=>s.playerId).map(s=>player(s.playerId))).filter(Boolean);
+      const total = pairGroups.reduce((s,x)=>s+x.slots.length,0);
+      tonightGroups.push({ label: '🏛️ ' + t('nav.sanctuary_short'), title: g.event.title, time: g.event.time, players, total, color: groupTypeColor('sanctuary') });
+    } else {
+      const players = g.slots.filter(s=>s.playerId).map(s=>player(s.playerId)).filter(Boolean);
+      tonightGroups.push({ label: groupTypeLabel(g.type), title: g.event.title || g.name, time: g.event.time, players, total: g.slots.length, color: groupTypeColor(g.type) });
+    }
+  });
+
+  // Conic gradient for role donut
+  const roleOrder = ['Tank','DPS','Heal','Flex'];
+  let acc = 0;
+  const gradientStops = roleOrder.map(role => {
+    const pct = (roleCounts[role] / roleTotal) * 100;
+    const start = acc; acc += pct;
+    return `${roleColor(role)} ${start}% ${acc}%`;
+  }).join(', ');
 
   return `
     <div class="gm-stat-grid gm-stat-grid-v2">
       <div class="gm-panel gm-stat-card-v2">
-        <div class="gm-stat-icon" style="background:rgba(139,107,255,0.14);color:var(--violet);">👥</div>
+        <div class="gm-stat-icon" style="background:rgba(118,87,255,0.14);color:var(--violet);">👥</div>
         <div><div class="gm-stat-value">${totalPlayers}</div><div class="gm-stat-label">${t('dash.stat.players')}</div></div>
       </div>
       <div class="gm-stat-card-v2 gm-panel">
-        <div class="gm-stat-icon" style="background:rgba(69,193,255,0.14);color:var(--blue);">🛡️</div>
+        <div class="gm-stat-icon" style="background:rgba(22,139,255,0.14);color:var(--blue);">🛡️</div>
         <div><div class="gm-stat-value">${CLASSES.length}</div><div class="gm-stat-label">${t('dash.stat.classes')}</div></div>
       </div>
       <div class="gm-stat-card-v2 gm-panel">
-        <div class="gm-stat-icon" style="background:rgba(53,210,154,0.14);color:var(--success);">⚔️</div>
+        <div class="gm-stat-icon" style="background:rgba(0,216,156,0.14);color:var(--success);">⚔️</div>
         <div><div class="gm-stat-value">${GROUPS.length}</div><div class="gm-stat-label">${t('dash.stat.groups_created')}</div></div>
       </div>
       <div class="gm-stat-card-v2 gm-panel">
-        <div class="gm-stat-icon" style="background:rgba(255,184,79,0.14);color:var(--new);">🗓️</div>
+        <div class="gm-stat-icon" style="background:rgba(244,184,74,0.14);color:var(--new);">🗓️</div>
         <div><div class="gm-stat-value">${upcomingEventsCount}</div><div class="gm-stat-label">${t('dash.stat.upcoming_events')}</div></div>
       </div>
     </div>
-    <div class="gm-panel" style="margin-bottom:24px;">
-      <h3 style="font-size:13px;margin:0 0 12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">📡 ${t('dash.recent_activity')}</h3>
-      ${!AUDIT_LOG.length ? `<div style="color:var(--muted);font-size:13px;">${t('dash.no_activity')}</div>` : `
-      <div style="display:flex;flex-direction:column;gap:2px;max-height:210px;overflow-y:auto;">
-        ${AUDIT_LOG.slice(0, 8).map(entry => {
-          const icons = { player_deleted: '🗑️', class_created: '➕', class_updated: '✏️', class_deleted: '🗑️', group_reset: '♻️', group_deleted: '🗑️', event_created: '🗓️', event_updated: '✏️', event_deleted: '🗑️' };
-          const icon = icons[entry.actionKey] || '📌';
-          const timeAgo = formatTimeAgo(entry.at);
-          return `<div class="gm-activity-row">
-            <span class="gm-activity-icon">${icon}</span>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:13px;">${esc(t('audit.' + entry.actionKey) || entry.actionKey)} <strong>${esc(entry.targetLabel)}</strong></div>
-              <div style="font-size:11px;color:var(--muted-2);">${esc(entry.actor)}</div>
+
+    <div class="gm-dash-3col">
+      <div class="gm-panel gm-dash-col-activity">
+        <h3 style="font-size:13px;margin:0 0 12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">📡 ${t('dash.recent_activity')}</h3>
+        ${!AUDIT_LOG.length ? `<div style="color:var(--muted);font-size:13px;">${t('dash.no_activity')}</div>` : `
+        <div style="display:flex;flex-direction:column;gap:2px;max-height:300px;overflow-y:auto;">
+          ${AUDIT_LOG.slice(0, 10).map(entry => {
+            const icons = { player_deleted: '🗑️', class_created: '➕', class_updated: '✏️', class_deleted: '🗑️', group_reset: '♻️', group_deleted: '🗑️', event_created: '🗓️', event_updated: '✏️', event_deleted: '🗑️' };
+            const icon = icons[entry.actionKey] || '📌';
+            return `<div class="gm-activity-row">
+              <span class="gm-activity-icon">${icon}</span>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;">${esc(t('audit.' + entry.actionKey) || entry.actionKey)} <strong>${esc(entry.targetLabel)}</strong></div>
+                <div style="font-size:11px;color:var(--muted-2);">${esc(entry.actor)}</div>
+              </div>
+              <span style="font-size:11px;color:var(--muted-2);white-space:nowrap;">${formatTimeAgo(entry.at)}</span>
+            </div>`;
+          }).join('')}
+        </div>`}
+      </div>
+
+      <div class="gm-panel gm-dash-col-members">
+        <h3 style="font-size:13px;margin:0 0 14px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">👤 ${t('dash.members_overview')}</h3>
+        <div class="gm-donut-wrap">
+          <div class="gm-donut" style="background:conic-gradient(${gradientStops});">
+            <div class="gm-donut-hole"><div class="gm-donut-total">${totalPlayers}</div><div class="gm-donut-total-label">${t('dash.stat.players')}</div></div>
+          </div>
+          <div class="gm-donut-legend">
+            ${roleOrder.map(role => `<div class="gm-donut-legend-row"><span class="gm-donut-dot" style="background:${roleColor(role)};"></span>${role} <strong>${roleCounts[role]}</strong></div>`).join('')}
+          </div>
+        </div>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">${t('dash.class_breakdown')}</div>
+          ${CLASSES.map(c => `
+            <div class="gm-bar-row" style="gap:8px;margin-bottom:7px;">
+              <div class="gm-bar-label" style="display:flex;align-items:center;gap:6px;font-size:12px;width:90px;"><img src="${c.icon}" style="width:14px;height:14px;border-radius:3px;" alt="" />${c.name}</div>
+              <div class="gm-bar-track" style="height:8px;"><div class="gm-bar-fill" style="width:${(classCounts[c.id]/maxClass)*100}%;background:${c.color};"></div></div>
+              <div class="gm-bar-value" style="font-size:12px;">${classCounts[c.id]}</div>
             </div>
-            <span style="font-size:11px;color:var(--muted-2);white-space:nowrap;">${timeAgo}</span>
-          </div>`;
-        }).join('')}
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="gm-panel gm-dash-col-events">
+        <h3 style="font-size:13px;margin:0 0 12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">🗓️ ${t('dashboard.next_event')}</h3>
+        ${!upcoming.length ? `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_upcoming_event')}</div>` : `
+        <div style="display:flex;flex-direction:column;gap:4px;max-height:280px;overflow-y:auto;">
+          ${upcoming.slice(0, 6).map(ev => {
+            const d = new Date(ev.date + 'T' + (ev.time || '00:00'));
+            const typeColor = { pve: 'var(--tank)', pvp: 'var(--dps)', other: 'var(--violet)' }[ev.type] || 'var(--violet)';
+            const weekday = d.toLocaleDateString(LANG==='en'?'en-GB':'fr-FR', { weekday: 'short' }).toUpperCase();
+            const dayNum = d.getDate();
+            const monthLabel = d.toLocaleDateString(LANG==='en'?'en-GB':'fr-FR', { month: 'short' });
+            return `<div class="gm-upcoming-row">
+              <div class="gm-upcoming-dot" style="background:${typeColor};"></div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(ev.title)}</div>
+                <div style="font-size:11px;color:var(--muted);">${esc(eventTypeLabel(ev.type))} · ${esc(ev.time||'')}</div>
+              </div>
+              <div class="gm-upcoming-date">
+                <div class="gm-upcoming-date-wd">${esc(weekday)}.</div>
+                <div class="gm-upcoming-date-day">${dayNum}</div>
+                <div class="gm-upcoming-date-mo">${esc(monthLabel)}</div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`}
+        <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="nav" data-tab="events" style="width:100%;justify-content:center;margin-top:12px;">${t('dash.view_full_calendar')}</button>
+      </div>
+    </div>
+
+    <div class="gm-panel" style="margin-top:24px;">
+      <h3 style="font-size:13px;margin:0 0 14px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">⚔️ ${t('dash.tonight_groups')}</h3>
+      ${!tonightGroups.length ? `<div style="color:var(--muted);font-size:13px;">${t('dash.no_tonight_groups')}</div>` : `
+      <div class="gm-tonight-row">
+        ${tonightGroups.map(g => `
+          <div class="gm-tonight-card">
+            <span class="gm-class-pill" style="border-color:${g.color}66;background:${g.color}1c;color:${g.color};margin-bottom:10px;">${esc(g.label)}</span>
+            <div style="font-family:'Cinzel';font-weight:600;font-size:15px;margin-bottom:4px;">${esc(g.title)}</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">🕐 ${esc(g.time||'')}</div>
+            <div class="gm-avatar-stack">
+              ${g.players.slice(0,6).map(p => avatarHtml(p, 28)).join('')}
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:10px;">👥 ${g.players.length} / ${g.total}</div>
+          </div>
+        `).join('')}
       </div>`}
     </div>
-    <div style="display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap;">
+
+    <div style="display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap;margin-top:24px;">
       <div style="flex:1;min-width:280px;max-width:50%;display:flex;flex-direction:column;gap:24px;">
-        <div class="gm-panel">
-          <h3 style="font-size:14px;margin:0 0 12px;">${t('dash.class_breakdown')}</h3>
-            ${CLASSES.map(c => `
-              <div class="gm-bar-row" style="gap:8px;margin-bottom:8px;">
-                <div class="gm-bar-label" style="display:flex;align-items:center;gap:6px;font-size:13px;width:100px;"><img src="${c.icon}" style="width:16px;height:16px;border-radius:3px;" alt="" />${c.name}</div>
-                <div class="gm-bar-track" style="height:10px;"><div class="gm-bar-fill" style="width:${(classCounts[c.id]/maxClass)*100}%;background:${c.color};"></div></div>
-                <div class="gm-bar-value" style="font-size:13px;">${classCounts[c.id]}</div>
-              </div>
-            `).join('')}
-        </div>
         ${(() => {
           const openGroups = GROUPS.filter(g => g.open && g.event && g.type !== 'sanctuary');
           return `
@@ -2147,12 +2261,6 @@ function renderDashboard(){
         </div>
       </div>
       <div style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:24px;">
-        <div class="gm-panel gm-dashboard-event-card" style="height:270px;display:flex;flex-direction:column;">
-          <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.next_event')}</h3>
-          <div style="max-height:230px;overflow-y:auto;padding-right:4px;">
-            ${nextEvent ? renderEventCard(nextEvent) : `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_upcoming_event')}</div>`}
-          </div>
-        </div>
         <div class="gm-panel gm-dashboard-event-card" style="height:530px;display:flex;flex-direction:column;">
           <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">${t('dashboard.my_group_events')}</h3>
           ${!myGroupEvents.length ? `<div style="color:var(--muted);font-size:13px;">${t('dashboard.no_group_events')}</div>` : `
