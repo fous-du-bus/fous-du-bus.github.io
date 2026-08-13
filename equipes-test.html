@@ -1291,6 +1291,19 @@ function renderDashboard(){
     </div>
   </div>`;
 }
+
+function render(){
+  let content='';
+  if(ACTIVE==='players') content=renderPlayers();
+  else if(ACTIVE==='classes') content=renderClasses();
+  else if(ACTIVE==='fixed-all'||ACTIVE==='fixed-pve'||ACTIVE==='fixed-pvp') content=renderFixedGroups();
+  else if(ACTIVE==='search-groups') content=renderSearchGroups();
+  else content=renderDashboard();
+
+  app.innerHTML=`<div class="shell">${sidebar()}<main class="main">${content}</main></div>`;
+  bind();
+}
+
 function bind(){
   document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{ACTIVE=b.dataset.tab;render()}));
   document.getElementById('previewBtn')?.addEventListener('click',()=>{PREVIEW_AS_MEMBER=!PREVIEW_AS_MEMBER;render()});
