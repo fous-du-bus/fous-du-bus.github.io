@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- MCM BUILD 2026-08-13 V2-DASH-SANCTUARY-SYNC-EVENTS -->
+<!-- MCM BUILD 2026-08-13 V2-SANCTUARY-CHOIX-A-B -->
 <title>MCM — MMO Connect Manager</title>
 <link rel="apple-touch-icon" href="./icon-192.png">
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -487,6 +487,21 @@ body{background:
   flex-wrap:wrap;
   max-width:260px;
 }
+
+/* ===== SANCTUARY DASHBOARD : CHOIX GROUPE A / B ===== */
+.sanctuary-dashboard-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-top:9px;
+}
+.sanctuary-dashboard-actions .dashboard-join-btn{
+  min-width:0;
+}
+@media(max-width:520px){
+  .sanctuary-dashboard-actions{grid-template-columns:1fr}
+}
+
 </style>
 </head>
 <body><div id="app"></div><div id="overlay"></div><div id="toast"></div>
@@ -1572,24 +1587,36 @@ function dashboardSearchTile(item){
 
     const actionForPair=()=>{
       if(!me)return '';
+
       const inA=a&&playerInSearchGroup(a,me.id);
       const inB=b&&playerInSearchGroup(b,me.id);
 
-      if(inA)return `<button class="dashboard-join-btn leave" data-dash-leave-search="${a.id}">Se retirer du groupe A</button>`;
-      if(inB)return `<button class="dashboard-join-btn leave" data-dash-leave-search="${b.id}">Se retirer du groupe B</button>`;
+      if(inA){
+        return `<div class="sanctuary-dashboard-actions">
+          <button class="dashboard-join-btn leave" data-dash-leave-search="${a.id}">Se retirer A</button>
+          <button class="dashboard-join-btn" disabled>Déjà inscrit dans A</button>
+        </div>`;
+      }
+
+      if(inB){
+        return `<div class="sanctuary-dashboard-actions">
+          <button class="dashboard-join-btn" disabled>Déjà inscrit dans B</button>
+          <button class="dashboard-join-btn leave" data-dash-leave-search="${b.id}">Se retirer B</button>
+        </div>`;
+      }
 
       const slotA=a?dashboardPreferredSlot(a,me,false):'';
       const slotB=b?dashboardPreferredSlot(b,me,false):'';
 
-      if(slotA){
-        const def=fixedSlotDefs().find(d=>d.key===slotA);
-        return `<button class="dashboard-join-btn" data-dash-join-search="${a.id}" data-dash-slot="${slotA}">S’inscrire A · ${esc(def?.label||'Slot')}</button>`;
-      }
-      if(slotB){
-        const def=fixedSlotDefs().find(d=>d.key===slotB);
-        return `<button class="dashboard-join-btn" data-dash-join-search="${b.id}" data-dash-slot="${slotB}">S’inscrire B · ${esc(def?.label||'Slot')}</button>`;
-      }
-      return `<button class="dashboard-join-btn" disabled>Complet / incompatible</button>`;
+      const btnA=slotA
+        ? `<button class="dashboard-join-btn" data-dash-join-search="${a.id}" data-dash-slot="${slotA}">S’inscrire Groupe A</button>`
+        : `<button class="dashboard-join-btn" disabled>Groupe A indisponible</button>`;
+
+      const btnB=slotB
+        ? `<button class="dashboard-join-btn" data-dash-join-search="${b.id}" data-dash-slot="${slotB}">S’inscrire Groupe B</button>`
+        : `<button class="dashboard-join-btn" disabled>Groupe B indisponible</button>`;
+
+      return `<div class="sanctuary-dashboard-actions">${btnA}${btnB}</div>`;
     };
 
     return `<div class="group-tile sanctuary-dashboard-tile">
@@ -1598,7 +1625,7 @@ function dashboardSearchTile(item){
       <div class="group-time">Groupe A ${ma.length}/5 · Groupe B ${mb.length}/5</div>
       <div class="avatar-stack">${[...ma,...mb].slice(0,10).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div>
       <div class="group-count">${ma.length+mb.length}/10 joueurs</div>
-      <div class="dashboard-group-actions">${actionForPair()}</div>
+      ${actionForPair()}
     </div>`;
   }
 
