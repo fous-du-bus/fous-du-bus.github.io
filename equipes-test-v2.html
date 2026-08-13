@@ -2568,7 +2568,6 @@ function renderDashboard(){
       <section class="card card-pad">
         <h3 class="card-title">${icon('dashboard','ui-icon')}ACTIVITÉ RÉCENTE</h3>
         <div class="activity-list">${recent.length?recent.map((p,i)=>`<div class="activity-row"><div class="act-ico">+</div><div><div class="act-main"><strong>${esc(playerName(p))}</strong> ${p.classId?'a configuré son personnage':'a rejoint MCM'}</div><div class="act-sub">${p.classId?esc(cls(p.classId)?.name||'Classe'):'Profil Discord'}</div></div><div class="act-time">${i?'Récent':'Maintenant'}</div></div>`).join(''):'<div class="act-sub">Aucune activité récente.</div>'}</div>
-        <div class="card-footer" data-tab="players">Voir toute l’activité ›</div>
       </section>
 
       <section class="card members-card">
@@ -2576,11 +2575,10 @@ function renderDashboard(){
         <div class="members-top"><div class="donut" style="--a:${activePct}%;--b:${Math.min(100,activePct+newPct)}%"><div class="donut-inner"><div><b>${total}</b><span>Total</span></div></div></div><div class="legend"><div class="legend-row"><span class="dot" style="background:#00d99f"></span><span>Classe définie</span><b>${assigned}</b></div><div class="legend-row"><span class="dot" style="background:#f0a641"></span><span>Nouveaux</span><b>${newc}</b></div><div class="legend-row"><span class="dot" style="background:#7657ff"></span><span>À compléter</span><b>${Math.max(0,total-assigned)}</b></div></div></div>
         <div class="split-title">RÉPARTITION DES CLASSES</div>
         <div class="dashboard-class-grid">${CLASSES.map(c=>{const count=PLAYERS.filter(p=>p.classId===c.id).length;return `<button class="dashboard-class-item" style="--class-color:${c.color||'#168bff'}" data-dashboard-class="${esc(c.id)}" title="Voir les joueurs ${esc(c.name)}"><img src="${c.icon}" alt="${esc(c.name)}"><div class="dashboard-class-count">${count}</div><div class="dashboard-class-name">${esc(c.name)}</div></button>`}).join('')}</div>
-        <div class="card-footer" data-tab="players">Voir tous les joueurs ›</div>
       </section>
 
       <section class="card events-card">
-        <h3 class="card-title">${icon('calendar','ui-icon')}ÉVÉNEMENTS À VENIR <span style="margin-left:auto;color:#56a9ff;font-family:Inter;font-size:10px">Voir tout</span></h3>
+        <h3 class="card-title">${icon('calendar','ui-icon')}ÉVÉNEMENTS À VENIR</h3>
         <div class="events-scroll">${upcoming.map(e=>`<div class="event-row">
           <div class="event-icon" style="border-color:${activityColor(e.activity)}66;background:${activityColor(e.activity)}18;color:${activityColor(e.activity)}">${e.type==='rvr'?'⚑':e.type==='pvp'?'⚔':'✦'}</div>
           <div>
@@ -2590,8 +2588,6 @@ function renderDashboard(){
           </div>
           <div class="event-date">${new Date(e.date+'T00:00').toLocaleDateString('fr-FR',{weekday:'short'}).replace('.','').toUpperCase()}<b>${e.date.slice(-2)}</b>${new Date(e.date+'T00:00').toLocaleDateString('fr-FR',{month:'short'})}</div>
         </div>`).join('')||'<div class="act-sub">Aucun événement planifié.</div>'}</div>
-        <div class="event-role-legend"><span><i class="event-role-dot tank"></i>Tank</span><span><i class="event-role-dot dps"></i>DPS</span><span><i class="event-role-dot heal"></i>Heal</span></div>
-        <div class="card-footer">Événements planifiés depuis MCM</div>
       </section>
 
       <section class="card groups-card">
