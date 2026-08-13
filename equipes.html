@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gestion des groupes - Fous du bus</title>
+<title>MCM - MMO Connect Manager</title>
 <link rel="apple-touch-icon" href="./icon-192.png">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
@@ -16,11 +16,11 @@ html, body { margin: 0; padding: 0; }
 *::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #a08bff, #6bd1ff); }
 *::-webkit-scrollbar-corner { background: transparent; }
 .gm-root {
-  --bg: #090c16; --bg-2: #0d1220; --panel: rgba(24, 30, 51, 0.62); --panel-solid: #141a2e;
-  --border: rgba(139, 130, 255, 0.16); --border-strong: rgba(139, 130, 255, 0.32);
-  --violet: #8b6bff; --blue: #45c1ff; --text: #e7e9f7; --muted: #8790ac; --muted-2: #5c6482;
-  --tank: #4f9dff; --healer: #35d29a; --dps: #ff6b7a; --support: #f6c552;
-  --danger: #ef4d5f; --success: #35d29a; --new: #ffb84f;
+  --bg: #030817; --bg-2: #071226; --panel: rgba(9, 22, 43, 0.82); --panel-solid: #09162b;
+  --border: rgba(70, 130, 255, 0.20); --border-strong: rgba(70, 130, 255, 0.42);
+  --violet: #7657ff; --blue: #168bff; --cyan: #00d9ff; --text: #f5f7ff; --muted: #94a3c4; --muted-2: #5c6482;
+  --tank: #168bff; --healer: #00d89c; --dps: #ff4d67; --support: #f4b84a;
+  --danger: #ff4d67; --success: #00d89c; --new: #f4b84a;
   font-family: 'Inter', sans-serif;
   background: radial-gradient(1200px 800px at 15% -10%, rgba(139,107,255,0.14), transparent 60%),
               radial-gradient(1000px 700px at 100% 10%, rgba(69,193,255,0.08), transparent 55%), var(--bg);
@@ -600,7 +600,7 @@ const I18N = {
     'gate.access_title': 'Accès réservé',
     'gate.access_msg': 'Connecte-toi avec Discord pour accéder à la Gestion des groupes (réservé aux membres avec le rôle Aion 2).',
     'gate.login_discord': 'Se connecter avec Discord',
-    'page.title': 'Gestion des groupes - Fous du bus',
+    'page.title': 'MCM - MMO Connect Manager',
   },
   en: {
     'nav.dashboard': 'Dashboard', 'nav.players': 'Players', 'nav.classes': 'Classes',
@@ -787,7 +787,7 @@ const I18N = {
     'gate.access_title': 'Restricted access',
     'gate.access_msg': 'Sign in with Discord to access Group Management (restricted to members with the Aion 2 role).',
     'gate.login_discord': 'Log in with Discord',
-    'page.title': 'Group Management - Fous du bus',
+    'page.title': 'MCM - MMO Connect Manager',
   },
 };
 function t(key){ return (I18N[LANG] && I18N[LANG][key]) || I18N.fr[key] || key; }
@@ -1854,7 +1854,7 @@ function renderShell(){
       <div class="gm-bg-stars-big"></div>
     </div>
     <div class="gm-mobile-topbar">
-      <div class="gm-brand"><img class="gm-brand-crest" src="./logo-lfdb.webp" alt="" /><div class="gm-brand-text">Fous du Bus</div></div>
+      <div class="gm-brand"><img class="gm-brand-crest" src="./mcm-logo.png" alt="" /><div class="gm-brand-text">MCM<span>MMO CONNECT MANAGER</span></div></div>
       <button class="gm-btn gm-btn-ghost gm-btn-sm" data-action="toggle-mobile-nav">${t('mobile.menu')}</button>
     </div>
     <div class="gm-shell">
@@ -1912,8 +1912,8 @@ function renderSidebar(){
   return `
     <div class="gm-sidebar ${MOBILE_NAV_OPEN ? 'open' : ''}">
       <div class="gm-brand">
-        <img class="gm-brand-crest" src="./logo-lfdb.webp" alt="" />
-        <div class="gm-brand-text">Fous du Bus<span>${t('brand.subtitle')}</span></div>
+        <img class="gm-brand-crest" src="./mcm-logo.png" alt="" />
+        <div class="gm-brand-text">MCM<span>MMO CONNECT MANAGER</span></div>
       </div>
       <div class="gm-global-search-wrap">
         <input type="text" id="global-search-input" data-action="global-search" placeholder="${t('search.global_placeholder')}" autocomplete="off" />
@@ -3181,7 +3181,7 @@ function renderGate(){
   } else {
     body = `
       <div style="text-align:center;max-width:360px;">
-        <img src="./logo-lfdb.webp" alt="" style="width:72px;height:72px;object-fit:contain;margin:0 auto 16px;display:block;" />
+        <img src="./mcm-logo.png" alt="" style="width:72px;height:72px;object-fit:contain;margin:0 auto 16px;display:block;" />
         <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;">${t('gate.access_title')}</div>
         <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px;">${t('gate.access_msg')}</div>
         <button class="gm-btn gm-btn-primary" style="background:#5865F2;border-color:#5865F2;color:#fff;" data-gate-action="login">${DISCORD_LOGO} ${t('gate.login_discord')}</button>
@@ -3298,7 +3298,7 @@ function checkEventReminders(){
     const diff = eventTime - now;
     if (diff > 0 && diff <= windowMs) {
       try {
-        new Notification(t('notif.reminder_title'), { body: t('notif.reminder_body').replace('{title}', item.title), icon: './logo-lfdb.webp' });
+        new Notification(t('notif.reminder_title'), { body: t('notif.reminder_body').replace('{title}', item.title), icon: './mcm-logo.png' });
       } catch(e){}
       NOTIFIED_EVENTS.add(item.id);
       changed = true;
