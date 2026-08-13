@@ -1417,8 +1417,7 @@ async function initAuth(){
     renderConnectionDiagnostic(diag);
   }
 }
-async function loadData(){const snap=await docRef.get();if(snap.exists){const d=snap.data();PLAYERS=Array.isArray(d.players)?d.players:[];FIXED_GROUPS=Array.isArray(d.fixedGroups)?d.fixedGroups:[];if(Array.isArray(d.classes)&&d.classes.length)CLASSES=d.classes}}
-function saveData(){return docRef.set({players:PLAYERS,classes:CLASSES,fixedGroups:FIXED_GROUPS},{merge:true})}
+
 function startPresenceTracking(){
   if(!discordUser||PRESENCE_UNSUB)return;
   const mine=presenceRef.doc(String(discordUser.id));
@@ -1492,7 +1491,7 @@ function renderDenied(info={}){
 }
 function sidebar(){const me=PLAYERS.find(p=>discordUser&&p.discordId===discordUser.id);const adminView=IS_ADMIN&&!PREVIEW_AS_MEMBER;return `<aside class="sidebar"><div class="brand"><img src="./mcm-logo.png" alt="MCM"><div class="brand-name">MMO Connect Manager</div></div><div class="profile"><div class="profile-row"><img src="${esc(me?.discordAvatar||discordAvatar(discordUser))}" alt=""><div><div class="profile-name">${esc(me?playerName(me):discordUser?.global_name||discordUser?.username||'Discord')} ${adminView?'<span class="profile-role">ADMIN</span>':''}</div><div class="profile-status">● En ligne</div></div></div></div><div class="nav-section">TABLEAU DE BORD</div><div class="nav"><button data-tab="dashboard" class="${ACTIVE==='dashboard'?'active':''}">${icon('dashboard')}Tableau de bord</button><button data-tab="players" class="${ACTIVE==='players'?'active':''}">${icon('users')}Joueurs</button><button data-tab="classes" class="${ACTIVE==='classes'?'active':''}">${icon('shield')}Classes</button></div><div class="nav-section">GROUPES</div><div class="nav"><button data-tab="search-groups" class="${ACTIVE==='search-groups'?'active':''}">${icon('swords')}Recherche de groupe</button><button data-tab="fixed-all" class="${ACTIVE==='fixed-all'?'active':''}">${icon('users')}Groupes fixes</button><button disabled>${icon('calendar')}Dailies</button></div><div class="nav-section">OUTILS</div><div class="nav"><button disabled>${icon('calendar')}Calendrier</button><button disabled>${icon('message')}Messagerie</button></div><div style="margin-top:auto">${IS_ADMIN?`<button class="btn ghost" style="width:100%;color:#20e4d6" id="previewBtn">${icon('eye','ui-icon')}${PREVIEW_AS_MEMBER?'Revenir en vue admin':'Aperçu membre'}</button>`:''}<button class="btn danger" style="width:100%;margin-top:8px" id="logoutBtn">${icon('logout','ui-icon')}Se déconnecter</button><div style="color:#64728d;font-size:9px;margin:20px 8px 0">© 2026 Aegrim - Tous droits réservés</div></div></aside>`}
 function hero(title='TABLEAU DE BORD',sub="Vue d’ensemble de la guilde et de l’activité",extraClass=''){const upcomingCount=typeof PLANNED_EVENTS==='undefined'?0:PLANNED_EVENTS.filter(e=>eventSourceStillExists(e)&&new Date(`${e.date}T${e.time||'00:00'}`).getTime()>=Date.now()).length;return `<section class="dashboard-hero${extraClass?' '+extraClass:''}"><div class="hero-content"><div class="hero-badge">${icon('shield','ui-icon')}</div><div class="hero-copy"><h2>${title}</h2>${sub?`<p>${sub}</p>`:''}</div></div><div class="hero-tools"><a class="hero-tool" href="https://discord.gg/BKyVEdTgP9" target="_blank" rel="noopener">Discord</a><button class="hero-tool notification-tool" id="notificationBtn" type="button" title="Notifications">${icon('bell','ui-icon')}${upcomingCount?`<span class="notification-badge">${Math.min(99,upcomingCount)}</span>`:''}</button><button class="hero-tool" id="languageBtn" type="button">${CURRENT_LANG.toUpperCase()}⌄</button></div></section>`}
-function renderDashboard(){const total=PLAYERS.length, assigned=PLAYERS.filter(p=>p.classId).length, newc=PLAYERS.filter(p=>p.isNewPlayer).length;const roleCounts={Tank:0,Heal:0,DPS:0,Flex:0};PLAYERS.forEach(p=>{const c=cls(p.classId);if(c&&roleCounts[c.role]!=null)roleCounts[c.role]++});const activePct=total?Math.round(assigned/total*100):0,newPct=total?Math.round(newc/total*100):0,otherPct=Math.max(0,100-activePct-newPct);const recent=PLAYERS.slice(-5).reverse();return `${hero(undefined,undefined,'dashboard-home-hero')}<div class="content-wrap"><div class="stats"><div class="metric blue"><div class="metric-icon">${icon('users','ui-icon')}</div><div><div class="metric-value">${total}</div><div class="metric-label">MEMBRES ACTIFS</div><div class="metric-note good">${assigned} profils complétés</div></div></div><div class="metric violet"><div class="metric-icon">${icon('shield','ui-icon')}</div><div><div class="metric-value">${CLASSES.length}</div><div class="metric-label">CLASSES DISPONIBLES</div><div class="metric-note">Système Aion 2</div></div></div><div class="metric green"><div class="metric-icon">${icon('swords','ui-icon')}</div><div><div class="metric-value">${FIXED_GROUPS.length}</div><div class="metric-label">GROUPES CRÉÉS</div><div class="metric-note good">${FIXED_GROUPS.filter(g=>g.type==='pve').length} PvE · ${FIXED_GROUPS.filter(g=>g.type==='pvp').length} PvP</div></div></div><div class="metric gold"><div class="metric-icon">${icon('calendar','ui-icon')}</div><div><div class="metric-value">—</div><div class="metric-label">ÉVÉNEMENTS À VENIR</div><div class="metric-note">Module à venir</div></div></div></div><div class="main-grid"><section class="card card-pad"><h3 class="card-title">${icon('dashboard','ui-icon')}ACTIVITÉ RÉCENTE</h3><div class="activity-list">${recent.length?recent.map((p,i)=>`<div class="activity-row"><div class="act-ico">+</div><div><div class="act-main"><strong>${esc(playerName(p))}</strong> ${p.classId?'a configuré son personnage':'a rejoint MCM'}</div><div class="act-sub">${p.classId?esc(cls(p.classId)?.name||'Classe'):'Profil Discord'}</div></div><div class="act-time">${i?'Récent':'Maintenant'}</div></div>`).join(''):'<div class="act-sub">Aucune activité récente.</div>'}</div><div class="card-footer" data-tab="players">Voir toute l’activité ›</div></section><section class="card members-card"><h3 class="card-title">${icon('users','ui-icon')}APERÇU DES MEMBRES</h3><div class="members-top"><div class="donut" style="--a:${activePct}%;--b:${Math.min(100,activePct+newPct)}%"><div class="donut-inner"><div><b>${total}</b><span>Total</span></div></div></div><div class="legend"><div class="legend-row"><span class="dot" style="background:#00d99f"></span><span>Classe définie</span><b>${assigned}</b></div><div class="legend-row"><span class="dot" style="background:#f0a641"></span><span>Nouveaux</span><b>${newc}</b></div><div class="legend-row"><span class="dot" style="background:#7657ff"></span><span>À compléter</span><b>${Math.max(0,total-assigned)}</b></div></div></div><div class="split-title">RÉPARTITION PAR RÔLE</div><div class="role-grid">${[['Tank','🛡'],['Heal','✚'],['DPS','➶'],['Flex','♟']].map(([r,s])=>`<div class="role-item"><div class="role-icon">${s}</div><div class="role-count">${roleCounts[r]||0}</div><div class="role-name">${r==='Heal'?'Soigneurs':r==='Flex'?'Supports':r+'s'}</div></div>`).join('')}</div><div class="card-footer" data-tab="players">Voir tous les joueurs ›</div></section><section class="card events-card"><h3 class="card-title">${icon('calendar','ui-icon')}ÉVÉNEMENTS À VENIR <span style="margin-left:auto;color:#56a9ff;font-family:Inter;font-size:10px">Voir tout</span></h3>${['Tiamat HM','Run Élysée','Arène 3v3','Kysis - Sœur','Siège de forteresse'].map((n,i)=>`<div class="event-row"><div class="event-icon">${['☯','⌂','⚔','♙','♜'][i]}</div><div><div class="event-title">${n}</div><div class="event-sub">Module événement à venir</div></div><div class="event-date">${['DIM.','LUN.','MAR.','MER.','SAM.'][i]}<b>${17+i}</b>Août</div></div>`).join('')}<div class="card-footer">Voir le calendrier complet ›</div></section><section class="card groups-card"><h3 class="card-title">${icon('swords','ui-icon')}GROUPES CE SOIR</h3><div class="groups-scroll"><div class="groups-grid">${FIXED_GROUPS.map(g=>{normalizeFixedGroup(g);const members=groupMembers(g);return `<div class="group-tile"><span class="tag">${g.type==='pvp'?'PVP FIXE':'PVE FIXE'}</span><div class="group-name">${esc(g.name)}</div><div class="group-time">${esc(g.schedule||'Horaire à définir')}</div><div class="avatar-stack">${members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div><div class="group-count">${members.length}/5 joueurs</div></div>`}).join('')||'<div class="group-count">Aucun groupe fixe créé.</div>'}</div><div class="view-all">Voir tous les groupes ›</div></section></div></div>`}
+
 function playerCard(p){const c=cls(p.classId),em=CLASS_EMBLEMS[p.classId],adminView=IS_ADMIN&&!PREVIEW_AS_MEMBER,isOwn=!!(discordUser&&p.discordId===discordUser.id),canEdit=adminView||isOwn;return `<article class="panel player-card"><div class="player-main"><div class="avatar-line">${p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:`<div class="avatar-fallback">${esc(playerName(p).slice(0,2).toUpperCase())}</div>`}<div><div class="player-name">${esc(playerName(p))}</div><div class="player-discord">${p.isNewPlayer?'Nouveau joueur':'Membre'}</div></div></div>${c?`<div class="class-pill" style="--cc:${c.color}"><img src="${c.icon}" alt="">${esc(c.name)} · ${esc(c.role)}</div>`:'<div class="class-pill">Classe à choisir</div>'}<div class="player-actions">${canEdit?`<button class="btn ghost" data-edit-player="${p.id}">${icon('edit','ui-icon')}${adminView&&!isOwn?'Modifier le joueur':'Modifier mon profil'}</button>`:''}${adminView?`<button class="btn danger" data-delete-player="${p.id}" title="Supprimer ce joueur">${icon('trash','ui-icon')}</button>`:''}</div></div>${em?`<div class="emblem-wrap" style="--glow:${c?.color||'#168bff'}"><img class="emblem" src="${em}" alt="${esc(c?.name||'Classe')}"></div>`:'<div class="empty-class">Bannière de classe</div>'}</article>`}
 function renderPlayers(){return `${hero('JOUEURS','')}<div class="page-head"><div><h2>Joueurs</h2><p>Les profils Discord synchronisés avec leur classe principale.</p></div>${IS_ADMIN&&!PREVIEW_AS_MEMBER?'<button class="btn primary" id="addPlayerBtn">+ Ajouter un joueur</button>':''}</div><div class="players-grid">${PLAYERS.map(playerCard).join('')||'<div class="panel" style="padding:20px;color:#8998b5">Aucun joueur pour le moment.</div>'}</div>`}
 function openPlayerModal(id=''){
@@ -1590,18 +1589,6 @@ function openAdminFixedSlot(groupId,slotKey){
     await saveData();overlay.innerHTML='';showToast(playerId?'Membre ajouté au groupe':'Emplacement libéré');window.MCM_RENDER();
   };
 }
-function fixedGroupCard(g){normalizeFixedGroup(g);const members=groupMembers(g),leader=PLAYERS.find(p=>p.id===g.leaderId),gc=g.type==='pvp'?'#ff4d67':'#168bff';return `<article class="panel fixed-card" style="--gc:${gc}"><div class="fixed-head"><div><span class="fixed-type">${g.type==='pvp'?'PVP FIXE':'PVE FIXE'}</span><div class="fixed-name">${esc(g.name)}</div><div class="fixed-meta"><span>👑 ${esc(leader?playerName(leader):'Leader à définir')}</span><span>🕒 ${esc(g.schedule||'Horaire à définir')}</span><span>👥 ${members.length}/5</span></div></div>${IS_ADMIN&&!PREVIEW_AS_MEMBER?`<div class="fixed-actions"><button class="btn ghost" data-edit-fixed="${g.id}">${icon('edit','ui-icon')}</button><button class="btn danger" data-delete-fixed="${g.id}">${icon('trash','ui-icon')}</button></div>`:''}</div><div class="fixed-desc">${esc(g.description||'Groupe fixe MCM.')}</div><div class="fixed-roster"><div class="fixed-roster-head"><span>Composition obligatoire</span><span>${members.length}/5</span></div><div class="fixed-slots">${fixedSlotDefs().map(d=>fixedSlotHtml(g,d)).join('')}</div></div></article>`}
-function renderFixedGroups(){
-  const groups=FIXED_GROUPS.map(normalizeFixedGroup);
-  const title='Groupes STATIC';
-  const sub='Groupes permanents de 5 : 1 Tank · 3 DPS · 1 Heal.';
-  return `${hero(title.toUpperCase(),sub)}
-    <div class="fixed-toolbar">
-      <div><h2>${title}</h2><p>${sub}</p></div>
-      ${IS_ADMIN&&!PREVIEW_AS_MEMBER?`<button class="btn primary" id="addFixedBtn" data-fixed-type="pve">${icon('plus','ui-icon')}Créer un groupe</button>`:''}
-    </div>
-    <div class="fixed-grid">${groups.map(fixedGroupCard).join('')||'<div class="panel" style="padding:22px;color:#8998b5">Aucun groupe STATIC.</div>'}</div>`;
-}
 function openFixedGroupModal(id=''){
   let g=id?FIXED_GROUPS.find(x=>x.id===id):null; const creating=!g;
   if(!g)g={id:'fg_'+Date.now(),name:'Groupe '+(FIXED_GROUPS.length+1),type:ACTIVE==='fixed-pvp'?'pvp':'pve',maxMembers:5,schedule:'',description:'',leaderId:'',memberIds:[],slots:{tank:'',dps1:'',dps2:'',dps3:'',heal:''}};
@@ -1614,23 +1601,6 @@ function openFixedGroupModal(id=''){
   draw();
 }
 function isFixedGroupCreator(g){const me=myPlayer();return !!(me&&g&&(g.createdByPlayerId===me.id||(g.createdById&&discordUser&&g.createdById===discordUser.id)))}
-async function deleteFixedGroup(id){
-  const g=FIXED_GROUPS.find(x=>x.id===id),me=myPlayer();
-  if(!g)return;
-  const allowed=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||isFixedGroupCreator(g);
-  if(!allowed)return showToast('Seul le créateur ou un admin peut supprimer ce groupe');
-  if(!confirm(`Supprimer « ${g.name} » et ses événements associés ?`))return;
-
-  FIXED_GROUPS=FIXED_GROUPS.filter(x=>x.id!==id);
-  PLANNED_EVENTS=PLANNED_EVENTS.filter(e=>{
-    const sourceId=e.sourceGroupId||e.groupId||'';
-    return sourceId!==id && e.sourceGroupId!==id && e.groupId!==id;
-  });
-
-  await saveData();
-  showToast('Groupe et événements associés supprimés');
-  window.MCM_RENDER();
-};
 let SEARCH_FILTER='all';
 function activityColor(activity){return window.MCM_ACTIVITY_COLORS[activity]||'#168bff'}
 function activityTypeLabel(activity){const t=window.MCM_ACTIVITY_TYPE(activity);return t==='rvr'?'RVR':t.toUpperCase()}
@@ -2417,9 +2387,13 @@ async function deleteFixedGroup(id){
   if(!g)return;
   const allowed=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||isFixedGroupCreator(g);
   if(!allowed)return showToast('Seul le créateur ou un admin peut supprimer ce groupe');
-  if(!confirm(`Supprimer « ${g.name} » ?`))return;
+  if(!confirm(`Supprimer « ${g.name} » et ses événements associés ?`))return;
   FIXED_GROUPS=FIXED_GROUPS.filter(x=>x.id!==id);
-  await saveData(); showToast('Groupe supprimé'); window.MCM_RENDER();
+  PLANNED_EVENTS=PLANNED_EVENTS.filter(e=>{
+    const sourceId=e.sourceGroupId||e.groupId||'';
+    return sourceId!==id && e.sourceGroupId!==id && e.groupId!==id;
+  });
+  await saveData(); showToast('Groupe et événements associés supprimés'); window.MCM_RENDER();
 }
 
 function canManageFixedGroup(g){
@@ -2577,31 +2551,6 @@ function preferredOpenSlotForGroup(g,player){
     ['dps1','dps2','dps3'];
   return order.find(k=>!g.slots[k] && classCanRole(player.classId,k==='tank'?'tank':k==='heal'?'heal':'dps'))||'';
 }
-
-function dashboardSearchAction(g){
-  const me=myPlayer();
-  if(!me)return '';
-  normalizeSearchGroup(g);
-  const mine=playerInSearchGroup(g,me.id);
-  if(mine)return `<button class="dashboard-join-btn leave" data-dashboard-leave-search="${g.id}">Se retirer</button>`;
-  const slot=preferredOpenSlotForGroup(g,me);
-  if(!slot)return `<button class="dashboard-join-btn" disabled>Complet / incompatible</button>`;
-  const def=fixedSlotDefs().find(d=>d.key===slot);
-  return `<button class="dashboard-join-btn" data-dashboard-join-search="${g.id}" data-dashboard-slot="${slot}">S’inscrire · ${esc(def?.label||'Slot')}</button>`;
-}
-
-function dashboardFixedAction(g){
-  const me=myPlayer();
-  if(!me)return '';
-  normalizeFixedGroup(g);
-  const mine=playerInFixedGroup(g,me.id);
-  if(mine)return `<button class="dashboard-join-btn leave" data-dashboard-leave-fixed="${g.id}">Se retirer</button>`;
-  const slot=preferredOpenSlotForGroup(g,me);
-  if(!slot)return `<button class="dashboard-join-btn" disabled>Complet / incompatible</button>`;
-  const def=fixedSlotDefs().find(d=>d.key===slot);
-  return `<button class="dashboard-join-btn" data-dashboard-join-fixed="${g.id}" data-dashboard-slot="${slot}">S’inscrire · ${esc(def?.label||'Slot')}</button>`;
-}
-
 
 function dashboardPreferredSlot(g,player,isFixed=false){
   if(!g||!player||!player.classId)return '';
@@ -2961,16 +2910,13 @@ function bind(){
   document.querySelectorAll('[data-delete-search]').forEach(b=>b.addEventListener('click',()=>deleteSearchGroup(b.dataset.deleteSearch)));
   document.querySelectorAll('[data-publish-search]').forEach(b=>b.addEventListener('click',()=>openSearchEventPlanner(b.dataset.publishSearch)));
 
-  document.querySelectorAll('[data-dashboard-join-search]').forEach(b=>b.addEventListener('click',()=>joinSearchSlot(b.dataset.dashboardJoinSearch,b.dataset.dashboardSlot)));
-  document.querySelectorAll('[data-dashboard-leave-search]').forEach(b=>b.addEventListener('click',()=>leaveSearchGroup(b.dataset.dashboardLeaveSearch)));
-  document.querySelectorAll('[data-dashboard-join-fixed]').forEach(b=>b.addEventListener('click',()=>joinFixedSlot(b.dataset.dashboardJoinFixed,b.dataset.dashboardSlot)));
-  document.querySelectorAll('[data-dashboard-leave-fixed]').forEach(b=>b.addEventListener('click',()=>leaveFixedGroup(b.dataset.dashboardLeaveFixed)));
   document.querySelectorAll('[data-dashboard-class]').forEach(b=>b.addEventListener('click',()=>openDashboardClassMembers(b.dataset.dashboardClass)));
   document.querySelectorAll('[data-presence-list]').forEach(b=>b.addEventListener('click',()=>openPresenceList(b.dataset.presenceList)));
 
-
   document.querySelectorAll('[data-dash-join-search]').forEach(b=>b.addEventListener('click',()=>joinSearchSlot(b.dataset.dashJoinSearch,b.dataset.dashSlot)));
   document.querySelectorAll('[data-dash-leave-search]').forEach(b=>b.addEventListener('click',()=>leaveSearchGroup(b.dataset.dashLeaveSearch)));
+  document.querySelectorAll('[data-dash-join-fixed]').forEach(b=>b.addEventListener('click',()=>joinFixedSlot(b.dataset.dashJoinFixed,b.dataset.dashSlot)));
+  document.querySelectorAll('[data-dash-leave-fixed]').forEach(b=>b.addEventListener('click',()=>leaveFixedGroup(b.dataset.dashLeaveFixed)));
 
 }
 
