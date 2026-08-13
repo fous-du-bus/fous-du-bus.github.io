@@ -103,7 +103,19 @@ html, body { margin: 0; padding: 0; }
 .gm-btn-ghost { background: transparent; border-color: var(--border); }
 .gm-btn-sm { padding: 6px 11px; font-size: 12px; border-radius: 8px; }
 .gm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.gm-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(6px); }
+.gm-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 18px; backdrop-filter: blur(10px); transition: border-color .25s ease; }
+.gm-panel:hover { border-color: var(--border-strong); }
+.gm-hero-banner { height: 90px; border-radius: 16px; margin-bottom: 24px; position: relative; overflow: hidden;
+  background:
+    radial-gradient(600px 200px at 20% 40%, rgba(22,139,255,0.28), transparent 65%),
+    radial-gradient(500px 180px at 75% 30%, rgba(118,87,255,0.24), transparent 65%),
+    radial-gradient(400px 160px at 95% 80%, rgba(0,217,255,0.18), transparent 60%),
+    linear-gradient(120deg, #050b1c, #071a33 55%, #06152b);
+  border: 1px solid var(--border);
+}
+.gm-hero-banner::before { content: ''; position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(115deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 26px);
+}
 .gm-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 20px; margin-bottom: 32px; }
 
 .gm-stat-card { padding: 16px; }
@@ -1996,6 +2008,7 @@ function renderTopbar(){
       ${(ACTIVE_TAB==='pve'||ACTIVE_TAB==='pvp') ? `<button class="gm-btn gm-btn-primary" data-action="create-group" data-type="${ACTIVE_TAB}">${t('topbar.new_group')}</button>` : ''}
       ${ACTIVE_TAB==='events' && isAdminView() ? `<button class="gm-btn gm-btn-primary" data-action="open-event-modal">${t('topbar.new_event')}</button>` : ''}
     </div>
+    ${ACTIVE_TAB==='dashboard' ? `<div class="gm-hero-banner"></div>` : ''}
   `;
 }
 
