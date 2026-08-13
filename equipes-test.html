@@ -189,6 +189,12 @@ body{background:
 .search-actions{display:flex;gap:6px;align-items:center}
 @media(max-width:700px){.event-role-legend{gap:7px}}
 
+
+.activity-choice.rvr:hover{border-color:#f5b84b;background:rgba(245,184,75,.08)}
+.activity-color-legend{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px}
+.activity-color-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 7px;border-radius:999px;font-size:8px;border:1px solid var(--ac);color:var(--ac);background:color-mix(in srgb,var(--ac) 10%,transparent)}
+.activity-color-dot{width:7px;height:7px;border-radius:50%;background:var(--ac)}
+
 </style>
 </head>
 <body><div id="app"></div><div id="overlay"></div><div id="toast"></div>
@@ -271,11 +277,26 @@ async function deletePlayer(id){if(!(IS_ADMIN&&!PREVIEW_AS_MEMBER))return;const 
 
 /* ===== RECHERCHE DE GROUPE ===== */
 const SEARCH_PVE_ACTIVITIES=['Expéditions','Transcendances','Sanctuary'];
-const SEARCH_PVP_ACTIVITIES=['Rift','Abysse','Arena'];
-const SEARCH_ACTIVITIES=[...SEARCH_PVE_ACTIVITIES,...SEARCH_PVP_ACTIVITIES];
+const SEARCH_PVP_ACTIVITIES=['Rift','Abysse','Arena','Battleground'];
+const SEARCH_RVR_ACTIVITIES=['Artifact Abysses','300 VS 300'];
+const SEARCH_ACTIVITIES=[...SEARCH_PVE_ACTIVITIES,...SEARCH_PVP_ACTIVITIES,...SEARCH_RVR_ACTIVITIES];
 let SEARCH_FILTER='all';
 
-function searchActivityType(activity){return SEARCH_PVP_ACTIVITIES.includes(activity)?'pvp':'pve'}
+function searchActivityType(activity){if(SEARCH_RVR_ACTIVITIES.includes(activity))return 'rvr';return SEARCH_PVP_ACTIVITIES.includes(activity)?'pvp':'pve'}
+
+const ACTIVITY_COLORS={
+  'Expéditions':'#168bff',
+  'Transcendances':'#7c56ff',
+  'Sanctuary':'#00c7c7',
+  'Rift':'#ff4d67',
+  'Abysse':'#ff7a45',
+  'Arena':'#ff3dbf',
+  'Battleground':'#d9534f',
+  'Artifact Abysses':'#f5b84b',
+  '300 VS 300':'#00dca3'
+};
+function activityColor(activity){return ACTIVITY_COLORS[activity]||'#168bff'}
+function activityTypeLabel(activity){const t=searchActivityType(activity);return t==='rvr'?'RVR':t.toUpperCase()}
 function normalizeSearchGroup(g){
   if(!g.slots||typeof g.slots!=='object')g.slots={};
   for(const d of fixedSlotDefs())if(typeof g.slots[d.key]!=='string')g.slots[d.key]='';
@@ -329,7 +350,7 @@ function searchSlotHtml(g,d){
   const p=PLAYERS.find(x=>x.id===g.slots[d.key]),c=p?cls(p.classId):null,me=myPlayer();
   const mine=!!(p&&me&&p.id===me.id),already=!!(me&&playerInSearchGroup(g,me.id));
   const canJoin=!!(!p&&me&&!already&&me.classId&&classCanRole(me.classId,d.role));
-  const gc=g.type==='pvp'?'#ff4d67':'#168bff';
+  const gc=activityColor(g.activity);
   const attrs=mine?` data-leave-search="${g.id}" title="Cliquer pour se retirer"`:canJoin?` data-join-search="${g.id}" data-search-slot="${d.key}" title="Cliquer pour s'inscrire"`:'';
   return `<div class="search-slot ${mine?'mine':canJoin?'joinable':''}" style="--gc:${gc}"${attrs}>
     <div class="search-slot-role" style="color:${d.role==='tank'?'#53a8ff':d.role==='heal'?'#26e0ac':'#ff7184'}">${d.icon} ${d.label}</div>
@@ -342,12 +363,12 @@ function searchSlotHtml(g,d){
 }
 function searchGroupCard(g){
   normalizeSearchGroup(g);
-  const members=searchGroupMembers(g),leader=PLAYERS.find(p=>p.id===g.leaderId),me=myPlayer(),gc=g.type==='pvp'?'#ff4d67':'#168bff';
+  const members=searchGroupMembers(g),leader=PLAYERS.find(p=>p.id===g.leaderId),me=myPlayer(),gc=activityColor(g.activity);
   const canDelete=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||(me&&g.createdByPlayerId===me.id); const canPublish=canManageSearchGroup(g);
   return `<article class="panel search-card" style="--gc:${gc}">
     <div class="search-head">
       <div>
-        <span class="search-kind">${g.type==='pvp'?'PVP':'PVE'} · ${esc(g.activity)}</span>
+        <span class="search-kind" style="color:${gc};border-color:${gc}66;background:${gc}16">${activityTypeLabel(g.activity)} · ${esc(g.activity)}</span>
         <div class="search-activity">${esc(g.activity)}</div>
         <div class="search-meta"><span>👑 <strong>${esc(leader?playerName(leader):'Leader à définir')}</strong></span><span>👥 ${members.length}/5</span></div>
       </div>
@@ -360,11 +381,11 @@ function openSearchGroupCreate(){
   const me=myPlayer();
   if(!me)return showToast('Ton profil joueur est introuvable');
   if(!me.classId)return showToast('Configure d’abord ta classe dans Joueurs');
-  const activities=SEARCH_FILTER==='pve'?SEARCH_PVE_ACTIVITIES:SEARCH_FILTER==='pvp'?SEARCH_PVP_ACTIVITIES:SEARCH_ACTIVITIES;
+  const activities=SEARCH_FILTER==='pve'?SEARCH_PVE_ACTIVITIES:SEARCH_FILTER==='pvp'?SEARCH_PVP_ACTIVITIES:SEARCH_FILTER==='rvr'?SEARCH_RVR_ACTIVITIES:SEARCH_ACTIVITIES;
   overlay.innerHTML=`<div class="modal-backdrop"><div class="modal">
     <h3>Créer une recherche de groupe</h3>
     <div style="font-size:10px;color:#8e9db8">Choisis simplement l’activité. Le groupe sera créé immédiatement et tu seras placé automatiquement dans un rôle compatible.</div>
-    <div class="activity-choice-grid">${activities.map(a=>`<button type="button" class="activity-choice ${searchActivityType(a)}" data-create-search-activity="${esc(a)}"><b>${esc(a)}</b><span>${searchActivityType(a)==='pvp'?'PvP':'PvE'}</span></button>`).join('')}</div>
+    <div class="activity-choice-grid">${activities.map(a=>`<button type="button" class="activity-choice ${searchActivityType(a)}" style="border-color:${activityColor(a)}55" data-create-search-activity="${esc(a)}"><b style="color:${activityColor(a)}">${esc(a)}</b><span>${activityTypeLabel(a)}</span></button>`).join('')}</div>
     <div class="search-create-note">Composition : 1 Tank · 3 DPS · 1 Heal. Gladiator peut être Tank ou DPS. Chanter peut être Heal ou DPS.</div>
     <div class="modal-actions"><button class="btn" id="cancelSearchCreate">Annuler</button></div>
   </div></div>`;
@@ -400,10 +421,12 @@ function renderSearchGroups(){
           <button class="search-tab ${SEARCH_FILTER==='all'?'active':''}" data-search-filter="all">Tous</button>
           <button class="search-tab ${SEARCH_FILTER==='pve'?'active':''}" data-search-filter="pve">PvE</button>
           <button class="search-tab ${SEARCH_FILTER==='pvp'?'active':''}" data-search-filter="pvp">PvP</button>
+          <button class="search-tab ${SEARCH_FILTER==='rvr'?'active':''}" data-search-filter="rvr">RVR</button>
         </div>
         <button class="btn primary" id="createSearchBtn">${icon('plus','ui-icon')}Créer une recherche</button>
       </div>
     </div>
+    <div class="activity-color-legend">${SEARCH_ACTIVITIES.map(a=>`<span class="activity-color-chip" style="--ac:${activityColor(a)}"><i class="activity-color-dot"></i>${esc(a)}</span>`).join('')}</div>
     <div class="search-grid">${groups.map(searchGroupCard).join('')||'<div class="panel" style="padding:22px;color:#8998b5">Aucune recherche active dans cette catégorie.</div>'}</div>`;
 }
 
@@ -686,7 +709,7 @@ function renderDashboard(){
     <div class="stats">
       <div class="metric blue"><div class="metric-icon">${icon('users','ui-icon')}</div><div><div class="metric-value">${total}</div><div class="metric-label">MEMBRES ACTIFS</div><div class="metric-note good">${assigned} profils complétés</div></div></div>
       <div class="metric violet"><div class="metric-icon">${icon('shield','ui-icon')}</div><div><div class="metric-value">${CLASSES.length}</div><div class="metric-label">CLASSES DISPONIBLES</div><div class="metric-note">Système Aion 2</div></div></div>
-      <div class="metric green"><div class="metric-icon">${icon('swords','ui-icon')}</div><div><div class="metric-value">${SEARCH_GROUPS.length}</div><div class="metric-label">RECHERCHES ACTIVES</div><div class="metric-note good">${SEARCH_GROUPS.filter(g=>searchActivityType(g.activity)==='pve').length} PvE · ${SEARCH_GROUPS.filter(g=>searchActivityType(g.activity)==='pvp').length} PvP</div></div></div>
+      <div class="metric green"><div class="metric-icon">${icon('swords','ui-icon')}</div><div><div class="metric-value">${SEARCH_GROUPS.length}</div><div class="metric-label">RECHERCHES ACTIVES</div><div class="metric-note good">${SEARCH_GROUPS.filter(g=>searchActivityType(g.activity)==='pve').length} PvE · ${SEARCH_GROUPS.filter(g=>searchActivityType(g.activity)==='pvp').length} PvP · ${SEARCH_GROUPS.filter(g=>searchActivityType(g.activity)==='rvr').length} RVR</div></div></div>
       <div class="metric gold"><div class="metric-icon">${icon('calendar','ui-icon')}</div><div><div class="metric-value">${upcoming.length}</div><div class="metric-label">ÉVÉNEMENTS À VENIR</div><div class="metric-note">Planifiés depuis les groupes</div></div></div>
     </div>
 
@@ -708,9 +731,9 @@ function renderDashboard(){
       <section class="card events-card">
         <h3 class="card-title">${icon('calendar','ui-icon')}ÉVÉNEMENTS À VENIR <span style="margin-left:auto;color:#56a9ff;font-family:Inter;font-size:10px">Voir tout</span></h3>
         ${upcoming.map(e=>`<div class="event-row">
-          <div class="event-icon">${e.type==='pvp'?'⚔':'✦'}</div>
+          <div class="event-icon" style="border-color:${activityColor(e.activity)}66;background:${activityColor(e.activity)}18;color:${activityColor(e.activity)}">${e.type==='rvr'?'⚑':e.type==='pvp'?'⚔':'✦'}</div>
           <div>
-            <div class="event-title">${esc(e.activity||e.title||'Événement')} · ${esc(e.groupName||'Groupe')}</div>
+            <div class="event-title"><span style="color:${activityColor(e.activity)}">${esc(e.activity||e.title||'Événement')}</span> · ${esc(e.groupName||'Groupe')}</div>
             <div class="event-sub">${e.source==='searchGroup'?'RECHERCHE':'STATIC'} · ${esc(e.time||'')}</div>
             <div class="event-avatar-stack">${eventAvatars(e)}</div>
           </div>
@@ -722,7 +745,7 @@ function renderDashboard(){
 
       <section class="card groups-card">
         <h3 class="card-title">${icon('swords','ui-icon')}RECHERCHES DE GROUPE</h3>
-        <div class="groups-grid">${SEARCH_GROUPS.slice(0,5).map(g=>{normalizeSearchGroup(g);const members=searchGroupMembers(g);return `<div class="group-tile"><span class="tag" style="border-color:${g.type==='pvp'?'#ff4d67':'#168bff'}88;color:${g.type==='pvp'?'#ff7184':'#58b4ff'}">${g.type.toUpperCase()}</span><div class="group-name">${esc(g.activity)}</div><div class="group-time">Recherche en cours</div><div class="avatar-stack">${members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div><div class="group-count">${members.length}/5 joueurs</div></div>`}).join('')||'<div class="group-count">Aucune recherche active.</div>'}</div>
+        <div class="groups-grid">${SEARCH_GROUPS.slice(0,5).map(g=>{normalizeSearchGroup(g);const members=searchGroupMembers(g);return `<div class="group-tile"><span class="tag" style="border-color:${activityColor(g.activity)}88;color:${activityColor(g.activity)}">${activityTypeLabel(g.activity)}</span><div class="group-name">${esc(g.activity)}</div><div class="group-time">Recherche en cours</div><div class="avatar-stack">${members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div><div class="group-count">${members.length}/5 joueurs</div></div>`}).join('')||'<div class="group-count">Aucune recherche active.</div>'}</div>
         <div class="view-all" data-tab="search-groups">Voir toutes les recherches ›</div>
       </section>
 
