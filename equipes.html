@@ -1833,7 +1833,7 @@ function openTranscendenceDungeonChoice(){
   document.getElementById('backTranscendenceChoice').onclick=()=>openSearchGroupCreate();
   document.getElementById('cancelTranscendenceChoice').onclick=()=>overlay.innerHTML='';
   document.querySelectorAll('[data-transcendence-dungeon]').forEach(b=>{
-    b.onclick=()=>createSearchGroup('Transcendances','','','',b.dataset.transcendenceDungeon);
+    b.onclick=()=>openSearchScheduleStep('Transcendances','','','',b.dataset.transcendenceDungeon);
   });
 }
 
@@ -1864,7 +1864,7 @@ function openSanctuaryDungeonChoice(){
     b.onclick=()=>{
       const dungeon=b.dataset.sanctuaryDungeon;
       const modes=MCM_SANCTUARY_MODES[dungeon]||['Normal'];
-      if(modes.length===1)return createSearchGroup('Sanctuary','',dungeon,modes[0]);
+      if(modes.length===1)return openSearchScheduleStep('Sanctuary','',dungeon,modes[0]);
       openSanctuaryModeChoice(dungeon);
     };
   });
@@ -1893,7 +1893,7 @@ function openSanctuaryModeChoice(dungeon){
   document.getElementById('backSanctuaryMode').onclick=()=>openSanctuaryDungeonChoice();
   document.getElementById('cancelSanctuaryMode').onclick=()=>overlay.innerHTML='';
   document.querySelectorAll('[data-sanctuary-mode]').forEach(b=>{
-    b.onclick=()=>createSearchGroup('Sanctuary','',dungeon,b.dataset.sanctuaryMode);
+    b.onclick=()=>openSearchScheduleStep('Sanctuary','',dungeon,b.dataset.sanctuaryMode);
   });
 }
 
@@ -1921,7 +1921,7 @@ function openExpeditionDungeonChoice(){
   document.getElementById('backExpeditionChoice').onclick=()=>openSearchGroupCreate();
   document.getElementById('cancelExpeditionChoice').onclick=()=>overlay.innerHTML='';
   document.querySelectorAll('[data-expedition-dungeon]').forEach(b=>{
-    b.onclick=()=>createSearchGroup('Expéditions',b.dataset.expeditionDungeon);
+    b.onclick=()=>openSearchScheduleStep('Expéditions',b.dataset.expeditionDungeon);
   });
 }
 
@@ -1932,7 +1932,7 @@ function openSearchGroupCreate(){
   const activities=SEARCH_FILTER==='pve'?window.MCM_SEARCH_PVE:SEARCH_FILTER==='pvp'?window.MCM_SEARCH_PVP:SEARCH_FILTER==='rvr'?window.MCM_SEARCH_RVR:window.MCM_SEARCH_ACTIVITIES;
   overlay.innerHTML=`<div class="modal-backdrop"><div class="modal">
     <h3>Créer une recherche de groupe</h3>
-    <div style="font-size:10px;color:#8e9db8">Choisis simplement l’activité. Le groupe sera créé immédiatement et tu seras placé automatiquement dans un rôle compatible.</div>
+    <div style="font-size:10px;color:#8e9db8">Choisis l’activité, puis l’horaire. Tu vérifieras ton rôle avant de créer et publier la recherche.</div>
     <div class="activity-choice-grid">${activities.map(a=>`<button type="button" class="activity-choice ${window.MCM_ACTIVITY_TYPE(a)}" style="border-color:${activityColor(a)}55" data-create-search-activity="${esc(a)}"><b style="color:${activityColor(a)}">${esc(a)}</b><span>${activityTypeLabel(a)}</span></button>`).join('')}</div>
     <div class="search-create-note">Composition : 1 Tank · 3 DPS · 1 Heal. Gladiator peut être Tank ou DPS. Chanter peut être Heal ou DPS.</div>
     <div class="modal-actions"><button class="btn" id="cancelSearchCreate">Annuler</button></div>
@@ -1943,10 +1943,21 @@ function openSearchGroupCreate(){
     if(activity==='Expéditions')return openExpeditionDungeonChoice();
     if(activity==='Sanctuary')return openSanctuaryDungeonChoice();
     if(activity==='Transcendances')return openTranscendenceDungeonChoice();
-    createSearchGroup(activity);
+    openSearchScheduleStep(activity);
   });
 }
-async function createSearchGroup(activity,expeditionDungeon='',sanctuaryDungeon='',sanctuaryMode='',transcendenceDungeon=''){
+function openSearchScheduleStep(activity,expeditionDungeon='',sanctuaryDungeon='',sanctuaryMode='',transcendenceDungeon=''){
+  const me=myPlayer(),current=localDateTimeDefaults();if(!me)return;
+  const role=me.classId==='templar'?'Tank':me.classId==='cleric'?'Heal':me.classId==='gladiator'?'Tank ou DPS':me.classId==='chanter'?'Heal ou DPS':'DPS';
+  const detail=expeditionDungeon||transcendenceDungeon||sanctuaryDungeon||'';
+  overlay.innerHTML=`<div class="modal-backdrop"><div class="modal"><h3>Quand veux-tu jouer ?</h3><div class="event-summary"><b>${esc(activity)}${detail?` · ${esc(detail)}`:''}${sanctuaryMode?` · ${esc(sanctuaryMode)}`:''}</b><br>Rôle prévu : <b>${esc(role)}</b></div><div class="event-kind-grid"><button class="event-kind active" data-quick-time="now">Maintenant</button><button class="event-kind" data-quick-time="30">Dans 30 min</button><button class="event-kind" data-quick-time="evening">Ce soir 20:30</button><button class="event-kind" data-quick-time="custom">Personnalisé</button></div><div class="event-plan-grid" style="margin-top:12px"><div class="form-row"><label>Date</label><input id="quickSearchDate" type="date" value="${current.date}"></div><div class="form-row"><label>Heure</label><input id="quickSearchTime" type="time" value="${current.time}"></div></div><div class="form-row"><label>Note (facultatif)</label><input id="quickSearchNote" placeholder="Objectif, prérequis, rendez-vous..."></div><div class="modal-actions"><button class="btn" id="backQuickSearch">Retour</button><button class="btn" id="cancelQuickSearch">Annuler</button><button class="btn primary" id="createPublishSearch">Créer et publier</button></div></div></div>`;
+  const setDateTime=date=>{const pad=n=>String(n).padStart(2,'0');document.getElementById('quickSearchDate').value=`${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;document.getElementById('quickSearchTime').value=`${pad(date.getHours())}:${pad(date.getMinutes())}`};
+  document.querySelectorAll('[data-quick-time]').forEach(button=>button.onclick=()=>{document.querySelectorAll('[data-quick-time]').forEach(x=>x.classList.toggle('active',x===button));const mode=button.dataset.quickTime,now=new Date();if(mode==='30')setDateTime(new Date(now.getTime()+1800000));else if(mode==='evening'){now.setHours(20,30,0,0);setDateTime(now)}else if(mode==='now')setDateTime(now);else document.getElementById('quickSearchDate').focus()});
+  document.getElementById('backQuickSearch').onclick=()=>openSearchGroupCreate();
+  document.getElementById('cancelQuickSearch').onclick=()=>overlay.innerHTML='';
+  document.getElementById('createPublishSearch').onclick=()=>{const date=document.getElementById('quickSearchDate').value,time=document.getElementById('quickSearchTime').value,note=document.getElementById('quickSearchNote').value.trim();if(!date||!time)return showToast('Choisis une date et une heure');createSearchGroup(activity,expeditionDungeon,sanctuaryDungeon,sanctuaryMode,transcendenceDungeon,{date,time,note,publish:true})};
+}
+async function createSearchGroup(activity,expeditionDungeon='',sanctuaryDungeon='',sanctuaryMode='',transcendenceDungeon='',schedule=null){
   if(!window.MCM_SEARCH_ACTIVITIES.includes(activity))return;
   const me=myPlayer();
   if(!me||!me.classId)return showToast('Configure d’abord ta classe');
@@ -1994,7 +2005,10 @@ async function createSearchGroup(activity,expeditionDungeon='',sanctuaryDungeon=
 
     SEARCH_GROUPS.push(groupA,groupB);
     addActivity('group',`${playerName(me)} a créé une recherche Sanctuary`,`${sanctuaryDungeon}${sanctuaryMode?' · '+sanctuaryMode:''}`,me);
+    let scheduledEvent=null;
+    if(schedule){scheduledEvent={id:'gev_'+Date.now(),source:'searchGroup',sourceGroupId:groupA.id,sanctuaryPairId:pairId,groupId:groupA.id,groupName:`Sanctuary · ${sanctuaryDungeon}`,sanctuaryDungeon,sanctuaryMode,activity:'Sanctuary',type:'pve',date:schedule.date,time:schedule.time,note:schedule.note||'',leaderId:me.id,memberIds:[me.id],createdAt:Date.now(),createdBy:discordUser?.id||'',status:'planned'};PLANNED_EVENTS.push(scheduledEvent);addActivity('event',`${playerName(me)} a planifié un événement`,`Sanctuary · ${schedule.date} à ${schedule.time}`,me)}
     await saveData();
+    if(schedule?.publish)await postSearchGroupToDiscord(groupA,scheduledEvent);
     overlay.innerHTML='';
     showToast('Sanctuary créé : Groupe A + Groupe B');
     window.MCM_RENDER();
@@ -2022,7 +2036,10 @@ async function createSearchGroup(activity,expeditionDungeon='',sanctuaryDungeon=
   g.memberIds=[me.id];
   SEARCH_GROUPS.push(g);
   addActivity('group',`${playerName(me)} a créé une recherche de groupe`,`${activity}${expeditionDungeon?' · '+expeditionDungeon:''}${transcendenceDungeon?' · '+transcendenceDungeon:''}`,me);
+  let scheduledEvent=null;
+  if(schedule){scheduledEvent={id:'gev_'+Date.now(),source:'searchGroup',sourceGroupId:g.id,groupId:g.id,groupName:expeditionDungeon?`${activity} · ${expeditionDungeon}`:transcendenceDungeon?`${activity} · ${transcendenceDungeon}`:activity,expeditionDungeon,transcendenceDungeon,activity,type:g.type,date:schedule.date,time:schedule.time,note:schedule.note||'',leaderId:me.id,memberIds:[me.id],createdAt:Date.now(),createdBy:discordUser?.id||'',status:'planned'};PLANNED_EVENTS.push(scheduledEvent);addActivity('event',`${playerName(me)} a planifié un événement`,`${activity} · ${schedule.date} à ${schedule.time}`,me)}
   await saveData();
+  if(schedule?.publish)await postSearchGroupToDiscord(g,scheduledEvent);
   overlay.innerHTML='';
   showToast(activity==='Expéditions'
       ?`Expedition · ${expeditionDungeon} : recherche créée`
@@ -2391,6 +2408,7 @@ function canManageSearchGroup(g){
   return !!((IS_ADMIN&&!PREVIEW_AS_MEMBER)||(me&&g.createdByPlayerId===me.id)||(me&&g.leaderId===me.id));
 }
 
+function localDateTimeDefaults(){const now=new Date(),pad=n=>String(n).padStart(2,'0');return{date:`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`,time:`${pad(now.getHours())}:${pad(now.getMinutes())}`}}
 function openSearchEventPlanner(groupId){
   const g=SEARCH_GROUPS.find(x=>x.id===groupId);
   if(!g)return;
@@ -2402,13 +2420,13 @@ function openSearchEventPlanner(groupId){
   if(!canManageSearchGroup(g))return showToast('Seul le leader, le créateur ou un admin peut publier');
   const sanctuaryGroups=(g.activity==='Sanctuary'&&g.sanctuaryPairId)?SEARCH_GROUPS.filter(x=>x.sanctuaryPairId===g.sanctuaryPairId):[g];
   const members=[...new Map(sanctuaryGroups.flatMap(x=>searchGroupMembers(x)).map(p=>[p.id,p])).values()];
-  const tomorrow=new Date(Date.now()+86400000).toISOString().slice(0,10);
+  const current=localDateTimeDefaults();
   overlay.innerHTML=`<div class="modal-backdrop"><div class="modal">
     <h3>Publier sur Discord</h3>
     <div class="form-row"><label>Activité</label><select id="sgEventActivity">${window.MCM_SEARCH_ACTIVITIES.map(a=>`<option value="${esc(a)}" ${a===g.activity?'selected':''}>${esc(a)}</option>`).join('')}</select></div>
     <div class="event-plan-grid">
-      <div class="form-row"><label>Date</label><input id="sgEventDate" type="date" value="${tomorrow}"></div>
-      <div class="form-row"><label>Heure</label><input id="sgEventTime" type="time" value="20:30"></div>
+      <div class="form-row"><label>Date</label><input id="sgEventDate" type="date" value="${current.date}"></div>
+      <div class="form-row"><label>Heure</label><input id="sgEventTime" type="time" value="${current.time}"></div>
     </div>
     <div class="form-row"><label>Note</label><input id="sgEventNote" placeholder="Optionnel"></div>
     <div class="event-summary"><b>${esc(g.activity)}${g.expeditionDungeon?` · ${esc(g.expeditionDungeon)}`:''}${g.transcendenceDungeon?` · ${esc(g.transcendenceDungeon)}`:''}${g.sanctuaryDungeon?` · ${esc(g.sanctuaryDungeon)}${g.sanctuaryMode?` · ${esc(g.sanctuaryMode)}`:''}`:''}</b> · ${members.length}/${g.activity==='Sanctuary'?10:5} joueurs<br>${g.activity==='Sanctuary'?'2 groupes : chacun 1 Tank · 3 DPS · 1 Heal':'Composition : 1 Tank · 3 DPS · 1 Heal'}</div>
