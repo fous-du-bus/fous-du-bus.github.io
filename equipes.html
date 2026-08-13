@@ -1183,7 +1183,9 @@ body{background:
   .mobile-bottom-icon{width:19px;height:19px;display:inline-flex}
   .mobile-bottom-icon svg{width:100%;height:100%}
   .mobile-bottom-badge{position:absolute;top:2px;right:calc(50% - 16px);background:#ff4d67;color:#fff;font-size:8.5px;font-weight:700;min-width:14px;height:14px;padding:0 3px;border-radius:8px;display:flex;align-items:center;justify-content:center;line-height:1}
-}
+}.adblock-warning{display:flex;align-items:flex-start;gap:10px;background:rgba(244,184,74,.12);border:1px solid rgba(244,184,74,.45);color:#f4b84a;border-radius:10px;padding:11px 14px;margin:0 0 16px;font-size:12px;line-height:1.5}
+.adblock-warning .ui-icon{width:18px;height:18px;flex-shrink:0;margin-top:1px}
+.adblock-warning strong{color:#ffce7a}
 </style>
 </head>
 <body><div id="app"></div><div id="overlay"></div><div id="toast"></div>
@@ -2180,8 +2182,9 @@ async function createSearchGroup(activity,expeditionDungeon='',sanctuaryDungeon=
 function renderSearchGroups(){
   const groups=SEARCH_GROUPS.map(normalizeSearchGroup).filter(g=>SEARCH_FILTER==='all'||g.type===SEARCH_FILTER);
   const title='Recherche de groupe';
-  const sub='Crée une recherche pour une activité, puis laisse les membres remplir les 5 rôles. ⚠️ Si la publication sur Discord échoue, mets ce site en liste blanche sur ton bloqueur de publicités (uBlock, Brave Shields, etc.).';
+  const sub='Crée une recherche pour une activité, puis laisse les membres remplir les 5 rôles.';
   return `${hero(title.toUpperCase(),sub)}
+    <div class="adblock-warning">${icon('bell','ui-icon')}<div><strong>Bloqueur de publicités ?</strong> Si la publication sur Discord échoue, mets ce site en liste blanche (uBlock, Brave Shields, AdGuard...) pour autoriser ses requêtes.</div></div>
     <div class="search-toolbar">
       <div><h2>${title}</h2><p>${sub}</p></div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -2666,7 +2669,8 @@ function fixedGroupCard(g){
 }
 function renderFixedGroups(){
   const groups=FIXED_GROUPS.map(normalizeFixedGroup);
-  return `${hero('GROUPES STATIC','Groupes permanents de 5 : 1 Tank · 3 DPS · 1 Heal. ⚠️ Si la publication sur Discord échoue, mets ce site en liste blanche sur ton bloqueur de publicités (uBlock, Brave Shields, etc.).')}
+  return `${hero('GROUPES STATIC','Groupes permanents de 5 : 1 Tank · 3 DPS · 1 Heal.')}
+    <div class="adblock-warning">${icon('bell','ui-icon')}<div><strong>Bloqueur de publicités ?</strong> Si la publication sur Discord échoue, mets ce site en liste blanche (uBlock, Brave Shields, AdGuard...) pour autoriser ses requêtes.</div></div>
     <div class="fixed-toolbar">
       <div><h2>Groupes STATIC</h2><p>Chaque membre peut créer un groupe puis laisser les autres s’inscrire.</p></div>
       <button class="btn primary" id="addFixedBtn">${icon('plus','ui-icon')}Créer un groupe</button>
