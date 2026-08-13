@@ -258,6 +258,30 @@ body{background:
   .search-grid,.fixed-grid{max-height:none;overflow:visible}
 }
 
+
+.search-card[data-sanctuary="true"]{box-shadow:inset 0 0 0 1px rgba(0,199,199,.08)}
+.sanctuary-pair-note{font-size:8px;color:#00c7c7;margin-top:4px}
+
+
+/* ===== INSCRIPTION RAPIDE DEPUIS LE TABLEAU DE BORD ===== */
+.dashboard-group-actions{display:flex;gap:6px;margin-top:9px}
+.dashboard-join-btn{
+  width:100%;
+  min-height:29px;
+  border:1px solid rgba(45,151,255,.4);
+  background:rgba(22,139,255,.09);
+  color:#69baff;
+  border-radius:7px;
+  font-size:8.5px;
+  font-weight:700;
+  cursor:pointer;
+}
+.dashboard-join-btn:hover{background:rgba(22,139,255,.17);border-color:#168bff;color:#fff}
+.dashboard-join-btn.leave{border-color:rgba(0,220,163,.4);background:rgba(0,220,163,.08);color:#38dfb0}
+.dashboard-join-btn.leave:hover{background:rgba(0,220,163,.15);border-color:#00dca3;color:#fff}
+.dashboard-join-btn:disabled{opacity:.45;cursor:not-allowed}
+.dashboard-role-hint{font-size:7.5px;color:#71809b;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
 </style>
 </head>
 <body><div id="app"></div><div id="overlay"></div><div id="toast"></div>
@@ -431,9 +455,9 @@ function searchGroupCard(g){
   return `<article class="panel search-card" style="--gc:${gc}">
     <div class="search-head">
       <div>
-        <span class="search-kind" style="color:${gc};border-color:${gc}66;background:${gc}16">${activityTypeLabel(g.activity)} · ${esc(g.activity)}</span>
-        <div class="search-activity">${esc(g.activity)}</div>
-        <div class="search-meta"><span>👑 <strong>${esc(leader?playerName(leader):'Leader à définir')}</strong></span><span>👥 ${members.length}/5</span></div>
+        <span class="search-kind" style="color:${gc};border-color:${gc}66;background:${gc}16">${activityTypeLabel(g.activity)} · ${esc(g.activity)}${g.activity==='Sanctuary'&&g.subgroup?` · GROUPE ${esc(g.subgroup)}`:''}</span>
+        <div class="search-activity">${esc(g.activity)}${g.activity==='Sanctuary'&&g.subgroup?` · Groupe ${esc(g.subgroup)}`:''}</div>
+        <div class="search-meta"><span>👑 <strong>${esc(leader?playerName(leader):'Leader à définir')}</strong></span><span>👥 ${members.length}/5</span></div>${g.activity==='Sanctuary'&&g.sanctuaryPairId?`<div class="sanctuary-pair-note">Sanctuary 10 joueurs · Groupe ${esc(g.subgroup||'')} sur 2</div>`:''}
       </div>
       <div class="search-actions">${canPublish?`<button class="btn" data-publish-search="${g.id}">${icon('calendar','ui-icon')} Discord</button>`:''}${canDelete?`<button class="btn danger" data-delete-search="${g.id}">${icon('trash','ui-icon')}</button>`:''}</div>
     </div>
@@ -459,9 +483,56 @@ async function createSearchGroup(activity){
   if(!SEARCH_ACTIVITIES.includes(activity))return;
   const me=myPlayer();
   if(!me||!me.classId)return showToast('Configure d’abord ta classe');
+
+  // Sanctuary = activité à 10 joueurs : création automatique de deux groupes de 5.
+  if(activity==='Sanctuary'){
+    const pairId='sanctuary_'+Date.now();
+    const makeGroup=(letter)=>{
+      const g={
+        id:'sg_'+Date.now()+'_'+letter.toLowerCase(),
+        activity:'Sanctuary',
+        type:'pve',
+        subgroup:letter,
+        sanctuaryPairId:pairId,
+        sequence:letter==='A'?1:2,
+        createdAt:Date.now(),
+        createdByPlayerId:me.id,
+        leaderId:letter==='A'?me.id:'',
+        memberIds:[],
+        slots:{tank:'',dps1:'',dps2:'',dps3:'',heal:''}
+      };
+      return g;
+    };
+
+    const groupA=makeGroup('A');
+    const groupB=makeGroup('B');
+
+    const preferred=myPreferredSearchSlot(me.classId,groupA);
+    if(!preferred)return showToast('Aucun slot compatible disponible');
+    groupA.slots[preferred]=me.id;
+    groupA.memberIds=[me.id];
+
+    SEARCH_GROUPS.push(groupA,groupB);
+    await saveData();
+    overlay.innerHTML='';
+    showToast('Sanctuary créé : Groupe A + Groupe B');
+    render();
+    return;
+  }
+
   let max=0;
   SEARCH_GROUPS.filter(g=>g.activity===activity).forEach(g=>{const n=Number(g.sequence)||0;max=Math.max(max,n)});
-  const g={id:'sg_'+Date.now(),activity,type:searchActivityType(activity),sequence:max+1,createdAt:Date.now(),createdByPlayerId:me.id,leaderId:me.id,memberIds:[],slots:{tank:'',dps1:'',dps2:'',dps3:'',heal:''}};
+  const g={
+    id:'sg_'+Date.now(),
+    activity,
+    type:searchActivityType(activity),
+    sequence:max+1,
+    createdAt:Date.now(),
+    createdByPlayerId:me.id,
+    leaderId:me.id,
+    memberIds:[],
+    slots:{tank:'',dps1:'',dps2:'',dps3:'',heal:''}
+  };
   const preferred=myPreferredSearchSlot(me.classId,g);
   if(!preferred)return showToast('Aucun slot compatible disponible');
   g.slots[preferred]=me.id;
@@ -644,7 +715,8 @@ function openSearchEventPlanner(groupId){
   const g=SEARCH_GROUPS.find(x=>x.id===groupId);
   if(!g)return;
   if(!canManageSearchGroup(g))return showToast('Seul le leader, le créateur ou un admin peut publier');
-  const members=searchGroupMembers(g);
+  const sanctuaryGroups=(g.activity==='Sanctuary'&&g.sanctuaryPairId)?SEARCH_GROUPS.filter(x=>x.sanctuaryPairId===g.sanctuaryPairId):[g];
+  const members=[...new Map(sanctuaryGroups.flatMap(x=>searchGroupMembers(x)).map(p=>[p.id,p])).values()];
   const tomorrow=new Date(Date.now()+86400000).toISOString().slice(0,10);
   overlay.innerHTML=`<div class="modal-backdrop"><div class="modal">
     <h3>Publier sur Discord</h3>
@@ -654,7 +726,7 @@ function openSearchEventPlanner(groupId){
       <div class="form-row"><label>Heure</label><input id="sgEventTime" type="time" value="20:30"></div>
     </div>
     <div class="form-row"><label>Note</label><input id="sgEventNote" placeholder="Optionnel"></div>
-    <div class="event-summary"><b>${esc(g.activity)}</b> · ${members.length}/5 joueurs<br>Composition : 1 Tank · 3 DPS · 1 Heal</div>
+    <div class="event-summary"><b>${esc(g.activity)}</b> · ${members.length}/${g.activity==='Sanctuary'?10:5} joueurs<br>${g.activity==='Sanctuary'?'2 groupes : chacun 1 Tank · 3 DPS · 1 Heal':'Composition : 1 Tank · 3 DPS · 1 Heal'}</div>
     <div class="modal-actions"><button class="btn" id="cancelSgEvent">Annuler</button><button class="btn primary" id="saveSgEvent">Publier sur Discord</button></div>
   </div></div>`;
   document.getElementById('cancelSgEvent').onclick=()=>overlay.innerHTML='';
@@ -668,6 +740,7 @@ function openSearchEventPlanner(groupId){
       id:'gev_'+Date.now(),
       source:'searchGroup',
       sourceGroupId:g.id,
+      sanctuaryPairId:g.sanctuaryPairId||'',
       groupId:g.id,
       groupName:g.activity,
       activity,
@@ -760,6 +833,42 @@ function renderFixedGroups(){
     </div>
     <div class="fixed-grid">${groups.map(fixedGroupCard).join('')||'<div class="panel" style="padding:22px;color:#8998b5">Aucun groupe STATIC.</div>'}</div>`;
 }
+
+function preferredOpenSlotForGroup(g,player){
+  if(!g||!player||!player.classId)return '';
+  normalizeSearchGroup(g);
+  const order=player.classId==='templar'?['tank']:
+    player.classId==='cleric'?['heal']:
+    player.classId==='gladiator'?['tank','dps1','dps2','dps3']:
+    player.classId==='chanter'?['heal','dps1','dps2','dps3']:
+    ['dps1','dps2','dps3'];
+  return order.find(k=>!g.slots[k] && classCanRole(player.classId,k==='tank'?'tank':k==='heal'?'heal':'dps'))||'';
+}
+
+function dashboardSearchAction(g){
+  const me=myPlayer();
+  if(!me)return '';
+  normalizeSearchGroup(g);
+  const mine=playerInSearchGroup(g,me.id);
+  if(mine)return `<button class="dashboard-join-btn leave" data-dashboard-leave-search="${g.id}">Se retirer</button>`;
+  const slot=preferredOpenSlotForGroup(g,me);
+  if(!slot)return `<button class="dashboard-join-btn" disabled>Complet / incompatible</button>`;
+  const def=fixedSlotDefs().find(d=>d.key===slot);
+  return `<button class="dashboard-join-btn" data-dashboard-join-search="${g.id}" data-dashboard-slot="${slot}">S’inscrire · ${esc(def?.label||'Slot')}</button>`;
+}
+
+function dashboardFixedAction(g){
+  const me=myPlayer();
+  if(!me)return '';
+  normalizeFixedGroup(g);
+  const mine=playerInFixedGroup(g,me.id);
+  if(mine)return `<button class="dashboard-join-btn leave" data-dashboard-leave-fixed="${g.id}">Se retirer</button>`;
+  const slot=preferredOpenSlotForGroup(g,me);
+  if(!slot)return `<button class="dashboard-join-btn" disabled>Complet / incompatible</button>`;
+  const def=fixedSlotDefs().find(d=>d.key===slot);
+  return `<button class="dashboard-join-btn" data-dashboard-join-fixed="${g.id}" data-dashboard-slot="${slot}">S’inscrire · ${esc(def?.label||'Slot')}</button>`;
+}
+
 function renderDashboard(){
   const total=PLAYERS.length,assigned=PLAYERS.filter(p=>p.classId).length,newc=PLAYERS.filter(p=>p.isNewPlayer).length;
   const roleCounts={Tank:0,Heal:0,DPS:0,Flex:0};
@@ -808,13 +917,13 @@ function renderDashboard(){
 
       <section class="card groups-card">
         <h3 class="card-title">${icon('swords','ui-icon')}RECHERCHES DE GROUPE</h3>
-        <div class="groups-scroll"><div class="groups-grid">${SEARCH_GROUPS.map(g=>{normalizeSearchGroup(g);const members=searchGroupMembers(g);return `<div class="group-tile"><span class="tag" style="border-color:${activityColor(g.activity)}88;color:${activityColor(g.activity)}">${activityTypeLabel(g.activity)}</span><div class="group-name">${esc(g.activity)}</div><div class="group-time">Recherche en cours</div><div class="avatar-stack">${members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div><div class="group-count">${members.length}/5 joueurs</div></div>`}).join('')||'<div class="group-count">Aucune recherche active.</div>'}</div></div>
+        <div class="groups-scroll"><div class="groups-grid">${SEARCH_GROUPS.map(g=>{normalizeSearchGroup(g);const members=searchGroupMembers(g);return `<div class="group-tile"><span class="tag" style="border-color:${activityColor(g.activity)}88;color:${activityColor(g.activity)}">${activityTypeLabel(g.activity)}</span><div class="group-name">${esc(g.activity)}${g.activity==='Sanctuary'&&g.subgroup?` · Groupe ${esc(g.subgroup)}`:''}</div><div class="group-time">Recherche en cours</div><div class="avatar-stack">${members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div><div class="group-count">${members.length}/5 joueurs</div><div class="dashboard-group-actions">${dashboardSearchAction(g)}</div></div>`}).join('')||'<div class="group-count">Aucune recherche active.</div>'}</div></div>
         <div class="view-all" data-tab="search-groups">Voir toutes les recherches ›</div>
       </section>
 
       <section class="card groups-card">
         <h3 class="card-title">${icon('swords','ui-icon')}GROUPES STATIC</h3>
-        <div class="groups-grid">${FIXED_GROUPS.slice(0,5).map(g=>{normalizeFixedGroup(g);const members=groupMembers(g),ev=latestGroupEvent(g.id);return `<div class="group-tile"><span class="tag">STATIC</span><div class="group-name">${esc(g.name)}</div><div class="group-time">${ev?esc(ev.activity)+' · '+esc(ev.date)+' · '+esc(ev.time):'Aucun événement planifié'}</div><div class="avatar-stack">${members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div><div class="group-count">${members.length}/5 joueurs</div></div>`}).join('')||'<div class="group-count">Aucun groupe STATIC créé.</div>'}</div></div>
+        <div class="groups-grid">${FIXED_GROUPS.map(g=>{normalizeFixedGroup(g);const members=groupMembers(g),ev=latestGroupEvent(g.id);return `<div class="group-tile"><span class="tag">STATIC</span><div class="group-name">${esc(g.name)}</div><div class="group-time">${ev?esc(ev.activity)+' · '+esc(ev.date)+' · '+esc(ev.time):'Aucun événement planifié'}</div><div class="avatar-stack">${members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div><div class="group-count">${members.length}/5 joueurs</div><div class="dashboard-group-actions">${dashboardFixedAction(g)}</div></div>`}).join('')||'<div class="group-count">Aucun groupe STATIC créé.</div>'}</div></div>
         <div class="view-all" data-tab="fixed-all">Voir tous les groupes ›</div>
       </section>
     </div>
@@ -841,6 +950,12 @@ function bind(){
   document.querySelectorAll('[data-leave-search]').forEach(b=>b.addEventListener('click',()=>leaveSearchGroup(b.dataset.leaveSearch)));
   document.querySelectorAll('[data-delete-search]').forEach(b=>b.addEventListener('click',()=>deleteSearchGroup(b.dataset.deleteSearch)));
   document.querySelectorAll('[data-publish-search]').forEach(b=>b.addEventListener('click',()=>openSearchEventPlanner(b.dataset.publishSearch)));
+
+  document.querySelectorAll('[data-dashboard-join-search]').forEach(b=>b.addEventListener('click',()=>joinSearchSlot(b.dataset.dashboardJoinSearch,b.dataset.dashboardSlot)));
+  document.querySelectorAll('[data-dashboard-leave-search]').forEach(b=>b.addEventListener('click',()=>leaveSearchGroup(b.dataset.dashboardLeaveSearch)));
+  document.querySelectorAll('[data-dashboard-join-fixed]').forEach(b=>b.addEventListener('click',()=>joinFixedSlot(b.dataset.dashboardJoinFixed,b.dataset.dashboardSlot)));
+  document.querySelectorAll('[data-dashboard-leave-fixed]').forEach(b=>b.addEventListener('click',()=>leaveFixedGroup(b.dataset.dashboardLeaveFixed)));
+
 }
 
 initAuth();
