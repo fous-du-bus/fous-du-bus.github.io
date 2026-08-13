@@ -2449,13 +2449,26 @@ const EN_TRANSLATIONS={
   'Plus':'More',
   'Recherche':'Search',
   'Rechercher un joueur…':'Search a player…',
-  'Tank':'Tank'
+  'Tank':'Tank',
+  'Joueurs non inscrits':'Unregistered players',
+  'Recherche en cours':'Search in progress',
+  'Se retirer':'Leave',
+  'Si la publication sur Discord échoue, mets ce site en liste blanche (uBlock, Brave Shields, AdGuard...) pour autoriser ses requêtes.':'If publishing to Discord fails, whitelist this site (uBlock, Brave Shields, AdGuard...) to allow its requests.',
+  'New':'New'
 };
 function translateTextToEnglish(text){
   const lead=text.match(/^\s*/)?.[0]||'',trail=text.match(/\s*$/)?.[0]||'',core=text.trim();
   if(!core)return text;
   if(EN_TRANSLATIONS[core])return lead+EN_TRANSLATIONS[core]+trail;
-  const rules=[[/^(\d+) profils complétés$/,'$1 completed profiles'],[/^(\d+) joueur\(s\)$/,'$1 player(s)'],[/^(\d+) joueurs$/,'$1 players'],[/^(\d+) joueur$/,'$1 player'],[/^Groupe supprimé$/,'Group deleted'],[/^Membre ajouté au groupe$/,'Member added to group'],[/^Emplacement libéré$/,'Slot cleared']];
+  const lowerCore=core.toLowerCase();
+  for(const key in EN_TRANSLATIONS){
+    if(key.toLowerCase()===lowerCore){
+      let translated=EN_TRANSLATIONS[key];
+      if(core===core.toUpperCase()&&core!==core.toLowerCase())translated=translated.toUpperCase();
+      return lead+translated+trail;
+    }
+  }
+  const rules=[[/^(\d+) profils complétés$/,'$1 completed profiles'],[/^(\d+) joueur\(s\)$/,'$1 player(s)'],[/^(\d+)\/(\d+) joueurs$/,'$1/$2 players'],[/^(\d+) joueurs$/,'$1 players'],[/^(\d+) joueur$/,'$1 player'],[/^Groupe supprimé$/,'Group deleted'],[/^Membre ajouté au groupe$/,'Member added to group'],[/^Emplacement libéré$/,'Slot cleared']];
   for(const [pattern,replacement] of rules)if(pattern.test(core))return lead+core.replace(pattern,replacement)+trail;
   return text;
 }
