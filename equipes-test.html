@@ -114,6 +114,24 @@ body{background:
 
 /* ===== COMPOSITEUR DE GROUPE — cartes joueurs ===== */
 .group-builder-modal{width:min(1280px,96vw);max-height:92vh;overflow:auto}.builder-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.builder-name{font-family:Cinzel,serif;font-size:17px;font-weight:700;background:transparent;border:0;border-bottom:1px dashed rgba(105,145,215,.28);color:#f3f6ff;padding:5px 2px;min-width:220px;outline:none}.builder-actions{display:flex;gap:8px;flex-wrap:wrap}.builder-meta{display:grid;grid-template-columns:140px 1fr 1fr 180px;gap:8px;margin-bottom:12px}.builder-meta .form-row{margin:0}.builder-meta input,.builder-meta select{height:38px}.builder-rule{font-size:10px;color:#8393b2;margin:0 0 10px;padding:9px 11px;border:1px solid rgba(72,124,205,.18);border-radius:9px;background:rgba(8,20,42,.65)}.builder-slots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.builder-slot{min-width:0;min-height:192px;border:1px dashed rgba(89,126,193,.28);background:linear-gradient(180deg,rgba(9,23,48,.86),rgba(6,17,36,.82));border-radius:14px;padding:12px;position:relative;overflow:hidden}.builder-slot.filled{border-style:solid;border-color:var(--slot-border,rgba(86,134,220,.45));background:radial-gradient(180px 120px at 80% 70%,var(--slot-glow,rgba(22,139,255,.12)),transparent 70%),linear-gradient(180deg,rgba(12,27,54,.95),rgba(7,18,38,.96))}.builder-slot-role{position:absolute;top:10px;right:10px;font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8090ad}.builder-player-top{display:flex;align-items:center;gap:8px;min-width:0;padding-right:52px}.builder-avatar{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid rgba(128,161,220,.55);background:#14233c;flex:none}.builder-player-copy{min-width:0}.builder-player-name{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.builder-player-discord{font-size:9px;color:#7e8da9;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.builder-class-pill{display:inline-flex;align-items:center;gap:5px;margin-top:11px;border:1px solid var(--cc,#168bff);background:color-mix(in srgb,var(--cc,#168bff) 14%,transparent);color:#dbe7ff;border-radius:999px;padding:4px 8px;font-size:9px;font-weight:600}.builder-class-pill img{width:15px;height:15px;object-fit:contain}.builder-emblem{position:absolute;right:8px;bottom:10px;width:104px;height:104px;object-fit:contain;filter:drop-shadow(0 7px 18px rgba(0,0,0,.35));opacity:.98}.builder-remove{position:absolute;left:12px;bottom:12px;border:1px solid rgba(255,77,103,.45);background:rgba(255,77,103,.09);color:#ff7588;border-radius:8px;padding:7px 11px;font-size:10px;font-weight:700;cursor:pointer;z-index:2}.builder-empty{height:100%;min-height:166px;display:flex;flex-direction:column;justify-content:center;gap:9px}.builder-empty-icon{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;margin:0 auto;color:#657694;border:1px dashed rgba(106,145,209,.32);font-size:20px}.builder-empty select{width:100%;background:#07162d;border:1px solid rgba(94,132,194,.34);color:#f3f6ff;border-radius:8px;padding:9px 8px;font-size:10px;outline:none}.builder-count{text-align:center;color:#8190ab;font-size:10px;margin:11px 0 3px}.builder-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)}.builder-warning{font-size:10px;color:#ff9b6b;min-height:14px}.builder-save{display:flex;gap:8px;margin-left:auto}@media(max-width:1100px){.builder-slots{grid-template-columns:repeat(2,1fr)}.builder-meta{grid-template-columns:1fr 1fr}}@media(max-width:650px){.builder-slots,.builder-meta{grid-template-columns:1fr}.builder-head,.builder-footer{align-items:stretch;flex-direction:column}.builder-save{margin-left:0}.builder-save .btn{flex:1}}
+
+/* ===== STATIC GROUPS / DISCORD EVENT PLANNER ===== */
+.fixed-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.fixed-leader-btn{border:0;background:transparent;color:#f2c15c;padding:0;cursor:pointer;font:inherit;display:inline-flex;align-items:center;gap:5px}
+.fixed-leader-btn:hover{color:#ffe39a;text-decoration:underline;text-underline-offset:3px}
+.fixed-leader-btn:disabled{cursor:default;color:#8d99b1;text-decoration:none}
+.fixed-publish{border-color:rgba(88,101,242,.55)!important;background:rgba(88,101,242,.12)!important;color:#b8c0ff!important}
+.fixed-publish:hover{background:rgba(88,101,242,.22)!important;border-color:#7289ff!important}
+.fixed-type.static{color:#69d7ff;border-color:rgba(22,139,255,.42);background:rgba(22,139,255,.12);letter-spacing:.08em}
+.event-plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.event-kind-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+.event-kind{border:1px solid rgba(95,132,198,.32);background:#07162d;color:#c8d5ec;border-radius:9px;padding:10px 8px;cursor:pointer;text-align:center;font-size:11px}
+.event-kind.active{border-color:#168bff;background:rgba(22,139,255,.16);color:#fff;box-shadow:0 0 0 1px rgba(22,139,255,.12) inset}
+.event-summary{margin-top:12px;padding:11px 12px;border:1px solid rgba(95,132,198,.22);border-radius:9px;background:rgba(5,15,32,.75);font-size:11px;color:#99aac8;line-height:1.55}
+.event-summary b{color:#eef4ff}
+.planned-chip{display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:4px 8px;border:1px solid rgba(118,87,255,.35);border-radius:999px;background:rgba(118,87,255,.1);color:#c8baff;font-size:9px}
+@media(max-width:620px){.event-plan-grid{grid-template-columns:1fr}.event-kind-grid{grid-template-columns:repeat(2,1fr)}}
+
 </style>
 </head>
 <body><div id="app"></div><div id="overlay"></div><div id="toast"></div>
@@ -195,5 +213,131 @@ function render(){let content;if(ACTIVE==='dashboard')content=renderDashboard();
 function bind(){document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{ACTIVE=b.dataset.tab;render()}));document.getElementById('previewBtn')?.addEventListener('click',()=>{PREVIEW_AS_MEMBER=!PREVIEW_AS_MEMBER;render()});document.getElementById('logoutBtn')?.addEventListener('click',logout);document.getElementById('addPlayerBtn')?.addEventListener('click',()=>openPlayerModal());document.querySelectorAll('[data-edit-player]').forEach(b=>b.addEventListener('click',()=>openPlayerModal(b.dataset.editPlayer)));document.querySelectorAll('[data-delete-player]').forEach(b=>b.addEventListener('click',()=>deletePlayer(b.dataset.deletePlayer)));document.getElementById('addFixedBtn')?.addEventListener('click',e=>createFixedGroupInstant(e.currentTarget.dataset.fixedType|| (ACTIVE==='fixed-pvp'?'pvp':'pve')));document.querySelectorAll('[data-edit-fixed]').forEach(b=>b.addEventListener('click',()=>openFixedGroupModal(b.dataset.editFixed)));document.querySelectorAll('[data-delete-fixed]').forEach(b=>b.addEventListener('click',()=>deleteFixedGroup(b.dataset.deleteFixed)));document.querySelectorAll('[data-join-fixed]').forEach(b=>b.addEventListener('click',()=>joinFixedSlot(b.dataset.joinFixed,b.dataset.slot)));document.querySelectorAll('[data-leave-fixed]').forEach(b=>b.addEventListener('click',()=>leaveFixedGroup(b.dataset.leaveFixed)))}
 function openPlayerModal(id=''){let p=id?PLAYERS.find(x=>x.id===id):null;if(!p) p={id:'p_'+Date.now(),pseudo:'',classId:'',secondaryClassId:'',isNewPlayer:true};const own=discordUser&&p.discordId===discordUser.id;if(id&&!(IS_ADMIN&&!PREVIEW_AS_MEMBER)&&!own)return;overlay.innerHTML=`<div class="modal-backdrop"><div class="modal"><h3>${id?'Modifier le personnage':'Nouveau personnage'}</h3><div class="form-row"><label>Pseudo en jeu</label><input id="fPseudo" value="${esc(p.pseudo||p.serverName||'')}"></div><div class="form-row"><label>Classe principale</label><select id="fClass"><option value="">-- Choisir --</option>${CLASSES.map(c=>`<option value="${c.id}" ${p.classId===c.id?'selected':''}>${esc(c.name)} — ${esc(c.role)}</option>`).join('')}</select></div><div class="form-row"><label>Classe secondaire (facultatif)</label><select id="fSecondary"><option value="">Aucune</option>${CLASSES.map(c=>`<option value="${c.id}" ${p.secondaryClassId===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div><div class="form-row"><label>Statut</label><select id="fStatus"><option value="new" ${p.isNewPlayer?'selected':''}>Nouveau joueur</option><option value="experienced" ${!p.isNewPlayer?'selected':''}>Joueur expérimenté</option></select></div><div class="modal-actions"><button class="btn" id="cancelModal">Annuler</button><button class="btn primary" id="saveModal">Enregistrer</button></div></div></div>`;document.getElementById('cancelModal').onclick=()=>overlay.innerHTML='';document.getElementById('saveModal').onclick=async()=>{const pseudo=document.getElementById('fPseudo').value.trim();if(!pseudo)return; if(!id)PLAYERS.push(p);p.pseudo=pseudo;p.classId=document.getElementById('fClass').value;p.secondaryClassId=document.getElementById('fSecondary').value;p.isNewPlayer=document.getElementById('fStatus').value==='new';await saveData();overlay.innerHTML='';showToast('Profil enregistré');render()}}
 async function deletePlayer(id){if(!(IS_ADMIN&&!PREVIEW_AS_MEMBER))return;const p=PLAYERS.find(x=>x.id===id);if(!p||!confirm(`Supprimer ${playerName(p)} ?`))return;PLAYERS=PLAYERS.filter(x=>x.id!==id);await saveData();showToast('Joueur supprimé');render()}
+
+/* ===== Simplified STATIC groups + group event planning ===== */
+let PLANNED_EVENTS=[];
+const STATIC_EVENT_TYPES=['Expéditions','Transcendances','Sanctuary','Rift','Abysse','Arena'];
+const DISCORD_GROUP_EVENT_WEBHOOK_URL='https://discord.com/api/webhooks/1536673660251668574/AyuydDHDwmxBfpsdu0ZATHAPB7b0VIAbWNLr0onaFBMjgsdyrPC5i3_C2tqIhe887VgP';
+
+async function loadData(){
+  const snap=await docRef.get();
+  if(snap.exists){
+    const d=snap.data();
+    PLAYERS=Array.isArray(d.players)?d.players:[];
+    FIXED_GROUPS=Array.isArray(d.fixedGroups)?d.fixedGroups:[];
+    PLANNED_EVENTS=Array.isArray(d.plannedEvents)?d.plannedEvents:[];
+    if(Array.isArray(d.classes)&&d.classes.length)CLASSES=d.classes;
+  }
+}
+function saveData(){
+  return docRef.set({players:PLAYERS,classes:CLASSES,fixedGroups:FIXED_GROUPS,plannedEvents:PLANNED_EVENTS},{merge:true})
+}
+function latestGroupEvent(groupId){
+  const now=Date.now();
+  return PLANNED_EVENTS.filter(e=>e.groupId===groupId && new Date(`${e.date}T${e.time||'00:00'}`).getTime()>=now)
+    .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time))[0]||null;
+}
+async function claimOrChangeLeader(groupId){
+  const g=FIXED_GROUPS.find(x=>x.id===groupId); if(!g)return;
+  normalizeFixedGroup(g);
+  const me=myPlayer(); const members=groupMembers(g);
+  const isAdmin=IS_ADMIN&&!PREVIEW_AS_MEMBER;
+  if(!members.length)return showToast('Le groupe doit avoir au moins un membre avant de définir un leader');
+  if(isAdmin){
+    const opts=members.map(p=>`<option value="${p.id}" ${g.leaderId===p.id?'selected':''}>${esc(playerName(p))}</option>`).join('');
+    overlay.innerHTML=`<div class="modal-backdrop"><div class="modal"><h3>Définir le leader</h3><div class="form-row"><label>Leader du groupe</label><select id="leaderPick"><option value="">-- Aucun --</option>${opts}</select></div><div class="modal-actions"><button class="btn" id="leaderCancel">Annuler</button><button class="btn primary" id="leaderSave">Enregistrer</button></div></div></div>`;
+    document.getElementById('leaderCancel').onclick=()=>overlay.innerHTML='';
+    document.getElementById('leaderSave').onclick=async()=>{g.leaderId=document.getElementById('leaderPick').value||'';await saveData();overlay.innerHTML='';showToast('Leader mis à jour');render()};
+    return;
+  }
+  if(!me || !playerInFixedGroup(g,me.id))return showToast('Inscris-toi dans le groupe avant de devenir leader');
+  if(!g.leaderId){g.leaderId=me.id;await saveData();showToast('Tu es maintenant leader du groupe');render();return}
+  if(g.leaderId===me.id){g.leaderId='';await saveData();showToast('Tu as libéré le rôle de leader');render();return}
+  showToast('Un leader est déjà défini pour ce groupe');
+}
+function canPublishGroupEvent(g){
+  const me=myPlayer();
+  return !!((IS_ADMIN&&!PREVIEW_AS_MEMBER)||(me&&g.leaderId===me.id));
+}
+function openGroupEventPlanner(groupId){
+  const g=FIXED_GROUPS.find(x=>x.id===groupId); if(!g)return;
+  if(!canPublishGroupEvent(g))return showToast('Seul le leader du groupe ou un admin peut planifier un événement');
+  normalizeFixedGroup(g);
+  let selected=STATIC_EVENT_TYPES[0];
+  const tomorrow=new Date(Date.now()+86400000); const dateDefault=tomorrow.toISOString().slice(0,10);
+  const draw=()=>{
+    const members=groupMembers(g);
+    overlay.innerHTML=`<div class="modal-backdrop"><div class="modal"><h3>Planifier pour ${esc(g.name)}</h3>
+      <div class="form-row"><label>Activité</label><div class="event-kind-grid">${STATIC_EVENT_TYPES.map(t=>`<button type="button" class="event-kind ${t===selected?'active':''}" data-event-kind="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>
+      <div class="event-plan-grid"><div class="form-row"><label>Date</label><input type="date" id="eventDate" value="${dateDefault}"></div><div class="form-row"><label>Heure</label><input type="time" id="eventTime" value="20:30"></div></div>
+      <div class="form-row"><label>Note (facultatif)</label><input id="eventNote" placeholder="Ex : objectif, prérequis, rendez-vous..."></div>
+      <div class="event-summary"><b>${esc(g.name)}</b> · STATIC · ${members.length}/5 joueurs<br>Composition : 1 Tank · 3 DPS · 1 Heal<br>L'annonce Discord contiendra la composition actuelle du groupe.</div>
+      <div class="modal-actions"><button class="btn" id="eventCancel">Annuler</button><button class="btn primary" id="eventPublish">Publier sur Discord</button></div>
+    </div></div>`;
+    document.querySelectorAll('[data-event-kind]').forEach(b=>b.onclick=()=>{selected=b.dataset.eventKind;draw()});
+    document.getElementById('eventCancel').onclick=()=>overlay.innerHTML='';
+    document.getElementById('eventPublish').onclick=async()=>{
+      const date=document.getElementById('eventDate').value, time=document.getElementById('eventTime').value, note=document.getElementById('eventNote').value.trim();
+      if(!date||!time)return showToast('Choisis une date et une heure');
+      const ev={id:'gev_'+Date.now(),groupId:g.id,groupName:g.name,activity:selected,date,time,note,createdAt:Date.now(),createdBy:discordUser?.id||'',status:'planned'};
+      PLANNED_EVENTS.push(ev); await saveData();
+      const status=await postGroupEventToDiscord(g,ev);
+      overlay.innerHTML=''; render();
+      showToast(status==='posted'?'Événement planifié et publié sur Discord':'Événement planifié dans MCM — publication Discord à vérifier');
+    };
+  };
+  draw();
+}
+async function postGroupEventToDiscord(g,ev){
+  if(!DISCORD_GROUP_EVENT_WEBHOOK_URL)return 'not_configured';
+  const leader=PLAYERS.find(p=>p.id===g.leaderId); const members=groupMembers(g);
+  const roster=fixedSlotDefs().map(d=>{const p=PLAYERS.find(x=>x.id===g.slots[d.key]); const c=p?cls(p.classId):null; return `${d.icon} **${d.label}** : ${p?playerName(p)+' ('+(c?.name||'')+')':'Libre'}`;}).join('\n');
+  const timestamp=new Date(`${ev.date}T${ev.time}`).toISOString();
+  const payload={username:'MCM · MMO Connect Manager',embeds:[{
+    title:`📅 ${ev.activity} — ${g.name}`,
+    description:`**STATIC · ${members.length}/5**\n\n${roster}${ev.note?`\n\n📝 ${ev.note}`:''}`,
+    color:g.type==='pvp'?0xff4d67:0x168bff,
+    fields:[{name:'👑 Leader',value:leader?playerName(leader):'À définir',inline:true},{name:'🗓️ Date',value:ev.date,inline:true},{name:'🕒 Heure',value:ev.time,inline:true}],
+    timestamp,
+    footer:{text:'MCM · MMO Connect Manager'}
+  }]};
+  try{
+    const fd=new FormData(); fd.append('payload_json',JSON.stringify(payload));
+    await fetch(DISCORD_GROUP_EVENT_WEBHOOK_URL,{method:'POST',mode:'no-cors',body:fd});
+    return 'posted';
+  }catch(e){console.error('Discord publish failed',e);return 'error'}
+}
+function fixedGroupCard(g){
+  normalizeFixedGroup(g);
+  const members=groupMembers(g),leader=PLAYERS.find(p=>p.id===g.leaderId),gc=g.type==='pvp'?'#ff4d67':'#168bff',me=myPlayer();
+  const leaderInteractive=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||(me&&playerInFixedGroup(g,me.id));
+  const event=latestGroupEvent(g.id);
+  return `<article class="panel fixed-card" style="--gc:${gc}"><div class="fixed-head"><div><span class="fixed-type static">STATIC</span><div class="fixed-name">${esc(g.name)}</div><div class="fixed-meta"><button class="fixed-leader-btn" data-leader-fixed="${g.id}" ${leaderInteractive?'':'disabled'} title="${leaderInteractive?'Définir le leader':'Inscris-toi dans le groupe pour devenir leader'}">👑 ${esc(leader?playerName(leader):'Leader à définir')}</button><span>👥 ${members.length}/5</span></div>${event?`<span class="planned-chip">📅 ${esc(event.activity)} · ${esc(event.date)} · ${esc(event.time)}</span>`:''}</div><div class="fixed-actions">${canPublishGroupEvent(g)?`<button class="btn fixed-publish" data-publish-fixed="${g.id}">${icon('calendar','ui-icon')} Publier sur Discord</button>`:''}${IS_ADMIN&&!PREVIEW_AS_MEMBER?`<button class="btn danger" data-delete-fixed="${g.id}">${icon('trash','ui-icon')}</button>`:''}</div></div><div class="fixed-roster"><div class="fixed-roster-head"><span>Composition obligatoire</span><span>${members.length}/5</span></div><div class="fixed-slots">${fixedSlotDefs().map(d=>fixedSlotHtml(g,d)).join('')}</div></div></article>`
+}
+function renderFixedGroups(type='all'){
+  const groups=(type==='all'?FIXED_GROUPS:FIXED_GROUPS.filter(g=>g.type===type)).map(normalizeFixedGroup);
+  const title=type==='pvp'?'Groupes STATIC PvP':type==='pve'?'Groupes STATIC PvE':'Tous les groupes STATIC';
+  const sub='Groupes de 5 : 1 Tank · 3 DPS · 1 Heal. Les membres choisissent directement leur slot.';
+  return `${hero(title.toUpperCase(),sub)}<div class="fixed-toolbar"><div><h2>${title}</h2><p>${sub}</p></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div class="fixed-tabs"><button class="fixed-tab ${type==='pve'?'active':''}" data-tab="fixed-pve">PvE</button><button class="fixed-tab ${type==='pvp'?'active':''}" data-tab="fixed-pvp">PvP</button><button class="fixed-tab ${type==='all'?'active':''}" data-tab="fixed-all">Tous</button></div>${IS_ADMIN&&!PREVIEW_AS_MEMBER?`<button class="btn primary" id="addFixedBtn" data-fixed-type="${type==='pvp'?'pvp':'pve'}">${icon('plus','ui-icon')}Créer un groupe</button>`:''}</div></div><div class="fixed-grid">${groups.map(fixedGroupCard).join('')||'<div class="panel" style="padding:22px;color:#8998b5">Aucun groupe STATIC dans cette catégorie.</div>'}</div>`
+}
+function renderDashboard(){
+  const total=PLAYERS.length, assigned=PLAYERS.filter(p=>p.classId).length, newc=PLAYERS.filter(p=>p.isNewPlayer).length;const roleCounts={Tank:0,Heal:0,DPS:0,Flex:0};PLAYERS.forEach(p=>{const c=cls(p.classId);if(c&&roleCounts[c.role]!=null)roleCounts[c.role]++});const activePct=total?Math.round(assigned/total*100):0,newPct=total?Math.round(newc/total*100):0,otherPct=Math.max(0,100-activePct-newPct);const recent=PLAYERS.slice(-5).reverse();
+  return `${hero()}<div class="content-wrap"><div class="stats"><div class="metric blue"><div class="metric-icon">${icon('users','ui-icon')}</div><div><div class="metric-value">${total}</div><div class="metric-label">MEMBRES ACTIFS</div><div class="metric-note good">${assigned} profils complétés</div></div></div><div class="metric violet"><div class="metric-icon">${icon('shield','ui-icon')}</div><div><div class="metric-value">${CLASSES.length}</div><div class="metric-label">CLASSES DISPONIBLES</div><div class="metric-note">Système Aion 2</div></div></div><div class="metric green"><div class="metric-icon">${icon('swords','ui-icon')}</div><div><div class="metric-value">${FIXED_GROUPS.length}</div><div class="metric-label">GROUPES STATIC</div><div class="metric-note good">${FIXED_GROUPS.filter(g=>g.type==='pve').length} PvE · ${FIXED_GROUPS.filter(g=>g.type==='pvp').length} PvP</div></div></div><div class="metric gold"><div class="metric-icon">${icon('calendar','ui-icon')}</div><div><div class="metric-value">${PLANNED_EVENTS.length}</div><div class="metric-label">ÉVÉNEMENTS PLANIFIÉS</div><div class="metric-note">Depuis les groupes STATIC</div></div></div></div><div class="main-grid"><section class="card card-pad"><h3 class="card-title">${icon('dashboard','ui-icon')}ACTIVITÉ RÉCENTE</h3><div class="activity-list">${recent.length?recent.map((p,i)=>`<div class="activity-row"><div class="act-ico">+</div><div><div class="act-main"><strong>${esc(playerName(p))}</strong> ${p.classId?'a configuré son personnage':'a rejoint MCM'}</div><div class="act-sub">${p.classId?esc(cls(p.classId)?.name||'Classe'):'Profil Discord'}</div></div><div class="act-time">${i?'Récent':'Maintenant'}</div></div>`).join(''):'<div class="act-sub">Aucune activité récente.</div>'}</div><div class="card-footer" data-tab="players">Voir toute l’activité ›</div></section><section class="card members-card"><h3 class="card-title">${icon('users','ui-icon')}APERÇU DES MEMBRES</h3><div class="members-top"><div class="donut" style="--a:${activePct}%;--b:${Math.min(100,activePct+newPct)}%"><div class="donut-inner"><div><b>${total}</b><span>Total</span></div></div></div><div class="legend"><div class="legend-row"><span class="dot" style="background:#00d99f"></span><span>Classe définie</span><b>${assigned}</b></div><div class="legend-row"><span class="dot" style="background:#f0a641"></span><span>Nouveaux</span><b>${newc}</b></div><div class="legend-row"><span class="dot" style="background:#7657ff"></span><span>À compléter</span><b>${Math.max(0,total-assigned)}</b></div></div></div><div class="split-title">RÉPARTITION PAR RÔLE</div><div class="role-grid">${[['Tank','🛡'],['Heal','✚'],['DPS','➶'],['Flex','♟']].map(([r,s])=>`<div class="role-item"><div class="role-icon">${s}</div><div class="role-count">${roleCounts[r]||0}</div><div class="role-name">${r==='Heal'?'Soigneurs':r==='Flex'?'Supports':r+'s'}</div></div>`).join('')}</div><div class="card-footer" data-tab="players">Voir tous les joueurs ›</div></section><section class="card events-card"><h3 class="card-title">${icon('calendar','ui-icon')}ÉVÉNEMENTS À VENIR <span style="margin-left:auto;color:#56a9ff;font-family:Inter;font-size:10px">Voir tout</span></h3>${PLANNED_EVENTS.slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).slice(0,5).map((e,i)=>`<div class="event-row"><div class="event-icon">${['⚔','✦','⛨','◈','⌁','◎'][STATIC_EVENT_TYPES.indexOf(e.activity)%6]||'📅'}</div><div><div class="event-title">${esc(e.activity)} · ${esc(e.groupName)}</div><div class="event-sub">STATIC · ${esc(e.time)}</div></div><div class="event-date">${new Date(e.date+'T00:00').toLocaleDateString('fr-FR',{weekday:'short'}).replace('.','').toUpperCase()}<b>${e.date.slice(-2)}</b>${new Date(e.date+'T00:00').toLocaleDateString('fr-FR',{month:'short'})}</div></div>`).join('')||'<div class="act-sub">Aucun événement planifié.</div>'}<div class="card-footer">Événements des groupes STATIC</div></section><section class="card groups-card"><h3 class="card-title">${icon('swords','ui-icon')}GROUPES STATIC</h3><div class="groups-grid">${FIXED_GROUPS.slice(0,5).map(g=>{normalizeFixedGroup(g);const members=groupMembers(g),ev=latestGroupEvent(g.id);return `<div class="group-tile"><span class="tag">STATIC</span><div class="group-name">${esc(g.name)}</div><div class="group-time">${ev?esc(ev.activity)+' · '+esc(ev.date)+' · '+esc(ev.time):'Aucun événement planifié'}</div><div class="avatar-stack">${members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div><div class="group-count">${members.length}/5 joueurs</div></div>`}).join('')||'<div class="group-count">Aucun groupe STATIC créé.</div>'}</div><div class="view-all" data-tab="fixed-all">Voir tous les groupes ›</div></section></div></div>`
+}
+function bind(){
+  document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{ACTIVE=b.dataset.tab;render()}));
+  document.getElementById('previewBtn')?.addEventListener('click',()=>{PREVIEW_AS_MEMBER=!PREVIEW_AS_MEMBER;render()});
+  document.getElementById('logoutBtn')?.addEventListener('click',logout);
+  document.getElementById('addPlayerBtn')?.addEventListener('click',()=>openPlayerModal());
+  document.querySelectorAll('[data-edit-player]').forEach(b=>b.addEventListener('click',()=>openPlayerModal(b.dataset.editPlayer)));
+  document.querySelectorAll('[data-delete-player]').forEach(b=>b.addEventListener('click',()=>deletePlayer(b.dataset.deletePlayer)));
+  document.getElementById('addFixedBtn')?.addEventListener('click',e=>createFixedGroupInstant(e.currentTarget.dataset.fixedType||(ACTIVE==='fixed-pvp'?'pvp':'pve')));
+  document.querySelectorAll('[data-delete-fixed]').forEach(b=>b.addEventListener('click',()=>deleteFixedGroup(b.dataset.deleteFixed)));
+  document.querySelectorAll('[data-join-fixed]').forEach(b=>b.addEventListener('click',()=>joinFixedSlot(b.dataset.joinFixed,b.dataset.slot)));
+  document.querySelectorAll('[data-leave-fixed]').forEach(b=>b.addEventListener('click',()=>leaveFixedGroup(b.dataset.leaveFixed)));
+  document.querySelectorAll('[data-leader-fixed]').forEach(b=>b.addEventListener('click',()=>{if(!b.disabled)claimOrChangeLeader(b.dataset.leaderFixed)}));
+  document.querySelectorAll('[data-publish-fixed]').forEach(b=>b.addEventListener('click',()=>openGroupEventPlanner(b.dataset.publishFixed)));
+}
+
 initAuth();
 </script></body></html>
