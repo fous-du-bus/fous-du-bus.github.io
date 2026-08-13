@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- MCM BUILD 2026-08-13-1153 V2-FIX-ACTIVITIES -->
+<!-- MCM BUILD 2026-08-13 V2-RENDER-DEFINITIF -->
 <title>MCM — MMO Connect Manager</title>
 <link rel="apple-touch-icon" href="./icon-192.png">
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -606,8 +606,8 @@ function normalizeFixedGroup(g){g.maxMembers=5;if(!g.slots)g.slots={tank:'',dps1
 function groupMembers(g){normalizeFixedGroup(g);return fixedSlotDefs().map(d=>PLAYERS.find(p=>p.id===g.slots[d.key])).filter(Boolean)}
 function myPlayer(){return PLAYERS.find(p=>discordUser&&p.discordId===discordUser.id)||null}
 function playerInFixedGroup(g,playerId){normalizeFixedGroup(g);return fixedSlotDefs().some(d=>g.slots[d.key]===playerId)}
-async function joinFixedSlot(groupId,slotKey){const g=FIXED_GROUPS.find(x=>x.id===groupId);const def=fixedSlotDefs().find(d=>d.key===slotKey);const me=myPlayer();if(!g||!def||!me)return showToast('Profil joueur introuvable');normalizeFixedGroup(g);if(!me.classId)return showToast('Choisis d’abord ta classe dans ton profil');if(playerInFixedGroup(g,me.id))return showToast('Tu es déjà inscrit dans ce groupe');if(g.slots[slotKey])return showToast('Ce slot est déjà occupé');if(!classCanRole(me.classId,def.role))return showToast(`Ta classe ne peut pas occuper le rôle ${def.label}`);g.slots[slotKey]=me.id;g.memberIds=fixedSlotDefs().map(d=>g.slots[d.key]).filter(Boolean);if(!g.leaderId)g.leaderId=me.id;await saveData();showToast(`Inscrit en ${def.label}`);render()}
-async function leaveFixedGroup(groupId){const g=FIXED_GROUPS.find(x=>x.id===groupId),me=myPlayer();if(!g||!me)return;normalizeFixedGroup(g);let removed=false;for(const d of fixedSlotDefs()){if(g.slots[d.key]===me.id){g.slots[d.key]='';removed=true}}if(!removed)return showToast('Tu ne fais pas partie de ce groupe');g.memberIds=fixedSlotDefs().map(d=>g.slots[d.key]).filter(Boolean);if(g.leaderId===me.id)g.leaderId='';await saveData();showToast('Tu as quitté le groupe');render()}
+async function joinFixedSlot(groupId,slotKey){const g=FIXED_GROUPS.find(x=>x.id===groupId);const def=fixedSlotDefs().find(d=>d.key===slotKey);const me=myPlayer();if(!g||!def||!me)return showToast('Profil joueur introuvable');normalizeFixedGroup(g);if(!me.classId)return showToast('Choisis d’abord ta classe dans ton profil');if(playerInFixedGroup(g,me.id))return showToast('Tu es déjà inscrit dans ce groupe');if(g.slots[slotKey])return showToast('Ce slot est déjà occupé');if(!classCanRole(me.classId,def.role))return showToast(`Ta classe ne peut pas occuper le rôle ${def.label}`);g.slots[slotKey]=me.id;g.memberIds=fixedSlotDefs().map(d=>g.slots[d.key]).filter(Boolean);if(!g.leaderId)g.leaderId=me.id;await saveData();showToast(`Inscrit en ${def.label}`);window.MCM_RENDER()}
+async function leaveFixedGroup(groupId){const g=FIXED_GROUPS.find(x=>x.id===groupId),me=myPlayer();if(!g||!me)return;normalizeFixedGroup(g);let removed=false;for(const d of fixedSlotDefs()){if(g.slots[d.key]===me.id){g.slots[d.key]='';removed=true}}if(!removed)return showToast('Tu ne fais pas partie de ce groupe');g.memberIds=fixedSlotDefs().map(d=>g.slots[d.key]).filter(Boolean);if(g.leaderId===me.id)g.leaderId='';await saveData();showToast('Tu as quitté le groupe');window.MCM_RENDER()}
 function roleEligiblePlayers(role,currentGroup,slotKey){normalizeFixedGroup(currentGroup);const used=new Set(fixedSlotDefs().filter(d=>d.key!==slotKey).map(d=>currentGroup.slots[d.key]).filter(Boolean));return PLAYERS.filter(p=>classCanRole(p.classId,role)&&!used.has(p.id))}
 function fixedSlotHtml(g,d){normalizeFixedGroup(g);const p=PLAYERS.find(x=>x.id===g.slots[d.key]),c=p?cls(p.classId):null,me=myPlayer(),isMine=!!(p&&me&&p.id===me.id),alreadyIn=!!(me&&playerInFixedGroup(g,me.id)),canJoin=!!(!p&&me&&!alreadyIn&&me.classId&&classCanRole(me.classId,d.role));const attrs=isMine?` data-leave-fixed="${g.id}" title="Cliquer pour se retirer"`:canJoin?` data-join-fixed="${g.id}" data-slot="${d.key}" title="Cliquer pour s'inscrire"`:'';const stateClass=isMine?' mine':canJoin?' joinable':'';return `<div class="fixed-slot ${d.role}${stateClass}"${attrs}><div class="fixed-slot-role">${d.icon} ${d.label}</div>${p?`${p.discordAvatar?`<img class="fixed-slot-avatar" src="${esc(p.discordAvatar)}" alt="">`:`<span class="fixed-slot-avatar avatar-fallback">${esc(playerName(p).slice(0,2).toUpperCase())}</span>`}<div class="fixed-slot-name" title="${esc(playerName(p))}">${esc(playerName(p))}</div>${c?`<img class="fixed-slot-class" src="${c.icon}" title="${esc(c.name)}" alt="">`:''}<div class="fixed-slot-status">${isMine?'Cliquer pour se retirer':'Occupé'}</div>`:`<div class="fixed-slot-empty">+</div><div class="fixed-slot-name">Libre</div><div class="fixed-slot-status">${canJoin?'Cliquer pour s’inscrire':alreadyIn?'Déjà inscrit':me?.classId?'Classe incompatible':'Classe requise'}</div>`}</div>`}
 function fixedGroupCard(g){normalizeFixedGroup(g);const members=groupMembers(g),leader=PLAYERS.find(p=>p.id===g.leaderId),gc=g.type==='pvp'?'#ff4d67':'#168bff';return `<article class="panel fixed-card" style="--gc:${gc}"><div class="fixed-head"><div><span class="fixed-type">${g.type==='pvp'?'PVP FIXE':'PVE FIXE'}</span><div class="fixed-name">${esc(g.name)}</div><div class="fixed-meta"><span>👑 ${esc(leader?playerName(leader):'Leader à définir')}</span><span>🕒 ${esc(g.schedule||'Horaire à définir')}</span><span>👥 ${members.length}/5</span></div></div>${IS_ADMIN&&!PREVIEW_AS_MEMBER?`<div class="fixed-actions"><button class="btn ghost" data-edit-fixed="${g.id}">${icon('edit','ui-icon')}</button><button class="btn danger" data-delete-fixed="${g.id}">${icon('trash','ui-icon')}</button></div>`:''}</div><div class="fixed-desc">${esc(g.description||'Groupe fixe MCM.')}</div><div class="fixed-roster"><div class="fixed-roster-head"><span>Composition obligatoire</span><span>${members.length}/5</span></div><div class="fixed-slots">${fixedSlotDefs().map(d=>fixedSlotHtml(g,d)).join('')}</div></div></article>`}
@@ -630,7 +630,7 @@ function openFixedGroupModal(id=''){
   const renderSlot=key=>{const role=slotRole[key],pid=draft.slots[key],p=PLAYERS.find(x=>x.id===pid),c=p?cls(p.classId):null,eligible=roleEligiblePlayers(role,draft,key);if(p&&c){const avatar=p.discordAvatar?`<img class="builder-avatar" src="${esc(p.discordAvatar)}" alt="">`:`<div class="builder-avatar" style="display:grid;place-items:center">${esc(playerName(p).slice(0,1).toUpperCase())}</div>`,emblem=CLASS_EMBLEMS[c.id]||c.icon;return `<div class="builder-slot filled" style="--slot-border:${slotColor[role]}55;--slot-glow:${slotColor[role]}22"><div class="builder-slot-role">${roleLabel[key]}</div><div class="builder-player-top">${avatar}<div class="builder-player-copy"><div class="builder-player-name">${esc(playerName(p))}</div><div class="builder-player-discord">${esc(p.discordUsername||'Discord')}</div></div></div><div class="builder-class-pill" style="--cc:${c.color||slotColor[role]}"><img src="${c.icon}" alt="">${esc(c.name)}</div><img class="builder-emblem" src="${emblem}" alt=""><button type="button" class="builder-remove" data-remove-builder="${key}">Retirer</button></div>`}return `<div class="builder-slot"><div class="builder-slot-role">${roleLabel[key]}</div><div class="builder-empty"><div class="builder-empty-icon">+</div><select data-builder-select="${key}"><option value="">-- Choisir un joueur --</option>${eligible.map(ep=>{const ec=cls(ep.classId);return `<option value="${ep.id}">${esc(playerName(ep))} — ${esc(ec?.name||'Sans classe')}</option>`}).join('')}</select></div></div>`};
   const snapshot=()=>{for(const [id,k] of [['fgName','name'],['fgType','type'],['fgSchedule','schedule'],['fgDesc','description'],['fgLeader','leaderId']]){const e=document.getElementById(id);if(e)draft[k]=e.value}};
   function draw(){const count=Object.values(draft.slots).filter(Boolean).length;overlay.innerHTML=`<div class="modal-backdrop"><div class="modal group-builder-modal"><div class="builder-head"><input id="fgName" class="builder-name" value="${esc(draft.name||'')}"><div class="builder-actions"><button class="btn ghost" id="resetFixed">↻ Réinitialiser</button>${!creating?`<button class="btn danger" id="deleteFixedInline">Supprimer</button>`:''}</div></div><div class="builder-meta"><div class="form-row"><label>Type</label><select id="fgType"><option value="pve" ${draft.type==='pve'?'selected':''}>PvE</option><option value="pvp" ${draft.type==='pvp'?'selected':''}>PvP</option></select></div><div class="form-row"><label>Horaire</label><input id="fgSchedule" value="${esc(draft.schedule||'')}" placeholder="Mardi & jeudi · 20:30"></div><div class="form-row"><label>Description</label><input id="fgDesc" value="${esc(draft.description||'')}" placeholder="Objectif / règles"></div><div class="form-row"><label>Leader</label><select id="fgLeader"><option value="">-- À définir --</option>${PLAYERS.map(p=>`<option value="${p.id}" ${draft.leaderId===p.id?'selected':''}>${esc(playerName(p))}</option>`).join('')}</select></div></div><div class="builder-rule"><b>Composition :</b> 1 Tank · 3 DPS · 1 Heal. Gladiator = Tank ou DPS. Chanter = Heal ou DPS.</div><div class="builder-slots">${['tank','dps1','dps2','dps3','heal'].map(renderSlot).join('')}</div><div class="builder-count">${count}/5 inscrits</div><div class="builder-footer"><div id="slotWarning" class="builder-warning"></div><div class="builder-save"><button class="btn" id="cancelFixed">Annuler</button><button class="btn primary" id="saveFixed">Enregistrer le groupe</button></div></div></div></div>`;bindBuilder()}
-  function bindBuilder(){document.querySelectorAll('[data-builder-select]').forEach(sel=>sel.onchange=()=>{snapshot();const k=sel.dataset.builderSelect;draft.slots[k]=sel.value||'';const ids=Object.values(draft.slots).filter(Boolean);if(new Set(ids).size!==ids.length){draft.slots[k]='';showToast('Un joueur ne peut occuper qu’un seul slot')}draw()});document.querySelectorAll('[data-remove-builder]').forEach(b=>b.onclick=()=>{snapshot();draft.slots[b.dataset.removeBuilder]='';if(draft.leaderId&&!Object.values(draft.slots).includes(draft.leaderId))draft.leaderId='';draw()});document.getElementById('resetFixed').onclick=()=>{snapshot();draft.slots={tank:'',dps1:'',dps2:'',dps3:'',heal:''};draft.leaderId='';draw()};const del=document.getElementById('deleteFixedInline');if(del)del.onclick=async()=>{overlay.innerHTML='';await deleteFixedGroup(g.id)};document.getElementById('cancelFixed').onclick=()=>overlay.innerHTML='';document.getElementById('saveFixed').onclick=async()=>{snapshot();const name=(draft.name||'').trim();if(!name)return showToast('Donne un nom au groupe');const ids=Object.values(draft.slots).filter(Boolean);if(new Set(ids).size!==ids.length)return showToast('Un joueur ne peut occuper qu’un seul slot');for(const def of fixedSlotDefs()){const pid=draft.slots[def.key];if(pid){const p=PLAYERS.find(x=>x.id===pid);if(!p||!classCanRole(p.classId,def.role))return showToast(`${def.label} : classe incompatible`)}}if(draft.leaderId&&!ids.includes(draft.leaderId))return showToast('Le leader doit être dans la composition');g.name=name;g.type=draft.type;g.maxMembers=5;g.schedule=(draft.schedule||'').trim();g.description=(draft.description||'').trim();g.leaderId=draft.leaderId||'';g.slots={...draft.slots};g.memberIds=ids;if(creating)FIXED_GROUPS.push(g);await saveData();overlay.innerHTML='';ACTIVE=g.type==='pvp'?'fixed-pvp':'fixed-pve';showToast(creating?'Groupe fixe créé':'Groupe fixe enregistré');render()}};
+  function bindBuilder(){document.querySelectorAll('[data-builder-select]').forEach(sel=>sel.onchange=()=>{snapshot();const k=sel.dataset.builderSelect;draft.slots[k]=sel.value||'';const ids=Object.values(draft.slots).filter(Boolean);if(new Set(ids).size!==ids.length){draft.slots[k]='';showToast('Un joueur ne peut occuper qu’un seul slot')}draw()});document.querySelectorAll('[data-remove-builder]').forEach(b=>b.onclick=()=>{snapshot();draft.slots[b.dataset.removeBuilder]='';if(draft.leaderId&&!Object.values(draft.slots).includes(draft.leaderId))draft.leaderId='';draw()});document.getElementById('resetFixed').onclick=()=>{snapshot();draft.slots={tank:'',dps1:'',dps2:'',dps3:'',heal:''};draft.leaderId='';draw()};const del=document.getElementById('deleteFixedInline');if(del)del.onclick=async()=>{overlay.innerHTML='';await deleteFixedGroup(g.id)};document.getElementById('cancelFixed').onclick=()=>overlay.innerHTML='';document.getElementById('saveFixed').onclick=async()=>{snapshot();const name=(draft.name||'').trim();if(!name)return showToast('Donne un nom au groupe');const ids=Object.values(draft.slots).filter(Boolean);if(new Set(ids).size!==ids.length)return showToast('Un joueur ne peut occuper qu’un seul slot');for(const def of fixedSlotDefs()){const pid=draft.slots[def.key];if(pid){const p=PLAYERS.find(x=>x.id===pid);if(!p||!classCanRole(p.classId,def.role))return showToast(`${def.label} : classe incompatible`)}}if(draft.leaderId&&!ids.includes(draft.leaderId))return showToast('Le leader doit être dans la composition');g.name=name;g.type=draft.type;g.maxMembers=5;g.schedule=(draft.schedule||'').trim();g.description=(draft.description||'').trim();g.leaderId=draft.leaderId||'';g.slots={...draft.slots};g.memberIds=ids;if(creating)FIXED_GROUPS.push(g);await saveData();overlay.innerHTML='';ACTIVE=g.type==='pvp'?'fixed-pvp':'fixed-pve';showToast(creating?'Groupe fixe créé':'Groupe fixe enregistré');window.MCM_RENDER()}};
   draw();
 }
 async function deleteFixedGroup(id){
@@ -649,7 +649,7 @@ async function deleteFixedGroup(id){
 
   await saveData();
   showToast('Groupe et événements associés supprimés');
-  render();
+  window.MCM_RENDER();
 };
 const SEARCH_PVE_ACTIVITIES=['Expéditions','Transcendances','Sanctuary'];
 const SEARCH_PVP_ACTIVITIES=['Rift','Abysse','Arena','Battleground'];
@@ -703,7 +703,7 @@ async function joinSearchSlot(groupId,slotKey){
   g.slots[slotKey]=me.id;
   g.memberIds=fixedSlotDefs().map(d=>g.slots[d.key]).filter(Boolean);
   if(!g.leaderId)g.leaderId=me.id;
-  await saveData(); showToast(`Inscrit en ${def.label}`); render();
+  await saveData(); showToast(`Inscrit en ${def.label}`); window.MCM_RENDER();
 }
 async function leaveSearchGroup(groupId){
   const g=SEARCH_GROUPS.find(x=>x.id===groupId),me=myPlayer();
@@ -714,7 +714,7 @@ async function leaveSearchGroup(groupId){
   if(!removed)return showToast('Tu ne fais pas partie de ce groupe');
   g.memberIds=fixedSlotDefs().map(d=>g.slots[d.key]).filter(Boolean);
   if(g.leaderId===me.id)g.leaderId=g.memberIds[0]||'';
-  await saveData(); showToast('Tu as quitté le groupe'); render();
+  await saveData(); showToast('Tu as quitté le groupe'); window.MCM_RENDER();
 }
 async function deleteSearchGroup(id){
   const g=SEARCH_GROUPS.find(x=>x.id===id),me=myPlayer();
@@ -740,7 +740,7 @@ async function deleteSearchGroup(id){
 
     await saveData();
     showToast('Sanctuary A+B et événements associés supprimés');
-    render();
+    window.MCM_RENDER();
     return;
   }
 
@@ -755,7 +755,7 @@ async function deleteSearchGroup(id){
 
   await saveData();
   showToast('Recherche et événements associés supprimés');
-  render();
+  window.MCM_RENDER();
 }
 function searchSlotHtml(g,d){
   normalizeSearchGroup(g);
@@ -841,7 +841,7 @@ async function createSearchGroup(activity){
     await saveData();
     overlay.innerHTML='';
     showToast('Sanctuary créé : Groupe A + Groupe B');
-    render();
+    window.MCM_RENDER();
     return;
   }
 
@@ -866,7 +866,7 @@ async function createSearchGroup(activity){
   await saveData();
   overlay.innerHTML='';
   showToast(`${activity} : recherche créée`);
-  render();
+  window.MCM_RENDER();
 }
 function renderSearchGroups(){
   const groups=SEARCH_GROUPS.map(normalizeSearchGroup).filter(g=>SEARCH_FILTER==='all'||g.type===SEARCH_FILTER);
@@ -924,12 +924,12 @@ async function claimOrChangeLeader(groupId){
     const opts=members.map(p=>`<option value="${p.id}" ${g.leaderId===p.id?'selected':''}>${esc(playerName(p))}</option>`).join('');
     overlay.innerHTML=`<div class="modal-backdrop"><div class="modal"><h3>Définir le leader</h3><div class="form-row"><label>Leader du groupe</label><select id="leaderPick"><option value="">-- Aucun --</option>${opts}</select></div><div class="modal-actions"><button class="btn" id="leaderCancel">Annuler</button><button class="btn primary" id="leaderSave">Enregistrer</button></div></div></div>`;
     document.getElementById('leaderCancel').onclick=()=>overlay.innerHTML='';
-    document.getElementById('leaderSave').onclick=async()=>{g.leaderId=document.getElementById('leaderPick').value||'';await saveData();overlay.innerHTML='';showToast('Leader mis à jour');render()};
+    document.getElementById('leaderSave').onclick=async()=>{g.leaderId=document.getElementById('leaderPick').value||'';await saveData();overlay.innerHTML='';showToast('Leader mis à jour');window.MCM_RENDER()};
     return;
   }
   if(!me || !playerInFixedGroup(g,me.id))return showToast('Inscris-toi dans le groupe avant de devenir leader');
-  if(!g.leaderId){g.leaderId=me.id;await saveData();showToast('Tu es maintenant leader du groupe');render();return}
-  if(g.leaderId===me.id){g.leaderId='';await saveData();showToast('Tu as libéré le rôle de leader');render();return}
+  if(!g.leaderId){g.leaderId=me.id;await saveData();showToast('Tu es maintenant leader du groupe');window.MCM_RENDER();return}
+  if(g.leaderId===me.id){g.leaderId='';await saveData();showToast('Tu as libéré le rôle de leader');window.MCM_RENDER();return}
   showToast('Un leader est déjà défini pour ce groupe');
 }
 function canPublishGroupEvent(g){
@@ -959,7 +959,7 @@ function openGroupEventPlanner(groupId){
       const ev={id:'gev_'+Date.now(),groupId:g.id,groupName:g.name,activity:selected,date,time,note,createdAt:Date.now(),createdBy:discordUser?.id||'',status:'planned'};
       PLANNED_EVENTS.push(ev); await saveData();
       const status=await postGroupEventToDiscord(g,ev);
-      overlay.innerHTML=''; render();
+      overlay.innerHTML=''; window.MCM_RENDER();
       showToast(status==='posted'?'Événement planifié et publié sur Discord':'Événement planifié dans MCM — publication Discord à vérifier');
     };
   };
@@ -1013,7 +1013,7 @@ async function createFixedGroupInstant(){
   await saveData();
   ACTIVE='fixed-all';
   showToast(`${g.name} créé`);
-  render();
+  window.MCM_RENDER();
 }
 
 async function deleteFixedGroup(id){
@@ -1023,7 +1023,7 @@ async function deleteFixedGroup(id){
   if(!allowed)return showToast('Seul le créateur ou un admin peut supprimer ce groupe');
   if(!confirm(`Supprimer « ${g.name} » ?`))return;
   FIXED_GROUPS=FIXED_GROUPS.filter(x=>x.id!==id);
-  await saveData(); showToast('Groupe supprimé'); render();
+  await saveData(); showToast('Groupe supprimé'); window.MCM_RENDER();
 }
 
 function canManageFixedGroup(g){
@@ -1086,7 +1086,7 @@ function openSearchEventPlanner(groupId){
     await saveData();
     overlay.innerHTML='';
     showToast('Événement ajouté aux événements à venir');
-    render();
+    window.MCM_RENDER();
   };
 }
 
@@ -1316,13 +1316,13 @@ function renderDashboard(){
 
       <section class="card groups-card">
         <h3 class="card-title">${icon('swords','ui-icon')}RECHERCHES DE GROUPE</h3>
-        <div class="dashboard-scroll-wrap"><div class="dashboard-scroll-wrap"><div class="groups-grid">${SEARCH_GROUPS.map(g=>{normalizeSearchGroup(g);const members=searchGroupMembers(g);return `<div class="group-tile"><span class="tag" style="border-color:${activityColor(g.activity)}88;color:${activityColor(g.activity)}">${activityTypeLabel(g.activity)}</span><div class="group-name">${esc(g.activity)}${g.activity==='Sanctuary'&&g.subgroup?` · Groupe ${esc(g.subgroup)}`:''}</div><div class="group-time">Recherche en cours</div><div class="avatar-stack">${members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div><div class="group-count">${members.length}/5 joueurs</div><div class="dashboard-group-actions">${dashboardSearchAction(g)}</div></div>`}).join('')||'<div class="group-count">Aucune recherche active.</div>'}</div></div>
+        <div class="dashboard-scroll-wrap"><div class="groups-grid">${SEARCH_GROUPS.map(g=>{normalizeSearchGroup(g);const members=searchGroupMembers(g);return `<div class="group-tile"><span class="tag" style="border-color:${activityColor(g.activity)}88;color:${activityColor(g.activity)}">${activityTypeLabel(g.activity)}</span><div class="group-name">${esc(g.activity)}${g.activity==='Sanctuary'&&g.subgroup?` · Groupe ${esc(g.subgroup)}`:''}</div><div class="group-time">Recherche en cours</div><div class="avatar-stack">${members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div><div class="group-count">${members.length}/5 joueurs</div><div class="dashboard-group-actions">${dashboardSearchAction(g)}</div></div>`}).join('')||'<div class="group-count">Aucune recherche active.</div>'}</div></div>
         <div class="view-all" data-tab="search-groups">Voir toutes les recherches ›</div>
       </section>
 
       <section class="card groups-card">
         <h3 class="card-title">${icon('swords','ui-icon')}GROUPES STATIC</h3>
-        <div class="dashboard-scroll-wrap"><div class="dashboard-scroll-wrap"><div class="groups-grid">${FIXED_GROUPS.map(g=>{normalizeFixedGroup(g);const members=groupMembers(g),ev=latestGroupEvent(g.id);return `<div class="group-tile"><span class="tag">STATIC</span><div class="group-name">${esc(g.name)}</div><div class="group-time">${ev?esc(ev.activity)+' · '+esc(ev.date)+' · '+esc(ev.time):'Aucun événement planifié'}</div><div class="avatar-stack">${members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div><div class="group-count">${members.length}/5 joueurs</div></div>`}).join('')||'<div class="group-count">Aucun groupe STATIC créé.</div>'}</div></div>
+        <div class="dashboard-scroll-wrap"><div class="groups-grid">${FIXED_GROUPS.map(g=>{normalizeFixedGroup(g);const members=groupMembers(g),ev=latestGroupEvent(g.id);return `<div class="group-tile"><span class="tag">STATIC</span><div class="group-name">${esc(g.name)}</div><div class="group-time">${ev?esc(ev.activity)+' · '+esc(ev.date)+' · '+esc(ev.time):'Aucun événement planifié'}</div><div class="avatar-stack">${members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div><div class="group-count">${members.length}/5 joueurs</div></div>`}).join('')||'<div class="group-count">Aucun groupe STATIC créé.</div>'}</div></div>
         <div class="view-all" data-tab="fixed-all">Voir tous les groupes ›</div>
       </section>
     </div>
@@ -1340,11 +1340,11 @@ window.MCM_RENDER=function(){
   app.innerHTML=`<div class="shell">${sidebar()}<main class="main">${content}</main></div>`;
   bind();
 };
-function render(){ return window.MCM_RENDER(); }
+
 
 function bind(){
-  document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{ACTIVE=b.dataset.tab;render()}));
-  document.getElementById('previewBtn')?.addEventListener('click',()=>{PREVIEW_AS_MEMBER=!PREVIEW_AS_MEMBER;render()});
+  document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{ACTIVE=b.dataset.tab;window.MCM_RENDER()}));
+  document.getElementById('previewBtn')?.addEventListener('click',()=>{PREVIEW_AS_MEMBER=!PREVIEW_AS_MEMBER;window.MCM_RENDER()});
   document.getElementById('logoutBtn')?.addEventListener('click',logout);
   document.getElementById('addPlayerBtn')?.addEventListener('click',()=>openPlayerModal());
   document.querySelectorAll('[data-edit-player]').forEach(b=>b.addEventListener('click',()=>openPlayerModal(b.dataset.editPlayer)));
@@ -1358,7 +1358,7 @@ function bind(){
   document.querySelectorAll('[data-publish-fixed]').forEach(b=>b.addEventListener('click',()=>openGroupEventPlanner(b.dataset.publishFixed)));
 
   document.getElementById('createSearchBtn')?.addEventListener('click',openSearchGroupCreate);
-  document.querySelectorAll('[data-search-filter]').forEach(b=>b.addEventListener('click',()=>{SEARCH_FILTER=b.dataset.searchFilter;render()}));
+  document.querySelectorAll('[data-search-filter]').forEach(b=>b.addEventListener('click',()=>{SEARCH_FILTER=b.dataset.searchFilter;window.MCM_RENDER()}));
   document.querySelectorAll('[data-join-search]').forEach(b=>b.addEventListener('click',()=>joinSearchSlot(b.dataset.joinSearch,b.dataset.searchSlot)));
   document.querySelectorAll('[data-leave-search]').forEach(b=>b.addEventListener('click',()=>leaveSearchGroup(b.dataset.leaveSearch)));
   document.querySelectorAll('[data-delete-search]').forEach(b=>b.addEventListener('click',()=>deleteSearchGroup(b.dataset.deleteSearch)));
