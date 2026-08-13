@@ -314,6 +314,77 @@ body{background:
   color:#6f7f9b;
 }
 
+
+/* ===== PATCH DASHBOARD INSCRIPTIONS + SCROLL ===== */
+.dashboard-group-actions{
+  display:flex;
+  gap:6px;
+  margin-top:9px;
+}
+.dashboard-join-btn{
+  width:100%;
+  min-height:30px;
+  border:1px solid rgba(45,151,255,.42);
+  background:rgba(22,139,255,.10);
+  color:#72bdff;
+  border-radius:7px;
+  font-size:8.5px;
+  font-weight:700;
+  cursor:pointer;
+}
+.dashboard-join-btn:hover{
+  background:rgba(22,139,255,.18);
+  border-color:#168bff;
+  color:#fff;
+}
+.dashboard-join-btn.leave{
+  border-color:rgba(0,220,163,.45);
+  background:rgba(0,220,163,.09);
+  color:#3ee3b5;
+}
+.dashboard-join-btn.leave:hover{
+  background:rgba(0,220,163,.16);
+  border-color:#00dca3;
+  color:#fff;
+}
+.dashboard-join-btn:disabled{
+  opacity:.42;
+  cursor:not-allowed;
+}
+.dashboard-scroll-wrap{
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  padding:2px 2px 10px;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(82,126,194,.6) rgba(255,255,255,.03);
+}
+.dashboard-scroll-wrap::-webkit-scrollbar{height:7px}
+.dashboard-scroll-wrap::-webkit-scrollbar-track{background:rgba(255,255,255,.03);border-radius:999px}
+.dashboard-scroll-wrap::-webkit-scrollbar-thumb{background:rgba(82,126,194,.6);border-radius:999px}
+.dashboard-scroll-wrap .groups-grid{
+  display:grid!important;
+  grid-auto-flow:column!important;
+  grid-auto-columns:220px!important;
+  grid-template-columns:none!important;
+  width:max-content!important;
+  min-width:100%;
+  gap:12px;
+}
+.dashboard-scroll-wrap .group-tile{
+  width:220px!important;
+  min-width:220px!important;
+}
+.dashboard-scroll-hint{
+  margin-top:6px;
+  color:#6e7d98;
+  font-size:8px;
+}
+.sanctuary-publish-note{
+  margin-top:7px;
+  font-size:8px;
+  color:#00c7c7;
+}
+
 </style>
 </head>
 <body><div id="app"></div><div id="overlay"></div><div id="toast"></div>
@@ -506,13 +577,13 @@ function searchSlotHtml(g,d){
 function searchGroupCard(g){
   normalizeSearchGroup(g);
   const members=searchGroupMembers(g),leader=PLAYERS.find(p=>p.id===g.leaderId),me=myPlayer(),gc=activityColor(g.activity);
-  const canDelete=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||(me&&g.createdByPlayerId===me.id); const canPublish=canManageSearchGroup(g);
+  const canDelete=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||(me&&g.createdByPlayerId===me.id); const canPublish=canManageSearchGroup(g)&&canShowSanctuaryPublish(g);
   return `<article class="panel search-card" style="--gc:${gc}">
     <div class="search-head">
       <div>
         <span class="search-kind" style="color:${gc};border-color:${gc}66;background:${gc}16">${activityTypeLabel(g.activity)} · ${esc(g.activity)}${g.activity==='Sanctuary'&&g.subgroup?` · GROUPE ${esc(g.subgroup)}`:''}</span>
         <div class="search-activity">${esc(g.activity)}${g.activity==='Sanctuary'&&g.subgroup?` · Groupe ${esc(g.subgroup)}`:''}</div>
-        <div class="search-meta"><span>👑 <strong>${esc(leader?playerName(leader):'Leader à définir')}</strong></span><span>👥 ${members.length}/5</span></div>${g.activity==='Sanctuary'&&g.sanctuaryPairId?`<div class="sanctuary-pair-note">Sanctuary 10 joueurs · Groupe ${esc(g.subgroup||'')} sur 2</div>`:''}
+        <div class="search-meta"><span>👑 <strong>${esc(leader?playerName(leader):'Leader à définir')}</strong></span><span>👥 ${members.length}/5</span></div>${g.activity==='Sanctuary'&&g.sanctuaryPairId?`<div class="sanctuary-pair-note">Sanctuary 10 joueurs · Groupe ${esc(g.subgroup||'')} sur 2</div>${g.subgroup==='A'?`<div class="sanctuary-publish-note">${sanctuaryPairFull(g)?'✓ A+B complets : publication disponible':'Publication disponible quand A+B sont complets (10/10)'}</div>`:''}`:''}
       </div>
       <div class="search-actions">${canPublish?`<button class="btn" data-publish-search="${g.id}">${icon('calendar','ui-icon')} Discord</button>`:''}${canDelete?`<button class="btn danger" data-delete-search="${g.id}">${icon('trash','ui-icon')}</button>`:''}</div>
     </div>
@@ -769,6 +840,11 @@ function canManageSearchGroup(g){
 function openSearchEventPlanner(groupId){
   const g=SEARCH_GROUPS.find(x=>x.id===groupId);
   if(!g)return;
+  if(g.activity==='Sanctuary'){
+    if(g.subgroup!=='A')return showToast('Sanctuary se publie uniquement depuis le Groupe A');
+    if(!sanctuaryPairFull(g))return showToast('Sanctuary doit être complet : Groupe A + Groupe B = 10/10');
+  }
+
   if(!canManageSearchGroup(g))return showToast('Seul le leader, le créateur ou un admin peut publier');
   const sanctuaryGroups=(g.activity==='Sanctuary'&&g.sanctuaryPairId)?SEARCH_GROUPS.filter(x=>x.sanctuaryPairId===g.sanctuaryPairId):[g];
   const members=[...new Map(sanctuaryGroups.flatMap(x=>searchGroupMembers(x)).map(p=>[p.id,p])).values()];
@@ -924,6 +1000,75 @@ function dashboardFixedAction(g){
   return `<button class="dashboard-join-btn" data-dashboard-join-fixed="${g.id}" data-dashboard-slot="${slot}">S’inscrire · ${esc(def?.label||'Slot')}</button>`;
 }
 
+
+function dashboardPreferredSlot(g,player,isFixed=false){
+  if(!g||!player||!player.classId)return '';
+  if(isFixed)normalizeFixedGroup(g); else normalizeSearchGroup(g);
+  const order=player.classId==='templar'?['tank']:
+    player.classId==='cleric'?['heal']:
+    player.classId==='gladiator'?['tank','dps1','dps2','dps3']:
+    player.classId==='chanter'?['heal','dps1','dps2','dps3']:
+    ['dps1','dps2','dps3'];
+
+  return order.find(k=>{
+    if(g.slots[k])return false;
+    const role=k==='tank'?'tank':k==='heal'?'heal':'dps';
+    return classCanRole(player.classId,role);
+  })||'';
+}
+
+function dashboardSearchAction(g){
+  const me=myPlayer();
+  if(!me)return '';
+  normalizeSearchGroup(g);
+
+  if(playerInSearchGroup(g,me.id)){
+    return `<button class="dashboard-join-btn leave" data-dash-leave-search="${g.id}">Se retirer</button>`;
+  }
+
+  const slot=dashboardPreferredSlot(g,me,false);
+  if(!slot){
+    return `<button class="dashboard-join-btn" disabled>Complet / incompatible</button>`;
+  }
+
+  const def=fixedSlotDefs().find(d=>d.key===slot);
+  return `<button class="dashboard-join-btn" data-dash-join-search="${g.id}" data-dash-slot="${slot}">S’inscrire · ${esc(def?.label||'Slot')}</button>`;
+}
+
+function dashboardFixedAction(g){
+  const me=myPlayer();
+  if(!me)return '';
+  normalizeFixedGroup(g);
+
+  if(playerInFixedGroup(g,me.id)){
+    return `<button class="dashboard-join-btn leave" data-dash-leave-fixed="${g.id}">Se retirer</button>`;
+  }
+
+  const slot=dashboardPreferredSlot(g,me,true);
+  if(!slot){
+    return `<button class="dashboard-join-btn" disabled>Complet / incompatible</button>`;
+  }
+
+  const def=fixedSlotDefs().find(d=>d.key===slot);
+  return `<button class="dashboard-join-btn" data-dash-join-fixed="${g.id}" data-dash-slot="${slot}">S’inscrire · ${esc(def?.label||'Slot')}</button>`;
+}
+
+function sanctuaryPairGroups(g){
+  if(!g||g.activity!=='Sanctuary'||!g.sanctuaryPairId)return [];
+  return SEARCH_GROUPS.filter(x=>x.sanctuaryPairId===g.sanctuaryPairId).sort((a,b)=>(a.subgroup||'').localeCompare(b.subgroup||''));
+}
+
+function sanctuaryPairFull(g){
+  const pair=sanctuaryPairGroups(g);
+  return pair.length===2 && pair.every(x=>searchGroupMembers(x).length===5);
+}
+
+function canShowSanctuaryPublish(g){
+  if(g.activity!=='Sanctuary')return true;
+  // Un seul bouton de publication : Groupe A uniquement, et seulement quand A+B = 10/10.
+  return g.subgroup==='A' && sanctuaryPairFull(g);
+}
+
 function renderDashboard(){
   const total=PLAYERS.length,assigned=PLAYERS.filter(p=>p.classId).length,newc=PLAYERS.filter(p=>p.isNewPlayer).length;
   const roleCounts={Tank:0,Heal:0,DPS:0,Flex:0};
@@ -972,13 +1117,13 @@ function renderDashboard(){
 
       <section class="card groups-card">
         <h3 class="card-title">${icon('swords','ui-icon')}RECHERCHES DE GROUPE</h3>
-        <div class="groups-scroll"><div class="groups-grid">${SEARCH_GROUPS.map(g=>{normalizeSearchGroup(g);const members=searchGroupMembers(g);return `<div class="group-tile"><span class="tag" style="border-color:${activityColor(g.activity)}88;color:${activityColor(g.activity)}">${activityTypeLabel(g.activity)}</span><div class="group-name">${esc(g.activity)}${g.activity==='Sanctuary'&&g.subgroup?` · Groupe ${esc(g.subgroup)}`:''}</div><div class="group-time">Recherche en cours</div><div class="avatar-stack">${members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div><div class="group-count">${members.length}/5 joueurs</div><div class="dashboard-group-actions">${dashboardSearchAction(g)}</div></div>`}).join('')||'<div class="group-count">Aucune recherche active.</div>'}</div></div>
+        <div class="dashboard-scroll-wrap"><div class="dashboard-scroll-wrap"><div class="groups-grid">${SEARCH_GROUPS.map(g=>{normalizeSearchGroup(g);const members=searchGroupMembers(g);return `<div class="group-tile"><span class="tag" style="border-color:${activityColor(g.activity)}88;color:${activityColor(g.activity)}">${activityTypeLabel(g.activity)}</span><div class="group-name">${esc(g.activity)}${g.activity==='Sanctuary'&&g.subgroup?` · Groupe ${esc(g.subgroup)}`:''}</div><div class="group-time">Recherche en cours</div><div class="avatar-stack">${members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div><div class="group-count">${members.length}/5 joueurs</div><div class="dashboard-group-actions">${dashboardSearchAction(g)}</div></div>`}).join('')||'<div class="group-count">Aucune recherche active.</div>'}</div></div>
         <div class="view-all" data-tab="search-groups">Voir toutes les recherches ›</div>
       </section>
 
       <section class="card groups-card">
         <h3 class="card-title">${icon('swords','ui-icon')}GROUPES STATIC</h3>
-        <div class="groups-scroll"><div class="groups-grid">${FIXED_GROUPS.map(g=>{normalizeFixedGroup(g);const members=groupMembers(g),ev=latestGroupEvent(g.id);return `<div class="group-tile"><span class="tag">STATIC</span><div class="group-name">${esc(g.name)}</div><div class="group-time">${ev?esc(ev.activity)+' · '+esc(ev.date)+' · '+esc(ev.time):'Aucun événement planifié'}</div><div class="avatar-stack">${members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div><div class="group-count">${members.length}/5 joueurs</div><div class="dashboard-group-actions">${dashboardFixedAction(g)}</div></div>`}).join('')||'<div class="group-count">Aucun groupe STATIC créé.</div>'}</div></div>
+        <div class="dashboard-scroll-wrap"><div class="dashboard-scroll-wrap"><div class="groups-grid">${FIXED_GROUPS.map(g=>{normalizeFixedGroup(g);const members=groupMembers(g),ev=latestGroupEvent(g.id);return `<div class="group-tile"><span class="tag">STATIC</span><div class="group-name">${esc(g.name)}</div><div class="group-time">${ev?esc(ev.activity)+' · '+esc(ev.date)+' · '+esc(ev.time):'Aucun événement planifié'}</div><div class="avatar-stack">${members.slice(0,5).map(p=>p.discordAvatar?`<img src="${esc(p.discordAvatar)}" alt="">`:'').join('')}</div><div class="group-count">${members.length}/5 joueurs</div><div class="dashboard-group-actions">${dashboardFixedAction(g)}</div></div>`}).join('')||'<div class="group-count">Aucun groupe STATIC créé.</div>'}</div></div>
         <div class="view-all" data-tab="fixed-all">Voir tous les groupes ›</div>
       </section>
     </div>
@@ -1010,6 +1155,12 @@ function bind(){
   document.querySelectorAll('[data-dashboard-leave-search]').forEach(b=>b.addEventListener('click',()=>leaveSearchGroup(b.dataset.dashboardLeaveSearch)));
   document.querySelectorAll('[data-dashboard-join-fixed]').forEach(b=>b.addEventListener('click',()=>joinFixedSlot(b.dataset.dashboardJoinFixed,b.dataset.dashboardSlot)));
   document.querySelectorAll('[data-dashboard-leave-fixed]').forEach(b=>b.addEventListener('click',()=>leaveFixedGroup(b.dataset.dashboardLeaveFixed)));
+
+
+  document.querySelectorAll('[data-dash-join-search]').forEach(b=>b.addEventListener('click',()=>joinSearchSlot(b.dataset.dashJoinSearch,b.dataset.dashSlot)));
+  document.querySelectorAll('[data-dash-leave-search]').forEach(b=>b.addEventListener('click',()=>leaveSearchGroup(b.dataset.dashLeaveSearch)));
+  document.querySelectorAll('[data-dash-join-fixed]').forEach(b=>b.addEventListener('click',()=>joinFixedSlot(b.dataset.dashJoinFixed,b.dataset.dashSlot)));
+  document.querySelectorAll('[data-dash-leave-fixed]').forEach(b=>b.addEventListener('click',()=>leaveFixedGroup(b.dataset.dashLeaveFixed)));
 
 }
 
