@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- MCM BUILD 2026-08-13 V2-CACHE-ROLES-24H -->
+<!-- MCM BUILD 2026-08-13 V2-SANCTUARY-UNIFIE -->
 <title>MCM — MMO Connect Manager</title>
 <link rel="apple-touch-icon" href="./icon-192.png">
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -471,6 +471,13 @@ body{background:
   background:currentColor;
 }
 
+
+.sanctuary-unified{grid-column:span 2}
+.sanctuary-unified-groups{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.sanctuary-half{border:1px solid rgba(0,199,199,.22);border-radius:12px;padding:10px;background:rgba(0,199,199,.035)}
+.sanctuary-half-title{display:flex;justify-content:space-between;align-items:center;color:#7eeeed;font-size:10px;font-weight:800;margin-bottom:8px}
+.sanctuary-total{color:#9aabc8;font-size:9px}
+@media(max-width:900px){.sanctuary-unified{grid-column:span 1}.sanctuary-unified-groups{grid-template-columns:1fr}}
 </style>
 </head>
 <body><div id="app"></div><div id="overlay"></div><div id="toast"></div>
@@ -936,6 +943,57 @@ function searchSlotHtml(g,d){
       :`<div class="search-slot-empty">+</div><div class="search-slot-name">Libre</div><div class="search-slot-status">${canJoin?'Cliquer pour s’inscrire':already?'Déjà inscrit':me?.classId?'Classe incompatible':'Classe requise'}</div>`}
   </div>`;
 }
+
+function sanctuaryUnifiedCard(g){
+  const pair=sanctuaryPairGroups(g);
+  const a=pair.find(x=>x.subgroup==='A')||g;
+  const b=pair.find(x=>x.subgroup==='B');
+  if(!b)return searchGroupCard(g);
+  normalizeSearchGroup(a); normalizeSearchGroup(b);
+  const ma=searchGroupMembers(a),mb=searchGroupMembers(b);
+  const leader=PLAYERS.find(p=>p.id===a.leaderId);
+  const me=myPlayer(),gc=activityColor('Sanctuary');
+  const canDelete=(IS_ADMIN&&!PREVIEW_AS_MEMBER)||(me&&a.createdByPlayerId===me.id);
+  const canPublish=canManageSearchGroup(a);
+
+  return `<article class="panel search-card sanctuary-unified" style="--gc:${gc}">
+    <div class="search-head">
+      <div>
+        <span class="search-kind" style="color:${gc};border-color:${gc}66;background:${gc}16">PVE · SANCTUARY · 10 JOUEURS</span>
+        <div class="search-activity">Sanctuary</div>
+        <div class="search-meta"><span>👑 <strong>${esc(leader?playerName(leader):'Leader à définir')}</strong></span><span>👥 ${ma.length+mb.length}/10</span></div>
+      </div>
+      <div class="search-actions">
+        ${canPublish?`<button class="btn fixed-publish" data-publish-search="${a.id}">${icon('calendar','ui-icon')} Publier sur Discord</button>`:''}
+        ${canDelete?`<button class="btn danger" data-delete-search="${a.id}">${icon('trash','ui-icon')}</button>`:''}
+      </div>
+    </div>
+    <div class="sanctuary-unified-groups">
+      <div class="sanctuary-half">
+        <div class="sanctuary-half-title"><span>GROUPE A</span><span class="sanctuary-total">${ma.length}/5</span></div>
+        <div class="search-slots">${fixedSlotDefs().map(d=>searchSlotHtml(a,d)).join('')}</div>
+      </div>
+      <div class="sanctuary-half">
+        <div class="sanctuary-half-title"><span>GROUPE B</span><span class="sanctuary-total">${mb.length}/5</span></div>
+        <div class="search-slots">${fixedSlotDefs().map(d=>searchSlotHtml(b,d)).join('')}</div>
+      </div>
+    </div>
+  </article>`;
+}
+
+function renderSearchGroupCards(groups){
+  const rendered=new Set();
+  return groups.map(g=>{
+    if(g.activity==='Sanctuary'&&g.sanctuaryPairId){
+      if(rendered.has(g.sanctuaryPairId))return '';
+      rendered.add(g.sanctuaryPairId);
+      const first=groups.find(x=>x.sanctuaryPairId===g.sanctuaryPairId&&x.subgroup==='A')||g;
+      return sanctuaryUnifiedCard(first);
+    }
+    return searchGroupCard(g);
+  }).join('');
+}
+
 function searchGroupCard(g){
   normalizeSearchGroup(g);
   const members=searchGroupMembers(g),leader=PLAYERS.find(p=>p.id===g.leaderId),me=myPlayer(),gc=activityColor(g.activity);
@@ -945,7 +1003,7 @@ function searchGroupCard(g){
       <div>
         <span class="search-kind" style="color:${gc};border-color:${gc}66;background:${gc}16">${activityTypeLabel(g.activity)} · ${esc(g.activity)}${g.activity==='Sanctuary'&&g.subgroup?` · GROUPE ${esc(g.subgroup)}`:''}</span>
         <div class="search-activity">${esc(g.activity)}${g.activity==='Sanctuary'&&g.subgroup?` · Groupe ${esc(g.subgroup)}`:''}</div>
-        <div class="search-meta"><span>👑 <strong>${esc(leader?playerName(leader):'Leader à définir')}</strong></span><span>👥 ${members.length}/5</span></div>${g.activity==='Sanctuary'&&g.sanctuaryPairId?`<div class="sanctuary-pair-note">Sanctuary 10 joueurs · Groupe ${esc(g.subgroup||'')} sur 2</div>${g.subgroup==='A'?`<div class="sanctuary-publish-note">${sanctuaryPairFull(g)?'✓ A+B complets : publication disponible':'Publication disponible quand A+B sont complets (10/10)'}</div>`:''}`:''}
+        <div class="search-meta"><span>👑 <strong>${esc(leader?playerName(leader):'Leader à définir')}</strong></span><span>👥 ${members.length}/5</span></div>${g.activity==='Sanctuary'&&g.sanctuaryPairId?`<div class="sanctuary-pair-note">Sanctuary 10 joueurs · Groupe ${esc(g.subgroup||'')} sur 2</div>${g.subgroup==='A'?`<div class="sanctuary-publish-note">'Publication Discord disponible'</div>`:''}`:''}
       </div>
       <div class="search-actions">${canPublish?`<button class="btn" data-publish-search="${g.id}">${icon('calendar','ui-icon')} Discord</button>`:''}${canDelete?`<button class="btn danger" data-delete-search="${g.id}">${icon('trash','ui-icon')}</button>`:''}</div>
     </div>
@@ -1049,7 +1107,7 @@ function renderSearchGroups(){
       </div>
     </div>
     <div class="activity-color-legend">${window.MCM_SEARCH_ACTIVITIES.map(a=>`<span class="activity-color-chip" style="--ac:${activityColor(a)}"><i class="activity-color-dot"></i>${esc(a)}</span>`).join('')}</div>
-    <div class="search-grid">${groups.map(searchGroupCard).join('')||'<div class="panel" style="padding:22px;color:#8998b5">Aucune recherche active dans cette catégorie.</div>'}</div>`;
+    <div class="search-grid">${renderSearchGroupCards(groups)||'<div class="panel" style="padding:22px;color:#8998b5">Aucune recherche active dans cette catégorie.</div>'}</div>`;
 }
 
 
@@ -1202,9 +1260,9 @@ function canManageSearchGroup(g){
 function openSearchEventPlanner(groupId){
   const g=SEARCH_GROUPS.find(x=>x.id===groupId);
   if(!g)return;
-  if(g.activity==='Sanctuary'){
-    if(g.subgroup!=='A')return showToast('Sanctuary se publie uniquement depuis le Groupe A');
-    if(!sanctuaryPairFull(g))return showToast('Sanctuary doit être complet : Groupe A + Groupe B = 10/10');
+  if(g.activity==='Sanctuary' && g.subgroup!=='A'){
+    const a=sanctuaryPairGroups(g).find(x=>x.subgroup==='A');
+    if(a)return openSearchEventPlanner(a.id);
   }
 
   if(!canManageSearchGroup(g))return showToast('Seul le leader, le créateur ou un admin peut publier');
@@ -1427,8 +1485,7 @@ function sanctuaryPairFull(g){
 
 function canShowSanctuaryPublish(g){
   if(g.activity!=='Sanctuary')return true;
-  // Un seul bouton de publication : Groupe A uniquement, et seulement quand A+B = 10/10.
-  return g.subgroup==='A' && sanctuaryPairFull(g);
+  return g.subgroup==='A';
 }
 
 function renderDashboard(){
