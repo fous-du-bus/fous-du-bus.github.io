@@ -37,6 +37,7 @@
     <nav class="sidebar-nav">
       <a class="sidebar-nav-link active" href="./index.html">☀️ Dailies</a>
       <a class="sidebar-nav-link" href="./equipes.html">⚔️ Gestion des groupes</a>
+      <a class="sidebar-nav-link" href="./evenements.html">⏱️ Événements</a>
     </nav>
     <div class="sidebar-section">LIENS</div>
     <nav class="sidebar-nav">
@@ -2457,11 +2458,16 @@ input:focus,select:focus,textarea:focus{outline:0!important;border-color:#168bff
   primary.className='mcm-primary';
   const aside=document.createElement('aside');
   aside.className='mcm-aside';
-  workspace.append(primary,aside);
+  document.body.classList.add('routines-page');
+  workspace.append(primary);
   toolbar.before(workspace);
-  primary.append(toolbar,dashboard,planner,blocks);
-  aside.append(events,reset);
+  primary.append(toolbar,dashboard,planner,blocks,reset);
+  events.hidden=true;
 })();
 </script>
+<style>
+.routines-page .mcm-workspace{grid-template-columns:minmax(0,1fr)}
+.routines-page .mcm-primary>.reset-btn{max-width:420px!important;margin:14px auto 0!important;display:block!important}
+</style>
 </body>
 </html>
