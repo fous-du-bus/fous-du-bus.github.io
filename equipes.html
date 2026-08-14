@@ -2220,6 +2220,16 @@ const DISCORD_GROUP_EVENT_WEBHOOK_URL='https://discord.com/api/webhooks/15366736
 const LFG_WORKER_URL='https://lfg-reactions.aegrim-midgard.workers.dev';
 const LFG_CHANNEL_ID='1529305584845852792';
 const MCM_DOC_ID='guildManager';
+const ROLE_TAG_IDS={tank:'1537715283178033172',dps:'1537715546005573672',heal:'1537715632643248158'};
+function missingRoleTags(groups){
+  const missing=new Set();
+  groups.forEach(g=>{
+    fixedSlotDefs().forEach(d=>{
+      if(!g.slots||!g.slots[d.key])missing.add(d.role);
+    });
+  });
+  return ['tank','dps','heal'].filter(r=>missing.has(r)).map(r=>`<@&${ROLE_TAG_IDS[r]}>`).join(' ');
+}
 
 async function loadData(){
   const snap=await docRef.get();
@@ -2605,7 +2615,8 @@ async function postGroupEventToDiscord(g,ev){
     timestamp,
     footer:{text:'MCM · MMO Connect Manager'}
   };
-  const content=mentionIds.length?mentionIds.map(id=>`<@${id}>`).join(' '):`📣 ${g.name}`;
+  const roleTags=missingRoleTags([g]);
+  const content=(mentionIds.length?mentionIds.map(id=>`<@${id}>`).join(' '):`📣 ${g.name}`)+(roleTags?' '+roleTags:'');
   try{
     const res=await fetch(LFG_WORKER_URL+'/publish',{
       method:'POST',headers:{'Content-Type':'application/json'},
@@ -2646,7 +2657,8 @@ async function postSearchGroupToDiscord(g,ev){
     timestamp,
     footer:{text:'MCM · MMO Connect Manager'}
   };
-  const content=mentionIds.length?mentionIds.map(id=>`<@${id}>`).join(' '):`📣 ${activityLabel}`;
+  const roleTags=missingRoleTags(pairGroups);
+  const content=(mentionIds.length?mentionIds.map(id=>`<@${id}>`).join(' '):`📣 ${activityLabel}`)+(roleTags?' '+roleTags:'');
   const refType=isSanctuary?'sanctuary':'search';
   const refId=isSanctuary?g.sanctuaryPairId:g.id;
   try{
