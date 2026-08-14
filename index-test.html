@@ -35,9 +35,9 @@
     <div id="discordTopBtn" class="sidebar-discord"></div>
     <div class="sidebar-section">NAVIGATION</div>
     <nav class="sidebar-nav">
-      <a class="sidebar-nav-link" href="./index-test.html">☀️ Dailies</a>
+      <a class="sidebar-nav-link active" href="./index-test.html">☀️ Dailies</a>
       <a class="sidebar-nav-link" href="./equipes.html">⚔️ Gestion des groupes</a>
-      <a class="sidebar-nav-link active" href="./evenements.html">⏱️ Événements</a>
+      <a class="sidebar-nav-link" href="./evenements.html">⏱️ Événements</a>
     </nav>
     <div class="sidebar-section">LIENS</div>
     <nav class="sidebar-nav">
@@ -2458,36 +2458,22 @@ input:focus,select:focus,textarea:focus{outline:0!important;border-color:#168bff
   primary.className='mcm-primary';
   const aside=document.createElement('aside');
   aside.className='mcm-aside';
-  document.body.classList.add('events-page');
-  const hero=document.createElement('header');
-  hero.className='events-hero';
-  hero.innerHTML='<div class="events-kicker">CALENDRIER AION 2</div><h1>Événements &amp; Failles</h1><p>Horaires, prochains passages et rappels de la communauté.</p>';
-  workspace.append(hero,aside);
+  document.body.classList.add('routines-page');
+  workspace.append(primary,aside);
   toolbar.before(workspace);
-  primary.hidden=true;
-  aside.className='mcm-events-page';
-  aside.append(events);
-  reset.hidden=true;
+  primary.append(toolbar,dashboard,planner,blocks);
+  aside.append(events,reset);
+  events.hidden=false;
+  blocks.hidden=false;
+  blocks.style.removeProperty('display');
 })();
 </script>
 <style>
-.events-page .wrap>.logo-img,.events-page #headerRow,.events-page .tabs,.events-page .progress-box,.events-page .summary-box,.events-page .chips,.events-page #syncPanel,.events-page #editPanel,.events-page .app-toolbar,.events-page #dashboard,.events-page #weeklyPlanner,.events-page #blocksContainer,.events-page .weekly-planner,.events-page .season-panel,.events-page .reset-btn{display:none!important}
-.events-page .mcm-workspace{display:block!important;max-width:1180px;margin:0 auto}
-.events-hero{text-align:center;padding:38px 18px 26px;border-bottom:1px solid rgba(82,126,194,.2);margin-bottom:16px}
-.events-hero .events-kicker{font:600 10px/1 Inter,sans-serif;letter-spacing:.18em;color:#13d7ff;margin-bottom:12px}
-.events-hero h1{margin:0!important;font-size:clamp(28px,4vw,42px)!important}
-.events-hero p{margin:9px 0 0;color:#96a5c2;font-size:12px}
-.mcm-events-page{position:static!important;max-height:none!important;overflow:visible!important;width:100%!important;display:block!important}
-.events-page #eventSidebar{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
-.events-page #eventSidebar>div{min-width:0!important}
-.events-page #eventSidebar .rift-card,.events-page #eventSidebar .rift-collapsed{height:100%!important;padding:17px!important}
-.events-page #eventSidebar .rift-title{font-size:14px!important}
-.events-page #eventSidebar .rift-subtitle{font-size:10px!important}
-.events-page #eventSidebar .rift-countdown-big{font-size:24px!important}
-.events-page #eventSidebar .rift-row{font-size:11px!important;padding:7px 2px!important}
-.events-page #eventSidebar .rift-row-day,.events-page #eventSidebar .rift-row-cd{font-size:10px!important}
-.events-page #eventSidebar .rift-footer{font-size:10px!important}
-@media(max-width:720px){.events-page #eventSidebar{grid-template-columns:1fr!important}.events-hero{padding-top:24px}}
+.routines-page .mcm-workspace{grid-template-columns:minmax(0,1fr)}
+.routines-page #eventSidebar,.routines-page #riftCard,.routines-page #artifactCard,.routines-page #abyssRiftCard,.routines-page #bossWedSatCard,.routines-page #bossFriSunCard{display:none!important}
+.routines-page .mcm-primary,.routines-page #blocksContainer{display:block!important;visibility:visible!important;opacity:1!important}
+.routines-page .mcm-aside{position:static!important;display:block!important;max-height:none!important;overflow:visible!important}
+.routines-page .mcm-aside>.reset-btn{max-width:420px!important;margin:14px auto 0!important;display:block!important}
 </style>
 </body>
 </html>
