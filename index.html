@@ -298,9 +298,24 @@ function tick(){const n=new Date(),day=new Date(n);day.setDate(day.getDate()+1);
 const DISCORD_CLIENT_ID='1532248812771606691',DISCORD_SESSION_KEY='mcm-discord-session';
 const GUILD_ID='1355632831333798200',REQUIRED_ROLE_ID='1443636744267501618',ADMIN_ROLE_ID='1397018334590926929';
 let IS_ADMIN_ROUTINE=false;
+const MCM_ROLE_CACHE_KEY='mcm-discord-role-cache-v1';
+const MCM_ROLE_CACHE_TTL=24*60*60*1000;
+function readRoleCache(userId=''){
+  try{
+    const c=JSON.parse(localStorage.getItem(MCM_ROLE_CACHE_KEY)||'null');
+    if(!c||!c.userId||!c.validatedAt)return null;
+    if(userId&&String(c.userId)!==String(userId))return null;
+    if(Date.now()-Number(c.validatedAt)>MCM_ROLE_CACHE_TTL){localStorage.removeItem(MCM_ROLE_CACHE_KEY);return null}
+    return c;
+  }catch{localStorage.removeItem(MCM_ROLE_CACHE_KEY);return null}
+}
+function writeRoleCache(userId,roles,hasMember,hasAdmin){
+  localStorage.setItem(MCM_ROLE_CACHE_KEY,JSON.stringify({userId:String(userId),roles:Array.isArray(roles)?roles.map(String):[],hasMember:!!hasMember,hasAdmin:!!hasAdmin,validatedAt:Date.now()}));
+}
+function clearRoleCache(){localStorage.removeItem(MCM_ROLE_CACHE_KEY)}
 function discordLogin(){const redirect=encodeURIComponent(location.origin+location.pathname);localStorage.removeItem(DISCORD_SESSION_KEY);location.href=`https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${redirect}&response_type=token&scope=identify%20guilds.members.read`}
 function renderDiscordLogin(){const box=$('#discordProfile'),action=$('#discordActionBtn');box.innerHTML='<div class="discord-offline-state"><b>Compte Discord</b><span>● Non connecté</span></div>';action.className='sidebar-discord-action connect';action.textContent='↪ Se connecter avec Discord';action.onclick=discordLogin}
-async function initDiscordProfile(){const hash=new URLSearchParams(location.hash.replace(/^#/,''));if(hash.get('error')){history.replaceState(null,'',location.pathname+location.search);renderDiscordLogin();toast('Connexion Discord annulée');return}let session=null;if(hash.get('access_token')){session={accessToken:hash.get('access_token'),expiresAt:Date.now()+Number(hash.get('expires_in')||3600)*1000};localStorage.setItem(DISCORD_SESSION_KEY,JSON.stringify(session));history.replaceState(null,'',location.pathname+location.search)}else{try{session=JSON.parse(localStorage.getItem(DISCORD_SESSION_KEY)||'null')}catch{session=null}}if(!session?.accessToken||Number(session.expiresAt||0)<=Date.now()){localStorage.removeItem(DISCORD_SESSION_KEY);renderDiscordLogin();return}try{const res=await fetch('https://discord.com/api/users/@me',{headers:{Authorization:`Bearer ${session.accessToken}`}});if(!res.ok)throw new Error('Session expirée');const user=await res.json(),avatar=user.avatar?`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`:'./logo-lfdb.webp',name=user.global_name||user.username||'Membre',action=$('#discordActionBtn');$('#discordProfile').innerHTML=`<div class="discord-user-row"><img src="${avatar}" alt=""><div class="discord-user-copy"><b>${esc(name)}</b><span>● En ligne</span></div></div>`;action.className='sidebar-discord-action logout';action.textContent='↪ Se déconnecter';action.onclick=()=>{localStorage.removeItem(DISCORD_SESSION_KEY);renderDiscordLogin();toast('Déconnecté de Discord')}}catch{localStorage.removeItem(DISCORD_SESSION_KEY);renderDiscordLogin()}}
+async function initDiscordProfile(){const hash=new URLSearchParams(location.hash.replace(/^#/,''));if(hash.get('error')){history.replaceState(null,'',location.pathname+location.search);renderDiscordLogin();toast('Connexion Discord annulée');return}let session=null;if(hash.get('access_token')){session={accessToken:hash.get('access_token'),expiresAt:Date.now()+Number(hash.get('expires_in')||3600)*1000};localStorage.setItem(DISCORD_SESSION_KEY,JSON.stringify(session));history.replaceState(null,'',location.pathname+location.search)}else{try{session=JSON.parse(localStorage.getItem(DISCORD_SESSION_KEY)||'null')}catch{session=null}}if(!session?.accessToken||Number(session.expiresAt||0)<=Date.now()){localStorage.removeItem(DISCORD_SESSION_KEY);renderDiscordLogin();return}try{const res=await fetch('https://discord.com/api/users/@me',{headers:{Authorization:`Bearer ${session.accessToken}`}});if(!res.ok)throw new Error('Session expirée');const user=await res.json(),avatar=user.avatar?`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`:'./logo-lfdb.webp',name=user.global_name||user.username||'Membre',action=$('#discordActionBtn');$('#discordProfile').innerHTML=`<div class="discord-user-row"><img src="${avatar}" alt=""><div class="discord-user-copy"><b>${esc(name)}</b><span>● En ligne</span></div></div>`;action.className='sidebar-discord-action logout';action.textContent='↪ Se déconnecter';action.onclick=()=>{clearRoleCache();localStorage.removeItem(DISCORD_SESSION_KEY);renderDiscordLogin();toast('Déconnecté de Discord')}}catch{localStorage.removeItem(DISCORD_SESSION_KEY);renderDiscordLogin()}}
 
 function getRoutineSession(){try{const s=JSON.parse(localStorage.getItem(DISCORD_SESSION_KEY)||'null');if(s?.accessToken&&Number(s.expiresAt||0)>Date.now())return s}catch{}return null}
 function renderGateState(state){
@@ -329,13 +344,35 @@ async function bootstrapRoutineGate(){
   if(!session){renderGateState('gate');return}
   renderGateState('checking');
   try{
-    const res=await fetch(`https://discord.com/api/users/@me/guilds/${GUILD_ID}/member`,{headers:{Authorization:`Bearer ${session.accessToken}`}});
+    const headers={Authorization:`Bearer ${session.accessToken}`};
+    const u=await fetch('https://discord.com/api/users/@me',{headers});
+    if(u.status===401){localStorage.removeItem(DISCORD_SESSION_KEY);renderGateState('gate');return}
+    if(!u.ok){renderGateState('error');return}
+    const routineUser=await u.json();
+
+    const cached=readRoleCache(routineUser.id);
+    if(cached&&(cached.hasMember||cached.hasAdmin)){
+      IS_ADMIN_ROUTINE=!!cached.hasAdmin;
+      renderGateState('granted');
+      startRoutineApp();
+      return;
+    }
+
+    let res=await fetch(`https://discord.com/api/users/@me/guilds/${GUILD_ID}/member`,{headers});
+    if(res.status===429){
+      let retryAfter=2;
+      try{const rate=await res.clone().json();retryAfter=Math.max(1,Number(rate.retry_after)||2)}catch{}
+      await new Promise(r=>setTimeout(r,Math.min(retryAfter*1000+300,45000)));
+      res=await fetch(`https://discord.com/api/users/@me/guilds/${GUILD_ID}/member`,{headers});
+    }
     if(res.status===404){renderGateState('denied');return}
     if(res.status===401){localStorage.removeItem(DISCORD_SESSION_KEY);renderGateState('gate');return}
     if(!res.ok){renderGateState('error');return}
     const member=await res.json(),roles=member.roles||[];
-    if(roles.includes(REQUIRED_ROLE_ID)){
-      IS_ADMIN_ROUTINE=roles.includes(ADMIN_ROLE_ID);
+    const hasMember=roles.includes(REQUIRED_ROLE_ID),hasAdmin=roles.includes(ADMIN_ROLE_ID);
+    if(hasMember||hasAdmin){
+      IS_ADMIN_ROUTINE=hasAdmin;
+      writeRoleCache(routineUser.id,roles,hasMember,hasAdmin);
       renderGateState('granted');
       startRoutineApp();
     }else{
