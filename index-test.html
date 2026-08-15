@@ -29,6 +29,8 @@
 /* Titre de bannière aligné comme sur MCM */
 .app-main .hero{position:relative;display:block;padding:0}.routine-hero-content{position:absolute;z-index:2;left:28px;top:27px;display:flex;align-items:flex-start;gap:16px;text-align:left}.routine-hero-badge{width:46px;height:46px;flex:none;border-radius:12px;display:grid;place-items:center;color:#87a5ff;background:rgba(55,94,255,.18);border:1px solid rgba(83,113,255,.25)}.routine-hero-badge svg{width:25px;height:25px}.routine-hero-copy h1{margin:0;font-family:Cinzel,serif;font-size:34px;line-height:1.15;font-weight:600;letter-spacing:.03em;text-transform:uppercase}.routine-hero-copy .date{margin-top:8px;text-align:left;font-size:12px;color:#aeb9cf}
 @media(max-width:920px){.routine-hero-content{left:18px;top:20px;gap:12px}.routine-hero-badge{width:42px;height:42px}.routine-hero-copy h1{font-size:27px}}
+/* Image de bannière sans déformation ni double couche */
+.app-main{background:none}.app-main .hero{background-color:#071125;background-image:url("./banniere-dashboard.png");background-repeat:no-repeat;background-size:cover;background-position:center 58%}.hero:before{background:linear-gradient(90deg,rgba(2,7,18,.58) 0%,rgba(2,7,18,.16) 50%,rgba(2,7,18,.2) 100%)}.hero:after{background:linear-gradient(180deg,rgba(2,7,18,.02) 0%,rgba(2,8,23,.12) 55%,rgba(2,8,23,.7) 86%,#020817 100%)}
 </style>
 <style id="readability-fix">
 :root{--panel:#091a32;--panel2:#0c203d;--line:rgba(111,151,214,.38);--text:#f7f9ff;--muted:#b2bfd4}
