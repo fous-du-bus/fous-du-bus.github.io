@@ -1218,7 +1218,8 @@ window.MCM_ACTIVITY_COLORS={
   'Arena':'#ff3dbf',
   'Battleground':'#d9534f',
   'Artifact Abysses':'#f5b84b',
-  '300 VS 300':'#00dca3'
+  '300 VS 300':'#00dca3',
+  'Abyss Boss':'#f5b84b'
 };
 window.MCM_ACTIVITY_TYPE=function(activity){
   if(window.MCM_SEARCH_RVR.includes(activity))return 'rvr';
@@ -3128,16 +3129,57 @@ async function sendChatMessage(){
   input.disabled=true;
   try{await generalChatRef.add({text,at:Date.now(),discordId:discordUser.id,authorId:discordUser.id,author:me?playerName(me):(discordUser.global_name||discordUser.username||'Membre'),username:discordUser.username||'',avatar:me?.discordAvatar||discordAvatar(discordUser),mentionedIds:detectMentions(text)});input.value=''}catch(err){console.error(err);showToast('Impossible d’envoyer le message')}finally{input.disabled=false;input.focus()}
 }
+const MCM_ABYSS_BOSSES=[
+  {name:'Watcher Kaira',zone:'Chaotic Lower Reshanta',interval:60},
+  {name:'Executor Argo',zone:'Chaotic Lower Reshanta',days:[3,6],hour:22,minute:30},
+  {name:'Executor Kaira',zone:'Chaotic Lower Reshanta',days:[3,6],hour:22,minute:30},
+  {name:'Executor Tamasa',zone:'Chaotic Lower Reshanta',days:[3,6],hour:22,minute:30},
+  {name:'Abyss Siege Boss',zone:'Chaotic Lower Reshanta',days:[0,5],hour:22,minute:0},
+  {name:'Enraged Guardian Lord Nahma',zone:'Chaotic Middle Reshanta',days:[0,5],hour:22,minute:0},
+  {name:'Executioner Dramos',zone:'Chaotic Middle Reshanta',days:[3,6],hour:22,minute:30},
+  {name:'Ravager Marakha',zone:'Chaotic Middle Reshanta',days:[3,6],hour:22,minute:30},
+  {name:'Turncoat Ducal',zone:'Chaotic Middle Reshanta',days:[3,6],hour:22,minute:30}
+];
+let MCM_ABYSS_EVENT_CACHE=[];
+function localEventParts(timestamp){const d=new Date(timestamp),pad=n=>String(n).padStart(2,'0');return{date:`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,time:`${pad(d.getHours())}:${pad(d.getMinutes())}`}}
+function abyssBossEvents(startMs,endMs,intervalMode='none'){
+  const events=[],seenDays=new Set(),taiwanShift=8*3600000;
+  for(let cursor=startMs-2*86400000;cursor<=endMs+2*86400000;cursor+=86400000){
+    const tw=new Date(cursor+taiwanShift),y=tw.getUTCFullYear(),m=tw.getUTCMonth(),d=tw.getUTCDate(),dayKey=`${y}-${m}-${d}`;
+    if(seenDays.has(dayKey))continue;seenDays.add(dayKey);
+    const weekday=new Date(Date.UTC(y,m,d)).getUTCDay();
+    MCM_ABYSS_BOSSES.filter(b=>b.days?.includes(weekday)).forEach(b=>{
+      const timestamp=Date.UTC(y,m,d,b.hour-8,b.minute||0),parts=localEventParts(timestamp);
+      if(timestamp<startMs||timestamp>endMs)return;
+      events.push({id:`abyss-${b.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')}-${timestamp}`,source:'abyssBoss',type:'abyss',activity:b.name,groupName:`Abyss Boss · ${b.zone}`,date:parts.date,time:parts.time,timestamp,note:'Horaire serveur Taïwan (GMT+8), converti automatiquement dans ton fuseau local.'});
+    });
+  }
+  const watcher=MCM_ABYSS_BOSSES[0];
+  if(intervalMode==='daily'){
+    const first=new Date(startMs);first.setHours(0,0,0,0);
+    for(let day=new Date(first);day.getTime()<=endMs;day.setDate(day.getDate()+1)){
+      const timestamp=new Date(day).setHours(12,0,0,0),parts=localEventParts(timestamp);
+      events.push({id:`abyss-watcher-${parts.date}`,source:'abyssBoss',type:'abyss',activity:watcher.name,groupName:`Abyss Boss · ${watcher.zone}`,date:parts.date,time:'Toutes les heures',timestamp,note:'Réapparition toutes les 60 minutes.'});
+    }
+  }else if(intervalMode==='next'){
+    const timestamp=Math.ceil((Math.max(Date.now(),startMs)+1)/3600000)*3600000;
+    if(timestamp<=endMs){const parts=localEventParts(timestamp);events.push({id:`abyss-watcher-${timestamp}`,source:'abyssBoss',type:'abyss',activity:watcher.name,groupName:`Abyss Boss · ${watcher.zone}`,date:parts.date,time:parts.time,timestamp,note:'Prochaine réapparition horaire estimée.'})}
+  }
+  return events.sort((a,b)=>a.timestamp-b.timestamp);
+}
+function eventDisplayColor(event){return event.source==='abyssBoss'?'#f5b84b':activityColor(event.activity)}
 function calendarWeekStart(){const date=new Date();date.setHours(0,0,0,0);date.setDate(date.getDate()-((date.getDay()+6)%7)+(CALENDAR_OFFSET*7));return date}
-function calendarEventCategory(event){if(event.source!=='searchGroup')return'static';return event.type||window.MCM_ACTIVITY_TYPE(event.activity)}
+function calendarEventCategory(event){if(event.source==='abyssBoss')return'abyss';if(event.source!=='searchGroup')return'static';return event.type||window.MCM_ACTIVITY_TYPE(event.activity)}
 function renderCalendar(){
   const start=calendarWeekStart(),end=new Date(start);end.setDate(end.getDate()+6);const days=Array.from({length:7},(_,index)=>{const day=new Date(start);day.setDate(day.getDate()+index);return day});
-  const events=PLANNED_EVENTS.filter(event=>eventSourceStillExists(event)).filter(event=>CALENDAR_FILTER==='all'||calendarEventCategory(event)===CALENDAR_FILTER);
+  const rangeEnd=new Date(end);rangeEnd.setHours(23,59,59,999);MCM_ABYSS_EVENT_CACHE=abyssBossEvents(start.getTime(),rangeEnd.getTime(),'daily');
+  const events=[...PLANNED_EVENTS.filter(event=>eventSourceStillExists(event)),...MCM_ABYSS_EVENT_CACHE].filter(event=>CALENDAR_FILTER==='all'||calendarEventCategory(event)===CALENDAR_FILTER);
   const label=`${start.toLocaleDateString(CURRENT_LANG==='en'?'en-GB':'fr-FR',{day:'2-digit',month:'short'})} — ${end.toLocaleDateString(CURRENT_LANG==='en'?'en-GB':'fr-FR',{day:'2-digit',month:'short',year:'numeric'})}`;
-  return `${hero('CALENDRIER','Tous les événements de la guilde')}<div class="calendar-toolbar"><div class="calendar-nav"><button class="btn ghost" id="calendarPrev">‹</button><div class="calendar-week-label">${label}</div><button class="btn ghost" id="calendarNext">›</button><button class="btn" id="calendarToday">Aujourd’hui</button></div><div class="calendar-filters">${[['all','Tous'],['pve','PvE'],['pvp','PvP'],['rvr','RVR'],['static','STATIC']].map(([key,name])=>`<button class="btn calendar-filter ${CALENDAR_FILTER===key?'active':''}" data-calendar-filter="${key}">${name}</button>`).join('')}</div></div><div class="calendar-grid">${days.map(day=>{const pad=n=>String(n).padStart(2,'0'),key=`${day.getFullYear()}-${pad(day.getMonth()+1)}-${pad(day.getDate())}`,today=new Date().toDateString()===day.toDateString(),dayEvents=events.filter(event=>event.date===key).sort((a,b)=>(a.time||'').localeCompare(b.time||''));return `<section class="calendar-day${today?' today':''}"><div class="calendar-day-head">${day.toLocaleDateString(CURRENT_LANG==='en'?'en-GB':'fr-FR',{weekday:'long'})}<b>${day.getDate()}</b>${day.toLocaleDateString(CURRENT_LANG==='en'?'en-GB':'fr-FR',{month:'short'})}</div><div class="calendar-events">${dayEvents.length?dayEvents.map(event=>`<button class="calendar-event" style="--event-color:${activityColor(event.activity)}" data-calendar-event="${esc(event.id)}"><div class="calendar-event-time">${esc(event.time||'—')}</div><div class="calendar-event-name">${esc(event.activity||event.title||'Événement')}</div><div class="calendar-event-group">${esc(event.groupName||'Groupe')}</div></button>`).join(''):'<div class="calendar-day-empty">Aucun événement</div>'}</div></section>`}).join('')}</div>`;
+  return `${hero('CALENDRIER','Tous les événements de la guilde')}<div class="calendar-toolbar"><div class="calendar-nav"><button class="btn ghost" id="calendarPrev">‹</button><div class="calendar-week-label">${label}</div><button class="btn ghost" id="calendarNext">›</button><button class="btn" id="calendarToday">Aujourd’hui</button></div><div class="calendar-filters">${[['all','Tous'],['abyss','Abyss Boss'],['pve','PvE'],['pvp','PvP'],['rvr','RVR'],['static','STATIC']].map(([key,name])=>`<button class="btn calendar-filter ${CALENDAR_FILTER===key?'active':''}" data-calendar-filter="${key}">${name}</button>`).join('')}</div></div><div class="calendar-grid">${days.map(day=>{const pad=n=>String(n).padStart(2,'0'),key=`${day.getFullYear()}-${pad(day.getMonth()+1)}-${pad(day.getDate())}`,today=new Date().toDateString()===day.toDateString(),dayEvents=events.filter(event=>event.date===key).sort((a,b)=>(a.timestamp||new Date(`${a.date}T${a.time||'00:00'}`).getTime())-(b.timestamp||new Date(`${b.date}T${b.time||'00:00'}`).getTime()));return `<section class="calendar-day${today?' today':''}"><div class="calendar-day-head">${day.toLocaleDateString(CURRENT_LANG==='en'?'en-GB':'fr-FR',{weekday:'long'})}<b>${day.getDate()}</b>${day.toLocaleDateString(CURRENT_LANG==='en'?'en-GB':'fr-FR',{month:'short'})}</div><div class="calendar-events">${dayEvents.length?dayEvents.map(event=>`<button class="calendar-event" style="--event-color:${eventDisplayColor(event)}" data-calendar-event="${esc(event.id)}"><div class="calendar-event-time">${esc(event.time||'—')}</div><div class="calendar-event-name">${esc(event.activity||event.title||'Événement')}</div><div class="calendar-event-group">${esc(event.groupName||'Groupe')}</div></button>`).join(''):'<div class="calendar-day-empty">Aucun événement</div>'}</div></section>`}).join('')}</div>`;
 }
 function openCalendarEvent(eventId){
-  const event=PLANNED_EVENTS.find(item=>item.id===eventId);if(!event)return;
+  const event=PLANNED_EVENTS.find(item=>item.id===eventId)||MCM_ABYSS_EVENT_CACHE.find(item=>item.id===eventId);if(!event)return;
+  if(event.source==='abyssBoss'){overlay.innerHTML=`<div class="modal-backdrop"><div class="modal"><h3 style="color:#f5b84b">${esc(event.activity)}</h3><div class="event-summary"><b>${esc(event.groupName)}</b><br>📅 ${esc(event.date)} · ${esc(event.time)}<br><br>${esc(event.note||'Horaire Abyss Boss')}</div><div class="modal-actions"><button class="btn" id="closeCalendarEvent">Fermer</button><a class="btn primary" href="./abyssboss.html">Ouvrir Abyss Boss</a></div></div></div>`;document.getElementById('closeCalendarEvent').onclick=()=>overlay.innerHTML='';return}
   const search=SEARCH_GROUPS.find(group=>group.id===(event.sourceGroupId||event.groupId)),fixed=FIXED_GROUPS.find(group=>group.id===event.groupId),group=search||fixed,me=myPlayer();let action='';
   if(search&&me&&!playerInSearchGroup(search,me.id)){const slot=preferredOpenSlotForGroup(search,me);if(slot)action=`<button class="btn primary" id="calendarJoin" data-kind="search" data-group="${search.id}" data-slot="${slot}">Rejoindre le groupe</button>`}
   if(fixed&&me&&!playerInFixedGroup(fixed,me.id)){const slot=preferredOpenSlotForGroup(fixed,me);if(slot)action=`<button class="btn primary" id="calendarJoin" data-kind="fixed" data-group="${fixed.id}" data-slot="${slot}">Rejoindre le groupe</button>`}
@@ -3182,14 +3224,15 @@ function renderDashboard(){
   const newPct=grandTotal?Math.round(newc/grandTotal*100):0;
   const cutA=onlinePct, cutB=Math.min(100,cutA+offlinePct), cutC=Math.min(100,cutB+newPct);
   const recent=ACTIVITY_LOG.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,12);
-  const upcoming=PLANNED_EVENTS.slice().filter(e=>eventSourceStillExists(e)).filter(e=>new Date(`${e.date}T${e.time||'00:00'}`).getTime()>=Date.now()-3600000).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  const now=Date.now(),bossUpcoming=abyssBossEvents(now,now+14*86400000,'next');
+  const upcoming=[...PLANNED_EVENTS.slice().filter(e=>eventSourceStillExists(e)).filter(e=>new Date(`${e.date}T${e.time||'00:00'}`).getTime()>=now-3600000),...bossUpcoming].sort((a,b)=>(a.timestamp||new Date(`${a.date}T${a.time||'00:00'}`).getTime())-(b.timestamp||new Date(`${b.date}T${b.time||'00:00'}`).getTime())).slice(0,12);
 
   return `${hero(undefined,'','dashboard-home-hero')}<div class="content-wrap">
     <div class="stats">
       <div class="metric blue"><div class="metric-icon">${icon('users','ui-icon')}</div><div><div class="metric-value">${total}</div><div class="metric-label">MEMBRES ACTIFS</div><div class="metric-note good">${assigned} profils complétés</div></div></div>
       <div class="metric violet"><div class="metric-icon">${icon('shield','ui-icon')}</div><div><div class="metric-value">${CLASSES.length}</div><div class="metric-label">CLASSES DISPONIBLES</div><div class="metric-note">Système Aion 2</div></div></div>
       <div class="metric green"><div class="metric-icon">${icon('swords','ui-icon')}</div><div><div class="metric-value">${SEARCH_GROUPS.length}</div><div class="metric-label">RECHERCHES ACTIVES</div><div class="metric-note good">${SEARCH_GROUPS.filter(g=>window.MCM_ACTIVITY_TYPE(g.activity)==='pve').length} PvE · ${SEARCH_GROUPS.filter(g=>window.MCM_ACTIVITY_TYPE(g.activity)==='pvp').length} PvP · ${SEARCH_GROUPS.filter(g=>window.MCM_ACTIVITY_TYPE(g.activity)==='rvr').length} RVR</div></div></div>
-      <div class="metric gold"><div class="metric-icon">${icon('calendar','ui-icon')}</div><div><div class="metric-value">${upcoming.length}</div><div class="metric-label">ÉVÉNEMENTS À VENIR</div><div class="metric-note">Planifiés depuis les groupes</div></div></div>
+      <div class="metric gold"><div class="metric-icon">${icon('calendar','ui-icon')}</div><div><div class="metric-value">${upcoming.length}</div><div class="metric-label">ÉVÉNEMENTS À VENIR</div><div class="metric-note">Groupes et Abyss Boss</div></div></div>
     </div>
 
     <div class="main-grid">
@@ -3208,11 +3251,11 @@ function renderDashboard(){
       <section class="card events-card">
         <h3 class="card-title">${icon('calendar','ui-icon')}ÉVÉNEMENTS À VENIR</h3>
         <div class="events-scroll">${upcoming.map(e=>`<div class="event-row">
-          <div class="event-icon" style="border-color:${activityColor(e.activity)}66;background:${activityColor(e.activity)}18;color:${activityColor(e.activity)}">${e.type==='rvr'?'⚑':e.type==='pvp'?'⚔':'✦'}</div>
+          <div class="event-icon" style="border-color:${eventDisplayColor(e)}66;background:${eventDisplayColor(e)}18;color:${eventDisplayColor(e)}">${e.source==='abyssBoss'?'☠':e.type==='rvr'?'⚑':e.type==='pvp'?'⚔':'✦'}</div>
           <div>
-            <div class="event-title"><span style="color:${activityColor(e.activity)}">${esc(e.activity||e.title||'Événement')}</span> · ${esc(e.groupName||'Groupe')}</div>
-            <div class="event-sub">${e.source==='searchGroup'?'RECHERCHE':'STATIC'} · ${esc(e.time||'')}</div>
-            <div class="event-avatar-stack">${eventAvatars(e)}</div>
+            <div class="event-title"><span style="color:${eventDisplayColor(e)}">${esc(e.activity||e.title||'Événement')}</span> · ${esc(e.groupName||'Groupe')}</div>
+            <div class="event-sub">${e.source==='abyssBoss'?'ABYSS BOSS':e.source==='searchGroup'?'RECHERCHE':'STATIC'} · ${esc(e.time||'')}</div>
+            <div class="event-avatar-stack">${e.source==='abyssBoss'?'':eventAvatars(e)}</div>
           </div>
           <div class="event-date">${new Date(e.date+'T00:00').toLocaleDateString('fr-FR',{weekday:'short'}).replace('.','').toUpperCase()}<b>${e.date.slice(-2)}</b>${new Date(e.date+'T00:00').toLocaleDateString('fr-FR',{month:'short'})}</div>
         </div>`).join('')||'<div class="act-sub">Aucun événement planifié.</div>'}</div>
