@@ -22,6 +22,10 @@
 .app-main .hero{height:305px;min-height:305px}.tabs{margin-top:-128px;padding-bottom:30px;gap:20px}.tab{height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;font-size:19px;border-radius:12px}.reset-badge{position:static!important;display:flex!important;align-items:center;margin:0!important;transform:none!important;min-width:92px;max-width:none;padding:6px 12px;font-size:11px!important;line-height:1!important}.progress-line{height:100px;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:22px;row-gap:12px;align-content:center;padding:16px 26px}.progress-copy{grid-column:1;grid-row:1;display:flex;align-items:baseline;gap:14px}.progress-copy strong{font-size:16px}.progress-count{display:inline-block;margin:0;color:#9dadc4}.progress-value{grid-column:2;grid-row:1;align-self:center;text-align:right;font-size:28px}.progress-line>.track{grid-column:1/-1;grid-row:2;width:100%;height:11px}.catchup{padding:0 26px}
 @media(max-width:920px){.app-main .hero{height:270px;min-height:270px}.tabs{margin-top:-116px;padding-bottom:24px;gap:10px}.tab{height:88px;font-size:16px}.reset-badge{min-width:78px;padding:5px 9px;font-size:10px!important}.progress-line{height:96px;grid-template-columns:1fr auto;padding:14px 16px}.progress-value{font-size:24px!important}}
 @media(max-width:520px){.tabs{grid-template-columns:1fr;position:relative;margin-top:-190px}.app-main .hero{height:390px;min-height:390px}.tab{height:78px}.progress-copy{display:block}.progress-count{display:block;margin-top:3px}.progress-line{height:112px}}
+/* Ajustements finaux bannière, onglets et timers */
+.app-main{position:relative;background-image:linear-gradient(180deg,rgba(2,7,18,.02) 0%,rgba(2,8,23,.18) 58%,rgba(2,8,23,.82) 88%,#020817 100%),linear-gradient(90deg,rgba(2,7,18,.56),rgba(2,7,18,.12) 50%,rgba(2,7,18,.2)),url("./banniere-dashboard.png");background-repeat:no-repeat;background-size:100% 390px;background-position:top center}.app-main .hero{height:330px;min-height:330px;background:none}.tabs{margin-top:-132px;padding-bottom:24px}.tab{height:112px}.tab-title{width:100%;text-align:center}.reset-badge{position:static!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;align-self:center!important;justify-self:center!important;transform:none!important;margin:0 auto!important;width:max-content!important;min-width:92px!important}.sidebar-bottom{display:none}
+@media(max-width:920px){.app-main{background-size:auto 350px}.app-main .hero{height:300px;min-height:300px}.tabs{margin-top:-120px}.tab{height:102px}}
+@media(max-width:520px){.app-main{background-size:auto 440px}.app-main .hero{height:420px;min-height:420px}.tabs{margin-top:-206px}.tab{height:90px}}
 </style>
 <style id="readability-fix">
 :root{--panel:#091a32;--panel2:#0c203d;--line:rgba(111,151,214,.38);--text:#f7f9ff;--muted:#b2bfd4}
@@ -113,8 +117,7 @@ body[data-view="daily"] .task-card,body[data-view="weekly"] .task-card{backgroun
   <div class="side-section">Tableau de bord</div>
   <nav class="side-nav"><a class="active" href="./index-test.html"><span class="side-ico">▦</span>Dailies</a><a href="./equipes.html"><span class="side-ico">♙</span>Gestion des groupes</a><a href="./evenements.html"><span class="side-ico">▣</span>Événements</a></nav>
   <div class="side-section">Outils</div>
-  <nav class="side-nav"><a href="https://coubo.fr/" target="_blank"><span class="side-ico">↗</span>coubo.fr</a><a href="https://discord.gg/BKyVEdTgP9" target="_blank"><span class="side-ico">◇</span>Discord</a></nav>
-  <div class="sidebar-bottom"><a href="https://discord.gg/BKyVEdTgP9" target="_blank">▱　Annonce Discord</a><a href="./equipes.html">◉　Voir les équipes</a></div>
+  <nav class="side-nav"><a href="https://coubo.fr/" target="_blank"><span class="side-ico">↗</span>Guide</a></nav>
   <div class="sidebar-copy">© 2026 Les Fous du Bus</div>
 </aside>
 <div class="app-main"><main class="page">
@@ -127,7 +130,7 @@ body[data-view="daily"] .task-card,body[data-view="weekly"] .task-card{backgroun
     <div class="maincol"><div class="summary-grid"><section class="summary card"><div class="card-title">À faire maintenant</div><div id="priorities"></div></section><section class="summary card"><div class="card-title">Progression par personnage</div><div id="charProgress"></div></section></div><section class="energy-card card"><div class="energy-card-head"><div class="energy-title">◉ Odyle Energy par personnage</div><label class="energy-cap">Plafond Odyle <input class="energy-cap-input" type="number" id="odyleMax" min="40" step="40" value="560"></label></div><div class="energy-grid" id="energyGrid"></div><div class="energy-total">Total du compte : <b id="energyTotal">0</b></div></section><div class="groups" id="groups"></div></div>
     <aside class="aside"><button class="reset" id="resetBtn">↻ Réinitialiser la journée</button></aside>
   </div>
-  <footer class="footer">Les Fous du Bus — Communauté Aion — <a href="https://coubo.fr/" style="color:#39bfff">coubo.fr</a><br>Ce site n’est pas affilié à NCSOFT ou au jeu Aion.</footer>
+  <footer class="footer">Les Fous du Bus — Communauté Aion<br>Ce site n’est pas affilié à NCSOFT ou au jeu Aion.</footer>
 </main></div></div><div class="toast" id="toast"></div>
 <script>
 let chars=JSON.parse(localStorage.getItem('lfdb-v3-characters')||'null')||[{id:'main',name:'Main'},{id:'alt1',name:'Alt 1'},{id:'alt2',name:'Alt 2'},{id:'alt3',name:'Alt 3'}];
