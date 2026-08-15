@@ -14,6 +14,9 @@
 @media(max-width:900px){.topbar{padding:0 14px}.top-brand span,.nav-right .top-btn:not(.login),.lang{display:none}.top-brand{margin-right:8px}.nav a{padding:0 10px}.workspace{grid-template-columns:1fr}.aside{display:grid;grid-template-columns:1fr 1fr}.reset{grid-column:1/-1}.summary-grid{grid-template-columns:1fr}.reset-badge{display:none}}
 @media(max-width:580px){.topbar{height:58px}.top-brand img{width:42px;height:42px}.nav a{font-size:10px;padding:0 7px}.top-btn.login{padding:0 9px}.hero{padding-top:8px}.hero img{width:78px;height:78px}.hero h1{font-size:23px}.tabs{gap:4px}.tab{font-size:11px}.progress-line{grid-template-columns:85px 1fr 72px;gap:8px}.controls{align-items:flex-start;flex-direction:column}.tools{margin-left:0}.workspace{display:block}.aside{margin-top:9px}.task-head,.task-row{grid-template-columns:minmax(0,1fr) repeat(4,36px);padding-left:9px;padding-right:9px}.task-name{font-size:9px}.char-label{font-size:8px}}
 .reset-badge{min-width:76px;justify-content:center;padding:5px 9px;margin-left:12px;white-space:nowrap;font-family:JetBrains Mono,monospace;font-weight:600}
+/* Bannière continue derrière les onglets */
+.app-main .hero{height:270px;min-height:270px;margin:0;padding:50px 24px 0;border:0;border-radius:0;background-position:center 58%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}.hero:before{background:linear-gradient(90deg,rgba(2,7,18,.58) 0%,rgba(2,7,18,.18) 48%,rgba(2,7,18,.22) 100%)}.hero:after{background:linear-gradient(180deg,rgba(2,7,18,.03) 0%,rgba(2,8,23,.18) 52%,rgba(2,8,23,.76) 82%,#020817 100%)}.hero h1{margin:0;font-size:clamp(34px,3vw,50px)}.hero .date{margin-top:15px}.tabs{position:relative;z-index:3;width:calc(100% - 48px);margin:-94px 24px 26px;padding-bottom:26px}.tab{backdrop-filter:blur(8px)}
+@media(max-width:920px){.app-main .hero{height:235px;min-height:235px;padding-top:38px}.tabs{width:calc(100% - 24px);margin:-83px 12px 20px;padding-bottom:20px}.hero h1{font-size:clamp(28px,7vw,38px)}}
 </style>
 <style id="readability-fix">
 :root{--panel:#091a32;--panel2:#0c203d;--line:rgba(111,151,214,.38);--text:#f7f9ff;--muted:#b2bfd4}
@@ -110,7 +113,7 @@ body[data-view="daily"] .task-card,body[data-view="weekly"] .task-card{backgroun
   <div class="sidebar-copy">© 2026 Les Fous du Bus</div>
 </aside>
 <div class="app-main"><main class="page">
-  <section class="hero"><img src="./logo-lfdb.webp" alt="Les Fous du Bus"><h1>Routines les Fous du Bus</h1><div class="date" id="date"></div></section>
+  <section class="hero"><h1>Ma routine</h1><div class="date" id="date"></div></section>
   <div class="tabs"><button class="tab active" data-view="daily">Quotidien <span class="reset-badge" id="dailyReset"></span></button><button class="tab" data-view="weekly">Hebdomadaire <span class="reset-badge" id="weeklyReset"></span></button></div>
   <section class="progress-card card"><div class="progress-line"><div class="progress-copy"><strong>Progression</strong><span class="progress-count" id="globalCount">0 / 0 tâches</span></div><div class="track"><div class="fill" id="globalFill"></div></div><span class="progress-value" id="globalValue">0%</span></div><button class="catchup" id="catchup"><span>À rattraper (<b id="catchupCount">0</b>)</span><span>⌄</span></button><div class="catchup-list" id="catchupList">Les tâches non terminées apparaissent ici.</div></section>
   <div class="controls"><div class="chips" id="chips"></div><div class="tools"><button class="tool" id="compactBtn">☷ Mode compact</button><button class="tool" id="hideBtn">◉ Masquer terminées</button><button class="tool" id="allBtn">◉ Tout valider</button></div></div>
