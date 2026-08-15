@@ -3224,7 +3224,7 @@ function renderDashboard(){
   const newPct=grandTotal?Math.round(newc/grandTotal*100):0;
   const cutA=onlinePct, cutB=Math.min(100,cutA+offlinePct), cutC=Math.min(100,cutB+newPct);
   const recent=ACTIVITY_LOG.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,12);
-  const now=Date.now(),bossUpcoming=abyssBossEvents(now,now+14*86400000,'next');
+  const now=Date.now(),bossUpcoming=abyssBossEvents(now,now+86400000,'next');
   const upcoming=[...PLANNED_EVENTS.slice().filter(e=>eventSourceStillExists(e)).filter(e=>new Date(`${e.date}T${e.time||'00:00'}`).getTime()>=now-3600000),...bossUpcoming].sort((a,b)=>(a.timestamp||new Date(`${a.date}T${a.time||'00:00'}`).getTime())-(b.timestamp||new Date(`${b.date}T${b.time||'00:00'}`).getTime())).slice(0,12);
 
   return `${hero(undefined,'','dashboard-home-hero')}<div class="content-wrap">
