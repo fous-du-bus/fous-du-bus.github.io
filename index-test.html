@@ -195,17 +195,17 @@ let characterNames=JSON.parse(localStorage.getItem('lfdb-v3-character-names')||'
 let odyleValues=JSON.parse(localStorage.getItem('lfdb-v3-odyle')||'{}'),odyleMax=Math.max(40,Number(localStorage.getItem('lfdb-v3-odyle-max')||560));
 const classInfo=id=>classes.find(c=>c[0]===id)||classes[0];
 const daily=[
- {title:'Duty Missions',target:5},
+ {title:'Duty Missions',target:5,icon:'./duty-missions.webp'},
  {title:'Nightmare',target:2,icon:'./nightmare.webp'},
  {title:'Shugo Festival',target:2,icon:'./shugo.webp'}
 ];
 const weekly=[
- {title:'Command Missions',target:12,mainOnly:true},
+ {title:'Command Missions',target:12,mainOnly:true,icon:'./command-missions.webp'},
  {title:'Daily Dungeons',target:1,mainOnly:true,icon:'./daily-dungeons.webp'},
- {title:'Ascension Trial',target:3},
+ {title:'Ascension Trial',target:3,icon:'./ascension-trial.webp'},
  {title:'Quêtes Abyss',target:1,mainOnly:true,icon:'./abyss.webp'},
- {title:'Sanctuary',target:1},
- {title:'Odyle Energy Morph',target:1}
+ {title:'Sanctuary',target:1,icon:'./sanctuary.webp'},
+ {title:'Odyle Energy Morph',target:1,icon:'./odyle-energy-morph.png'}
 ];
 let view='daily',filter='all';const key=()=>`lfdb-v7-counters:${view}`;let state=JSON.parse(localStorage.getItem(key())||'{}');
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
