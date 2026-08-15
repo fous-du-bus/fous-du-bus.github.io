@@ -199,6 +199,11 @@ body[data-view="daily"] .task-card,body[data-view="weekly"] .task-card{backgroun
 </style>
 </head>
 <body>
+<div id="accessGate" style="position:fixed;inset:0;z-index:9999;background:radial-gradient(1100px 700px at 75% 0%,rgba(124,86,255,.12),transparent 58%),var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;">
+  <div id="accessGateContent" style="text-align:center;max-width:360px;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--text);">
+    <div style="color:var(--muted);font-size:13px;">Vérification de ton accès…</div>
+  </div>
+</div>
 <div class="app-shell">
 <aside class="mcm-sidebar">
   <a class="sidebar-brand" href="./index-test.html"><img src="./logo-lfdb.webp" alt="Les Fous du Bus"><strong>Les Fous du Bus</strong></a>
@@ -273,12 +278,57 @@ function addAlt(){const n=chars.filter(c=>c.id!=='main').length+1,id='alt'+Date.
 function removeAlt(id){const c=chars.find(x=>x.id===id);if(!c||!confirm(`Supprimer ${characterNames[id]||c.name} ?`))return;chars=chars.filter(x=>x.id!==id);delete profiles[id];delete characterNames[id];delete odyleValues[id];localStorage.setItem('lfdb-v3-character-names',JSON.stringify(characterNames));if(filter===id)filter='all';saveProfiles();saveOdyle();renderProfiles();renderChips();render();toast('Alt supprimé')}
 function tick(){const n=new Date(),day=new Date(n);day.setDate(day.getDate()+1);day.setHours(5,0,0,0);if(day<=n)day.setDate(day.getDate()+1);const wed=new Date(n);wed.setDate(wed.getDate()+((3-wed.getDay()+7)%7));wed.setHours(5,0,0,0);if(wed<=n)wed.setDate(wed.getDate()+7);const fmt=d=>{const m=d-n,h=Math.floor(m/36e5),mn=Math.floor(m%36e5/6e4);return `${h}h ${String(mn).padStart(2,'0')}m`};$('#dailyReset').textContent=fmt(day);$('#weeklyReset').textContent=fmt(wed)}
 const DISCORD_CLIENT_ID='1532248812771606691',DISCORD_SESSION_KEY='mcm-discord-session';
+const GUILD_ID='1355632831333798200',REQUIRED_ROLE_ID='1443636744267501618',ADMIN_ROLE_ID='1397018334590926929';
+let IS_ADMIN_ROUTINE=false;
 function discordLogin(){const redirect=encodeURIComponent(location.origin+location.pathname);localStorage.removeItem(DISCORD_SESSION_KEY);location.href=`https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${redirect}&response_type=token&scope=identify%20guilds.members.read`}
 function renderDiscordLogin(){const box=$('#discordProfile'),action=$('#discordActionBtn');box.innerHTML='<div class="discord-offline-state"><b>Compte Discord</b><span>● Non connecté</span></div>';action.className='sidebar-discord-action connect';action.textContent='↪ Se connecter avec Discord';action.onclick=discordLogin}
 async function initDiscordProfile(){const hash=new URLSearchParams(location.hash.replace(/^#/,''));if(hash.get('error')){history.replaceState(null,'',location.pathname+location.search);renderDiscordLogin();toast('Connexion Discord annulée');return}let session=null;if(hash.get('access_token')){session={accessToken:hash.get('access_token'),expiresAt:Date.now()+Number(hash.get('expires_in')||3600)*1000};localStorage.setItem(DISCORD_SESSION_KEY,JSON.stringify(session));history.replaceState(null,'',location.pathname+location.search)}else{try{session=JSON.parse(localStorage.getItem(DISCORD_SESSION_KEY)||'null')}catch{session=null}}if(!session?.accessToken||Number(session.expiresAt||0)<=Date.now()){localStorage.removeItem(DISCORD_SESSION_KEY);renderDiscordLogin();return}try{const res=await fetch('https://discord.com/api/users/@me',{headers:{Authorization:`Bearer ${session.accessToken}`}});if(!res.ok)throw new Error('Session expirée');const user=await res.json(),avatar=user.avatar?`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`:'./logo-lfdb.webp',name=user.global_name||user.username||'Membre',action=$('#discordActionBtn');$('#discordProfile').innerHTML=`<div class="discord-user-row"><img src="${avatar}" alt=""><div class="discord-user-copy"><b>${esc(name)}</b><span>● En ligne</span></div></div>`;action.className='sidebar-discord-action logout';action.textContent='↪ Se déconnecter';action.onclick=()=>{localStorage.removeItem(DISCORD_SESSION_KEY);renderDiscordLogin();toast('Déconnecté de Discord')}}catch{localStorage.removeItem(DISCORD_SESSION_KEY);renderDiscordLogin()}}
+
+function getRoutineSession(){try{const s=JSON.parse(localStorage.getItem(DISCORD_SESSION_KEY)||'null');if(s?.accessToken&&Number(s.expiresAt||0)>Date.now())return s}catch{}return null}
+function renderGateState(state){
+  const gate=document.getElementById('accessGate'),content=document.getElementById('accessGateContent');
+  if(state==='granted'){gate.style.display='none';return}
+  gate.style.display='flex';
+  if(state==='checking'){
+    content.innerHTML='<div style="color:var(--muted);font-size:13px;">Vérification de ton accès…</div>';
+  }else if(state==='denied'){
+    content.innerHTML=`<div style="font-size:15px;font-weight:600;color:#ff8b96;margin-bottom:8px;">Accès refusé</div><div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px;">Cette page est réservée aux membres ayant le rôle <strong style="color:var(--text);">Aion 2</strong> sur le serveur Discord de la guilde.</div><button class="sidebar-discord-action logout" style="width:auto;padding:0 16px;" onclick="localStorage.removeItem(DISCORD_SESSION_KEY);discordLogin()">Changer de compte</button>`;
+  }else if(state==='error'){
+    content.innerHTML=`<div style="font-size:15px;font-weight:600;color:var(--gold);margin-bottom:8px;">Vérification impossible</div><div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px;">Un problème technique empêche de vérifier ton accès (réseau ou Discord momentanément indisponible).</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;"><button class="sidebar-discord-action connect" style="width:auto;padding:0 16px;" onclick="bootstrapRoutineGate()">Réessayer</button><button class="sidebar-discord-action logout" style="width:auto;padding:0 16px;" onclick="localStorage.removeItem(DISCORD_SESSION_KEY);discordLogin()">Se déconnecter</button></div>`;
+  }else{
+    content.innerHTML=`<img src="./logo-lfdb.webp" alt="" style="width:72px;height:72px;object-fit:contain;margin:0 auto 16px;display:block;"><div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;">Accès réservé</div><div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px;">Connecte-toi avec Discord pour accéder à ta routine (réservé aux membres avec le rôle Aion 2).</div><button class="sidebar-discord-action connect" style="width:auto;padding:0 16px;" onclick="discordLogin()">↪ Se connecter avec Discord</button>`;
+  }
+}
+async function bootstrapRoutineGate(){
+  const hash=new URLSearchParams(location.hash.replace(/^#/,''));
+  if(hash.get('error')){history.replaceState(null,'',location.pathname+location.search);renderGateState('gate');return}
+  if(hash.get('access_token')){
+    const session={accessToken:hash.get('access_token'),expiresAt:Date.now()+Number(hash.get('expires_in')||3600)*1000};
+    localStorage.setItem(DISCORD_SESSION_KEY,JSON.stringify(session));
+    history.replaceState(null,'',location.pathname+location.search);
+  }
+  const session=getRoutineSession();
+  if(!session){renderGateState('gate');return}
+  renderGateState('checking');
+  try{
+    const res=await fetch(`https://discord.com/api/users/@me/guilds/${GUILD_ID}/member`,{headers:{Authorization:`Bearer ${session.accessToken}`}});
+    if(res.status===404){renderGateState('denied');return}
+    if(res.status===401){localStorage.removeItem(DISCORD_SESSION_KEY);renderGateState('gate');return}
+    if(!res.ok){renderGateState('error');return}
+    const member=await res.json(),roles=member.roles||[];
+    if(roles.includes(REQUIRED_ROLE_ID)){
+      IS_ADMIN_ROUTINE=roles.includes(ADMIN_ROLE_ID);
+      renderGateState('granted');
+      startRoutineApp();
+    }else{
+      renderGateState('denied');
+    }
+  }catch(e){renderGateState('error')}
+}
+function startRoutineApp(){renderProfiles();renderChips();render();tick();initDiscordProfile();setInterval(tick,60000)}
 function toast(t){$('#toast').textContent=t;$('#toast').classList.add('show');setTimeout(()=>$('#toast').classList.remove('show'),1500)}
 $$('.tab').forEach(b=>b.onclick=()=>{view=b.dataset.view;$$('.tab').forEach(x=>x.classList.toggle('active',x===b));state=JSON.parse(localStorage.getItem(key())||'{}');render()});$('#hideBtn').onclick=()=>{document.body.classList.toggle('hide-done');$('#hideBtn').classList.toggle('active')};$('#allBtn').onclick=()=>{const data=view==='daily'?daily:weekly;data.forEach((g,gi)=>visibleChars().filter(c=>!g.mainOnly||c.id==='main').forEach(c=>state[taskKey(gi,0,c.id)]=g.target));save();render();toast('Toutes les tâches sont validées')};$('#resetBtn').onclick=()=>{if(confirm('Réinitialiser la progression de cette vue ?')){state={};save();render();toast('Progression réinitialisée')}};
-const today=new Date(),weekday=today.toLocaleDateString('fr-FR',{weekday:'long'}),fullDate=today.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});$('#date').innerHTML=`<span class="banner-weekday">${esc(weekday)}</span><span class="banner-full-date">${esc(fullDate)}</span>`;$('#odyleMax').onchange=e=>{odyleMax=Math.max(40,Number(e.target.value||560));saveOdyle();renderEnergy()};renderProfiles();renderChips();render();tick();initDiscordProfile();setInterval(tick,60000);
+const today=new Date(),weekday=today.toLocaleDateString('fr-FR',{weekday:'long'}),fullDate=today.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});$('#date').innerHTML=`<span class="banner-weekday">${esc(weekday)}</span><span class="banner-full-date">${esc(fullDate)}</span>`;$('#odyleMax').onchange=e=>{odyleMax=Math.max(40,Number(e.target.value||560));saveOdyle();renderEnergy()};bootstrapRoutineGate();
 </script>
 </body>
 </html>
