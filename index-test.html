@@ -26,6 +26,9 @@
 .app-main{position:relative;background-image:linear-gradient(180deg,rgba(2,7,18,.02) 0%,rgba(2,8,23,.18) 58%,rgba(2,8,23,.82) 88%,#020817 100%),linear-gradient(90deg,rgba(2,7,18,.56),rgba(2,7,18,.12) 50%,rgba(2,7,18,.2)),url("./banniere-dashboard.png");background-repeat:no-repeat;background-size:100% 390px;background-position:top center}.app-main .hero{height:330px;min-height:330px;background:none}.tabs{margin-top:-132px;padding-bottom:24px}.tab{height:112px}.tab-title{width:100%;text-align:center}.reset-badge{position:static!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;align-self:center!important;justify-self:center!important;transform:none!important;margin:0 auto!important;width:max-content!important;min-width:92px!important}.sidebar-bottom{display:none}
 @media(max-width:920px){.app-main{background-size:auto 350px}.app-main .hero{height:300px;min-height:300px}.tabs{margin-top:-120px}.tab{height:102px}}
 @media(max-width:520px){.app-main{background-size:auto 440px}.app-main .hero{height:420px;min-height:420px}.tabs{margin-top:-206px}.tab{height:90px}}
+/* Titre de bannière aligné comme sur MCM */
+.app-main .hero{position:relative;display:block;padding:0}.routine-hero-content{position:absolute;z-index:2;left:28px;top:27px;display:flex;align-items:flex-start;gap:16px;text-align:left}.routine-hero-badge{width:46px;height:46px;flex:none;border-radius:12px;display:grid;place-items:center;color:#87a5ff;background:rgba(55,94,255,.18);border:1px solid rgba(83,113,255,.25)}.routine-hero-badge svg{width:25px;height:25px}.routine-hero-copy h1{margin:0;font-family:Cinzel,serif;font-size:34px;line-height:1.15;font-weight:600;letter-spacing:.03em;text-transform:uppercase}.routine-hero-copy .date{margin-top:8px;text-align:left;font-size:12px;color:#aeb9cf}
+@media(max-width:920px){.routine-hero-content{left:18px;top:20px;gap:12px}.routine-hero-badge{width:42px;height:42px}.routine-hero-copy h1{font-size:27px}}
 </style>
 <style id="readability-fix">
 :root{--panel:#091a32;--panel2:#0c203d;--line:rgba(111,151,214,.38);--text:#f7f9ff;--muted:#b2bfd4}
@@ -121,7 +124,7 @@ body[data-view="daily"] .task-card,body[data-view="weekly"] .task-card{backgroun
   <div class="sidebar-copy">© 2026 Les Fous du Bus</div>
 </aside>
 <div class="app-main"><main class="page">
-  <section class="hero"><h1>Ma routine</h1><div class="date" id="date"></div></section>
+  <section class="hero"><div class="routine-hero-content"><div class="routine-hero-badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg></div><div class="routine-hero-copy"><h1>Ma routine</h1><div class="date" id="date"></div></div></div></section>
   <div class="tabs"><button class="tab active" data-view="daily"><span class="tab-title">Quotidien</span><span class="reset-badge" id="dailyReset"></span></button><button class="tab" data-view="weekly"><span class="tab-title">Hebdomadaire</span><span class="reset-badge" id="weeklyReset"></span></button></div>
   <section class="progress-card card"><div class="progress-line"><div class="progress-copy"><strong>Progression</strong><span class="progress-count" id="globalCount">0 / 0 tâches</span></div><div class="track"><div class="fill" id="globalFill"></div></div><span class="progress-value" id="globalValue">0%</span></div></section>
   <div class="controls"><div class="chips" id="chips"></div><div class="tools"><button class="tool" id="compactBtn">☷ Mode compact</button><button class="tool" id="hideBtn">◉ Masquer terminées</button><button class="tool" id="allBtn">◉ Tout valider</button></div></div>
