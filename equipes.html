@@ -3350,20 +3350,14 @@ function stratFormationObjects(name){
   const objects=[];
   const marker=(label,x,y,color,symbol)=>objects.push({id:`o${Date.now()}${objects.length}`,type:'marker',marker:symbol,label,x,y,color,rotation:0,scale:.9});
   let positions;
-  if(name==='circle10'){
-    positions=Array.from({length:10},(_,i)=>[700+Math.cos((i/10)*Math.PI*2+Math.PI/2)*420,390+Math.sin((i/10)*Math.PI*2+Math.PI/2)*275]);
-    marker('Boss',700,390,'#b56cff','☠');marker('SPAWN',700,735,'#ff4d67','⬆');
-  }else if(name==='teams10'){
+  if(name==='teams10'){
     positions=[[310,150],[190,245],[380,275],[250,380],[420,410],[1090,150],[1210,245],[1020,275],[1150,380],[980,410]];
-    marker('Boss',700,95,'#b56cff','☠');
-  }else if(name==='surround10'){
-    positions=Array.from({length:10},(_,i)=>[700+Math.cos((i/10)*Math.PI*2)*430,400+Math.sin((i/10)*Math.PI*2)*285]);
-    marker('Boss',700,400,'#ff596e','☠');
+    marker('Boss',700,95,'#facc15','☠');
   }else{
     positions=[[350,220],[535,180],[700,250],[865,180],[1050,220]];
-    marker('Boss',700,400,'#ff596e','☠');
+    marker('Boss',700,400,'#facc15','☠');
   }
-  positions.forEach((position,index)=>marker('',position[0],position[1],index<5?'#24d8ee':'#ff6b7d',String(index+1)));
+  positions.forEach((position,index)=>marker('',position[0],position[1],index<5?'#3b82f6':'#ef4444',String(index+1)));
   return objects;
 }
 
@@ -3387,7 +3381,7 @@ function initStrategyBoardV5(){
   const newDrawingButton=document.getElementById('stratNew'),topActions=document.getElementById('stratPresent')?.parentElement,saveDrawingButton=document.createElement('button'),renameDrawingButton=document.createElement('button'),deleteDrawingButton=document.createElement('button'),drawingSaved=Boolean(stratCurrent().saved);newDrawingButton.textContent='Voir un autre dessin';newDrawingButton.disabled=false;saveDrawingButton.type='button';saveDrawingButton.id='stratSaveDrawing';saveDrawingButton.className=`btn strat-save-drawing${drawingSaved?' saved':''}`;saveDrawingButton.textContent=drawingSaved?'✓ Dessin enregistré':'Enregistrer le dessin';saveDrawingButton.disabled=!can();renameDrawingButton.type='button';renameDrawingButton.className='btn';renameDrawingButton.textContent='Renommer';renameDrawingButton.disabled=!can();deleteDrawingButton.type='button';deleteDrawingButton.className='btn danger';deleteDrawingButton.textContent='Supprimer de la base';deleteDrawingButton.disabled=!can();topActions?.insertBefore(renameDrawingButton,document.getElementById('stratPresent'));topActions?.insertBefore(saveDrawingButton,document.getElementById('stratPresent'));topActions?.insertBefore(deleteDrawingButton,document.getElementById('stratPresent'));saveDrawingButton.onclick=stratSaveDrawing;renameDrawingButton.onclick=stratRenameDrawing;deleteDrawingButton.onclick=stratDeleteFromDatabase;
   const markerSelect=document.getElementById('stratMarker');markerSelect.innerHTML='<option value="☠">Boss</option><option value="1">Joueur 1</option><option value="2">Joueur 2</option><option value="3">Joueur 3</option><option value="4">Joueur 4</option><option value="5">Joueur 5</option><option value="6">Joueur 6</option><option value="7">Joueur 7</option><option value="8">Joueur 8</option><option value="9">Joueur 9</option><option value="10">Joueur 10</option><option value="⬆">Point de départ</option><option value="🛡">Tank</option><option value="✚">Heal</option><option value="⚔">DPS</option>';document.getElementById('stratLabel').placeholder='Nom';
   const compact=document.querySelector('.strat-compact-tools'),guide=document.createElement('div');guide.className='strat-simple-guide';guide.innerHTML='<b>1. Choisis une formation ou importe une carte</b><span>2. Déplace le boss et les joueurs</span><span>3. Enregistre la phase</span><span>Double-clic pour supprimer</span>';compact.prepend(guide);
-  const formations=document.createElement('div');formations.className='strat-formation-bar';formations.innerHTML='<span class="strat-section-label">Formation rapide</span><select id="stratFormation"><option value="group5">1 groupe · 5 joueurs</option><option value="teams10">2 groupes · 10 joueurs</option><option value="circle10">10 joueurs en cercle</option><option value="surround10">10 joueurs autour du boss</option></select><button class="btn primary" id="stratApplyFormation">Appliquer</button>';compact.insertBefore(formations,guide.nextSibling);
+  const formations=document.createElement('div');formations.className='strat-formation-bar';formations.innerHTML='<span class="strat-section-label">Formation rapide</span><select id="stratFormation"><option value="group5">1 groupe · joueurs 1 à 5</option><option value="teams10">2 groupes · joueurs 1 à 10</option></select><button class="btn primary" id="stratApplyFormation">Appliquer</button>';compact.insertBefore(formations,guide.nextSibling);
   const textTools=document.createElement('div');textTools.className='strat-text-tools';textTools.innerHTML='<span class="strat-section-label">Texte</span><input id="stratFreeText" type="text" maxlength="80" placeholder="Écrire une consigne…"><select id="stratTextSize" title="Taille du texte"><option value="24">Petit</option><option value="32" selected>Moyen</option><option value="44">Grand</option><option value="58">Très grand</option></select><button class="btn primary" id="stratAddText">+ Ajouter le texte</button>';compact.insertBefore(textTools,formations.nextSibling);
   const mapLabel=document.querySelector('label:has(#stratBg)');mapLabel.classList.add('strat-map-button');mapLabel.firstChild.textContent='🗺 Importer la carte ';markerSelect.closest('.strat-tool-group').prepend(mapLabel);
   const shell=document.getElementById('stratShell'),layout=document.createElement('div'),room=document.createElement('aside');layout.className='strat-collab-layout';room.className='strat-room';room.id='stratRoom';shell.parentNode.insertBefore(layout,shell);layout.appendChild(shell);layout.appendChild(room);renderStratParticipantsPanel();
