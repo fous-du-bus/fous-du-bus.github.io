@@ -3317,6 +3317,80 @@ function enableOneShotStrategyTools(){const svg=document.getElementById('stratSv
 function enableStrategyDeleteCrosses(){const svg=document.getElementById('stratSvg');if(!svg)return;svg.addEventListener('click',e=>{const isCross=e.target.matches?.('circle[cx="31"][cy="-31"], text[x="31"][y="-27"]');if(!isCross||!stratCanEdit())return;e.preventDefault();e.stopPropagation();const group=e.target.closest('[data-oid]');if(!group)return;stratPhase().objects=stratPhase().objects.filter(o=>o.id!==group.dataset.oid);STRAT_SELECTED='';stratPersist();stratRenderObjects();showToast('Symbole supprimé')})}
 function enableStrategyShapeDragging(){const svg=document.getElementById('stratSvg');if(!svg)return;let move=null;const point=e=>{const r=svg.getBoundingClientRect();return{x:(e.clientX-r.left)*1400/r.width,y:(e.clientY-r.top)*800/r.height}};svg.addEventListener('pointerdown',e=>{if(STRAT_TOOL!=='select'||!stratCanEdit())return;const el=e.target.closest?.('[data-oid]'),o=el&&stratPhase().objects.find(x=>x.id===el.dataset.oid);if(!o||o.type==='marker')return;const p=point(e);move={o,start:p,original:JSON.parse(JSON.stringify(o))};svg.setPointerCapture(e.pointerId)});svg.addEventListener('pointermove',e=>{if(!move)return;const p=point(e),dx=p.x-move.start.x,dy=p.y-move.start.y,o=move.o,base=move.original;if(o.points)o.points=base.points.map(v=>[v[0]+dx,v[1]+dy]);else{o.x1=base.x1+dx;o.y1=base.y1+dy;o.x2=base.x2+dx;o.y2=base.y2+dy}stratRenderObjects()});svg.addEventListener('pointerup',()=>{if(move){stratPersist();move=null}})}
 
+function initStrategyBoardV5(){
+  stratStartSync();
+  const root=document.getElementById('stratRoot'),stage=document.getElementById('stratStage'),svg=document.getElementById('stratSvg');
+  if(!root||!stage||!svg)return;
+  const can=()=>stratCanEdit(),phase=()=>stratPhase(),uid=()=>`o${Date.now()}${Math.random().toString(16).slice(2)}`;
+  const save=()=>{stratPersist();stratRenderObjects()};
+  const point=e=>{const r=svg.getBoundingClientRect();return{x:(e.clientX-r.left)*1400/r.width,y:(e.clientY-r.top)*800/r.height}};
+  const snap=n=>document.getElementById('stratGrid')?.classList.contains('active')?Math.round(n/25)*25:n;
+  const setTool=tool=>{STRAT_TOOL=tool;document.querySelectorAll('[data-strat-tool]').forEach(b=>b.classList.toggle('active',b.dataset.stratTool===tool));svg.style.cursor=tool==='select'?'default':'crosshair'};
+  stage.style.width=STRAT_ZOOM*100+'%';stratRenderObjects();setTool(STRAT_TOOL||'select');
+  document.querySelectorAll('[data-strat-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.stratTool));
+  let action=null;
+  svg.onpointerdown=e=>{
+    if(!can())return;
+    const cross=e.target.matches?.('circle[cx="31"][cy="-31"], text[x="31"][y="-27"]');
+    const element=e.target.closest?.('[data-oid]');
+    if(cross&&element){e.preventDefault();e.stopPropagation();phase().objects=phase().objects.filter(o=>o.id!==element.dataset.oid);STRAT_SELECTED='';save();showToast('Objet supprimé');return}
+    const p=point(e);
+    if(STRAT_TOOL==='select'){
+      const object=element&&phase().objects.find(o=>o.id===element.dataset.oid);
+      STRAT_SELECTED=object?.id||'';stratRenderObjects();
+      if(!object)return;
+      action={kind:'move',object,start:p,original:JSON.parse(JSON.stringify(object))};
+      svg.setPointerCapture(e.pointerId);return;
+    }
+    const type=STRAT_TOOL==='pen'?'path':STRAT_TOOL;
+    const object={id:uid(),type,color:document.getElementById('stratColor').value,width:+document.getElementById('stratWidth').value,x1:snap(p.x),y1:snap(p.y),x2:snap(p.x),y2:snap(p.y)};
+    if(type==='path')object.points=[[object.x1,object.y1]];
+    phase().objects.push(object);action={kind:'draw',object,tool:STRAT_TOOL};STRAT_SELECTED=object.id;svg.setPointerCapture(e.pointerId);stratRenderObjects();
+  };
+  svg.onpointermove=e=>{
+    if(!action)return;const p=point(e),o=action.object;
+    if(action.kind==='draw'){o.x2=snap(p.x);o.y2=snap(p.y);if(o.type==='path')o.points.push([o.x2,o.y2])}
+    else{const dx=p.x-action.start.x,dy=p.y-action.start.y,b=action.original;if(o.type==='marker'){o.x=b.x+dx;o.y=b.y+dy}else if(o.points){o.points=b.points.map(v=>[v[0]+dx,v[1]+dy])}else{o.x1=b.x1+dx;o.y1=b.y1+dy;o.x2=b.x2+dx;o.y2=b.y2+dy}}
+    stratRenderObjects();
+  };
+  svg.onpointerup=e=>{
+    if(!action)return;const finished=action,tool=finished.tool;action=null;
+    if(finished.kind==='draw'&&finished.object.type!=='path'){
+      const o=finished.object,d=Math.hypot(o.x2-o.x1,o.y2-o.y1);if(d<12){const size=['line','arrow','cone'].includes(o.type)?170:115;o.x2=o.x1+size;o.y2=o.y1}
+    }
+    save();
+    if(finished.kind==='draw'&&tool!=='pen'){setTool('select');showToast('Élément ajouté')}
+  };
+  svg.onpointercancel=()=>{action=null};
+  svg.ondblclick=e=>{const el=e.target.closest?.('[data-oid]');if(!el||!can())return;phase().objects=phase().objects.filter(o=>o.id!==el.dataset.oid);STRAT_SELECTED='';save();showToast('Objet supprimé')};
+  document.getElementById('stratAddMarker').onclick=()=>{if(!can())return;phase().objects.push({id:uid(),type:'marker',marker:document.getElementById('stratMarker').value,label:document.getElementById('stratLabel').value.trim(),x:700,y:400,color:document.getElementById('stratColor').value,rotation:0,scale:1});save();setTool('select')};
+  document.getElementById('stratDeleteObject').onclick=()=>{if(!can()||!STRAT_SELECTED)return;phase().objects=phase().objects.filter(o=>o.id!==STRAT_SELECTED);STRAT_SELECTED='';save();showToast('Objet supprimé')};
+  document.getElementById('stratDuplicateObject').onclick=()=>{const source=phase().objects.find(o=>o.id===STRAT_SELECTED);if(!source||!can())return;const copy=JSON.parse(JSON.stringify(source));copy.id=uid();if(copy.type==='marker'){copy.x+=50;copy.y+=50}else if(copy.points)copy.points=copy.points.map(v=>[v[0]+40,v[1]+40]);else{copy.x1+=40;copy.x2+=40;copy.y1+=40;copy.y2+=40}phase().objects.push(copy);STRAT_SELECTED=copy.id;save()};
+  document.getElementById('stratRotate').oninput=e=>{const o=phase().objects.find(x=>x.id===STRAT_SELECTED);if(o?.type==='marker'&&can()){o.rotation=+e.target.value;save()}};
+  document.getElementById('stratScale').oninput=e=>{const o=phase().objects.find(x=>x.id===STRAT_SELECTED);if(o?.type==='marker'&&can()){o.scale=+e.target.value/100;save()}};
+  document.getElementById('stratBg').onchange=e=>{const file=e.target.files?.[0];if(!file||!can())return;const reader=new FileReader();reader.onload=()=>{phase().background=reader.result;stratPersist();window.MCM_RENDER()};reader.readAsDataURL(file)};
+  document.getElementById('stratGrid').onclick=e=>{e.currentTarget.classList.toggle('active');stage.classList.toggle('no-grid')};
+  document.getElementById('stratHide').onclick=e=>{STRAT_HIDE=!STRAT_HIDE;document.getElementById('stratObjects').style.display=STRAT_HIDE?'none':'';e.currentTarget.classList.toggle('active',STRAT_HIDE)};
+  document.getElementById('stratZoom').oninput=e=>{STRAT_ZOOM=+e.target.value/100;stage.style.width=STRAT_ZOOM*100+'%'};
+  document.getElementById('stratClear').onclick=()=>{if(can()&&confirm('Effacer tous les éléments de cette phase ?')){phase().objects=[];STRAT_SELECTED='';save()}};
+  document.getElementById('stratExport').onclick=()=>{const xml=new XMLSerializer().serializeToString(svg),img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=1400;c.height=800;const x=c.getContext('2d'),bg=document.getElementById('stratBackground');if(bg?.src)x.drawImage(bg,0,0,1400,800);x.drawImage(img,0,0);const a=document.createElement('a');a.download=(stratCurrent().name||'strategie')+'.png';a.href=c.toDataURL('image/png');a.click()};img.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(xml)))};
+  document.getElementById('stratSelect').onchange=e=>{STRAT_MODEL.active=e.target.value;STRAT_SELECTED='';stratPersist();window.MCM_RENDER()};
+  document.getElementById('stratName').onchange=e=>{stratCurrent().name=e.target.value.trim()||'Stratégie';stratPersist();window.MCM_RENDER()};
+  document.getElementById('stratBoss').onchange=e=>{stratCurrent().boss=e.target.value.trim();stratPersist()};
+  document.getElementById('stratNew').onclick=()=>{const pid='p'+Date.now(),s={id:'s'+Date.now(),name:'Nouvelle stratégie',boss:'',activePhase:pid,phases:[{id:pid,name:'Phase 1',background:'',objects:[]}]};STRAT_MODEL.strategies.push(s);STRAT_MODEL.active=s.id;stratPersist();window.MCM_RENDER()};
+  document.getElementById('stratClone').onclick=()=>{const s=JSON.parse(JSON.stringify(stratCurrent()));s.id='s'+Date.now();s.name+=' — copie';s.phases.forEach((p,i)=>p.id='p'+Date.now()+i);s.activePhase=s.phases[0].id;STRAT_MODEL.strategies.push(s);STRAT_MODEL.active=s.id;stratPersist();window.MCM_RENDER()};
+  document.getElementById('stratDelete').onclick=()=>{if(STRAT_MODEL.strategies.length<2)return showToast('Garde au moins une stratégie');STRAT_MODEL.strategies=STRAT_MODEL.strategies.filter(s=>s.id!==stratCurrent().id);STRAT_MODEL.active=STRAT_MODEL.strategies[0].id;stratPersist();window.MCM_RENDER()};
+  document.querySelectorAll('[data-phase]').forEach(b=>b.onclick=()=>{stratCurrent().activePhase=b.dataset.phase;STRAT_SELECTED='';stratPersist();window.MCM_RENDER()});
+  document.getElementById('stratAddPhase').onclick=()=>{const s=stratCurrent(),p={id:'p'+Date.now(),name:'Phase '+(s.phases.length+1),background:phase().background,objects:[]};s.phases.push(p);s.activePhase=p.id;stratPersist();window.MCM_RENDER()};
+  document.getElementById('stratClonePhase').onclick=()=>{const s=stratCurrent(),p=JSON.parse(JSON.stringify(phase()));p.id='p'+Date.now();p.name+=' — copie';s.phases.push(p);s.activePhase=p.id;stratPersist();window.MCM_RENDER()};
+  document.getElementById('stratRenamePhase').onclick=()=>{const name=prompt('Nom de la phase',phase().name);if(name){phase().name=name;stratPersist();window.MCM_RENDER()}};
+  document.getElementById('stratDeletePhase').onclick=()=>{const s=stratCurrent();if(s.phases.length<2)return showToast('Garde au moins une phase');s.phases=s.phases.filter(p=>p.id!==phase().id);s.activePhase=s.phases[0].id;stratPersist();window.MCM_RENDER()};
+  const changePhase=delta=>{const s=stratCurrent(),i=s.phases.findIndex(p=>p.id===s.activePhase);s.activePhase=s.phases[(i+delta+s.phases.length)%s.phases.length].id;STRAT_SELECTED='';stratPersist();window.MCM_RENDER()};
+  document.getElementById('stratPrevPhase').onclick=()=>changePhase(-1);document.getElementById('stratNextPhase').onclick=()=>changePhase(1);
+  document.getElementById('stratPresent').onclick=()=>{root.classList.toggle('strat-present');document.getElementById('stratPresent').textContent=root.classList.contains('strat-present')?'Quitter':'▶ Présenter'};
+  document.getElementById('stratLock').onclick=()=>{if(!IS_ADMIN&&STRAT_MODEL.leaderId&&STRAT_MODEL.leaderId!==discordUser?.id)return showToast('Réservé au responsable');STRAT_MODEL.leaderId=STRAT_MODEL.leaderId||discordUser?.id||'';STRAT_MODEL.readOnly=!STRAT_MODEL.readOnly;stratPersist();window.MCM_RENDER()};
+}
+
 window.MCM_RENDER=function(){
   let content='';
   if(ACTIVE==='players') content=renderPlayers();
@@ -3331,7 +3405,7 @@ window.MCM_RENDER=function(){
   app.innerHTML=`<div class="mobile-topbar"><img src="./mcm-logo.png" alt="MCM"><span class="mobile-topbar-title">MMO Connect Manager</span><button class="mobile-menu-btn" id="mobileMenuBtn">☰</button></div><div class="mobile-overlay${MOBILE_NAV_OPEN?' open':''}" id="mobileOverlay"></div><div class="shell">${sidebar()}<main class="main">${content}</main></div>${mobileBottomNav()}`;
   document.querySelector('.sidebar')?.classList.toggle('mobile-open',MOBILE_NAV_OPEN);
   bind();
-  if(ACTIVE==='strategies'){initStrategyBoardV3();enableOneShotStrategyTools();enableStrategyDeleteCrosses();enableStrategyShapeDragging()}
+  if(ACTIVE==='strategies')initStrategyBoardV5()
   applyLanguage(app);
   checkEventNotifications();
 };
