@@ -1191,6 +1191,11 @@ body{background:
 .nav-link-btn .nav-icon{width:17px;height:17px;display:inline-grid;place-items:center;flex:none;border:1.7px solid currentColor;border-radius:4px}
 .nav-link-btn .nav-icon svg{display:none}
 .nav-link-btn .nav-icon::before{content:"✓";font-size:12px;font-weight:900;line-height:1;transform:translateY(-.5px)}
+.nav button.has-unread{color:#fff!important;border-color:rgba(40,190,255,.72)!important;background:linear-gradient(90deg,rgba(22,139,255,.24),rgba(19,215,255,.08))!important;box-shadow:inset 3px 0 0 #13d7ff,0 0 18px rgba(19,215,255,.14)}
+.nav button.has-unread .nav-icon{color:#45d7ff;filter:drop-shadow(0 0 5px rgba(19,215,255,.75))}
+.nav button.has-unread .nav-badge,.mobile-bottom-item.has-unread .mobile-bottom-badge{animation:mcmMessagePulse 1.55s ease-in-out infinite}
+.mobile-bottom-item.has-unread{color:#45d7ff!important;background:rgba(22,139,255,.1)}
+@keyframes mcmMessagePulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,77,103,.35)}50%{transform:scale(1.12);box-shadow:0 0 0 5px rgba(255,77,103,0)}}
 </style>
 </head>
 <body><div id="app"></div><div id="overlay"></div><div id="toast"></div>
@@ -1708,6 +1713,14 @@ function unreadMentionCount(){
   if(!discordUser)return 0;
   const seenAt=getMentionsSeenAt();
   return CHAT_MESSAGES.filter(m=>(m.mentionedIds||[]).includes(discordUser.id)&&(m.at||0)>seenAt&&String(m.discordId||m.authorId)!==String(discordUser.id)).length;
+}
+function messagesSeenKey(){return discordUser?'mcm-messages-seen-'+discordUser.id:''}
+function getMessagesSeenAt(){const k=messagesSeenKey();return k?parseInt(localStorage.getItem(k)||'0',10):0}
+function markMessagesSeen(){const k=messagesSeenKey();if(k)localStorage.setItem(k,String(Math.max(Date.now(),...CHAT_MESSAGES.map(m=>Number(m.at||0)))))}
+function unreadMessageCount(){
+  if(!discordUser)return 0;
+  const seenAt=getMessagesSeenAt();
+  return CHAT_MESSAGES.filter(m=>(m.at||0)>seenAt&&String(m.discordId||m.authorId)!==String(discordUser.id)).length;
 }
 function playerInFixedGroup(g,playerId){normalizeFixedGroup(g);return fixedSlotDefs().some(d=>g.slots[d.key]===playerId)}
 async function joinFixedSlot(groupId,slotKey){const g=FIXED_GROUPS.find(x=>x.id===groupId);const def=fixedSlotDefs().find(d=>d.key===slotKey);const me=myPlayer();if(!g||!def||!me)return showToast('Profil joueur introuvable');normalizeFixedGroup(g);if(!me.classId)return showToast('Choisis d’abord ta classe dans ton profil');if(playerInFixedGroup(g,me.id))return showToast('Tu es déjà inscrit dans ce groupe');if(g.slots[slotKey])return showToast('Ce slot est déjà occupé');if(!classCanRole(me.classId,def.role))return showToast(`Ta classe ne peut pas occuper le rôle ${def.label}`);g.slots[slotKey]=me.id;g.memberIds=fixedSlotDefs().map(d=>g.slots[d.key]).filter(Boolean);if(!g.leaderId)g.leaderId=me.id;addActivity('join',`${playerName(me)} a rejoint ${g.name}`,def.label,me);await saveData();showToast(`Inscrit en ${def.label}`);window.MCM_RENDER()}
@@ -3113,14 +3126,15 @@ function openDashboardClassMembers(classId){
 }
 
 const renderSidebarBase=sidebar;
-sidebar=function(){const unread=unreadMentionCount();return renderSidebarBase().replace(`<button disabled>${icon('calendar')}Calendrier</button>`,`<button data-tab="calendar" class="${ACTIVE==='calendar'?'active':''}">${icon('calendar')}Calendrier</button>`).replace(`<button disabled>${icon('message')}Messagerie</button>`,`<button data-tab="messages" class="${ACTIVE==='messages'?'active':''}">${icon('message')}Messagerie${unread?`<span class="nav-badge">${unread}</span>`:''}</button>`)};
+sidebar=function(){const unread=unreadMessageCount(),badge=unread>99?'99+':unread;return renderSidebarBase().replace(`<button disabled>${icon('calendar')}Calendrier</button>`,`<button data-tab="calendar" class="${ACTIVE==='calendar'?'active':''}">${icon('calendar')}Calendrier</button>`).replace(`<button disabled>${icon('message')}Messagerie</button>`,`<button data-tab="messages" class="${ACTIVE==='messages'?'active':unread?'has-unread':''}">${icon('message')}Messagerie${unread?`<span class="nav-badge" title="${unread} nouveau${unread>1?'x':''} message${unread>1?'s':''}">${badge}</span>`:''}</button>`)};
 function startChatListener(){
   if(CHAT_UNSUB)return;
-  CHAT_UNSUB=generalChatRef.orderBy('at').limitToLast(200).onSnapshot(snapshot=>{CHAT_MESSAGES=snapshot.docs.map(doc=>({id:doc.id,...doc.data()})).sort((a,b)=>(a.at||0)-(b.at||0));if(document.querySelector('.shell'))window.MCM_RENDER()},err=>console.error('Messagerie indisponible',err));
+  CHAT_UNSUB=generalChatRef.orderBy('at').limitToLast(200).onSnapshot(snapshot=>{CHAT_MESSAGES=snapshot.docs.map(doc=>({id:doc.id,...doc.data()})).sort((a,b)=>(a.at||0)-(b.at||0));const seenKey=messagesSeenKey();if(seenKey&&!localStorage.getItem(seenKey)){const latest=Math.max(0,...CHAT_MESSAGES.map(m=>Number(m.at||0)));localStorage.setItem(seenKey,String(latest))}if(ACTIVE==='messages'){markMessagesSeen();markMentionsSeen()}if(document.querySelector('.shell'))window.MCM_RENDER()},err=>console.error('Messagerie indisponible',err));
 }
 function renderMessages(){
   startChatListener();
   markMentionsSeen();
+  markMessagesSeen();
   return `${hero('MESSAGERIE','Discussion générale de la guilde')}<div class="panel chat-layout"><div class="chat-messages" id="chatMessages">${CHAT_MESSAGES.length?CHAT_MESSAGES.map(message=>{const mine=discordUser&&String(message.discordId||message.authorId)===String(discordUser.id);const mentionsMe=discordUser&&(message.mentionedIds||[]).includes(discordUser.id);return `<div class="chat-message${mine?' mine':''}${mentionsMe?' mentions-me':''}"><img class="chat-avatar" src="${esc(message.avatar||discordAvatar({id:message.discordId||'0',avatar:null}))}" alt=""><div class="chat-bubble"><div class="chat-author">${esc(message.author||message.username||'Membre')}</div><div class="chat-text">${highlightMentions(message.text||'')}</div><div class="chat-time">${new Date(message.at||Date.now()).toLocaleString(CURRENT_LANG==='en'?'en-GB':'fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div></div>`}).join(''):'<div class="chat-empty">Aucun message. Commence la discussion !</div>'}</div><div class="chat-compose"><div class="chat-input-wrap"><div class="mention-dropdown" id="mentionDropdown"></div><textarea id="chatInput" maxlength="1000" placeholder="Écrire un message… (@pseudo pour mentionner)"></textarea></div><button class="btn primary" id="sendChatBtn">Envoyer</button></div></div>`;
 }
 async function sendChatMessage(){
@@ -3297,8 +3311,8 @@ function mobileBottomNav(){
     {tab:'search-groups',icon:'swords',label:'Recherche'},
     {tab:'messages',icon:'message',label:'Chat'},
   ];
-  const unread=unreadMentionCount();
-  return `<div class="mobile-bottom-nav">${items.map(it=>`<button data-tab="${it.tab}" class="mobile-bottom-item${ACTIVE===it.tab?' active':''}">${icon(it.icon,'mobile-bottom-icon')}<span>${it.label}</span>${it.tab==='messages'&&unread?`<span class="mobile-bottom-badge">${unread}</span>`:''}</button>`).join('')}<button class="mobile-bottom-item" id="mobileMoreBtn"><span class="mobile-bottom-icon" style="font-size:19px;line-height:1">⋯</span><span>Plus</span></button></div>`;
+  const unread=unreadMessageCount(),badge=unread>99?'99+':unread;
+  return `<div class="mobile-bottom-nav">${items.map(it=>`<button data-tab="${it.tab}" class="mobile-bottom-item${ACTIVE===it.tab?' active':it.tab==='messages'&&unread?' has-unread':''}">${icon(it.icon,'mobile-bottom-icon')}<span>${it.label}</span>${it.tab==='messages'&&unread?`<span class="mobile-bottom-badge">${badge}</span>`:''}</button>`).join('')}<button class="mobile-bottom-item" id="mobileMoreBtn"><span class="mobile-bottom-icon" style="font-size:19px;line-height:1">⋯</span><span>Plus</span></button></div>`;
 }
 
 
