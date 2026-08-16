@@ -3450,14 +3450,20 @@ function initStrategyBoardV5(){
     }
     const type=STRAT_TOOL==='pen'?'path':STRAT_TOOL;
     const selectedColor=document.getElementById('stratColor').value,color=STRAT_TOOL==='danger'?'#ef4444':STRAT_TOOL==='safe'?'#22c55e':selectedColor,object={id:uid(),type,color,width:+document.getElementById('stratWidth').value,x1:snap(p.x),y1:snap(p.y),x2:snap(p.x),y2:snap(p.y)};
-    if(type==='path')object.points=[[object.x1,object.y1]];
+    if(type==='path'){
+      object.points=[[object.x1,object.y1]];
+      const preview=document.createElementNS('http://www.w3.org/2000/svg','polyline');
+      preview.id='stratPenPreview';preview.setAttribute('fill','none');preview.setAttribute('stroke',color);preview.setAttribute('stroke-width',object.width);preview.setAttribute('stroke-linecap','round');preview.setAttribute('stroke-linejoin','round');preview.setAttribute('pointer-events','none');
+      document.getElementById('stratObjects')?.appendChild(preview);
+      action={kind:'draw',object,tool:STRAT_TOOL,preview};STRAT_SELECTED='';svg.setPointerCapture(e.pointerId);return;
+    }
     phase().objects.push(object);action={kind:'draw',object,tool:STRAT_TOOL};STRAT_SELECTED=object.id;svg.setPointerCapture(e.pointerId);stratRenderObjects();
   };
   svg.onpointermove=e=>{
     if(!action)return;const p=point(e),o=action.object;
     if(action.kind==='lasso'){action.current=p;lassoBox.setAttribute('x',Math.min(action.start.x,p.x));lassoBox.setAttribute('y',Math.min(action.start.y,p.y));lassoBox.setAttribute('width',Math.abs(p.x-action.start.x));lassoBox.setAttribute('height',Math.abs(p.y-action.start.y));return}
     if(action.kind==='groupmove'){const dx=p.x-action.start.x,dy=p.y-action.start.y;action.items.forEach(item=>moveFrom(item.object,item.original,dx,dy));stratRenderObjects();broadcastLive();return}
-    if(action.kind==='draw'||action.kind==='resize'){o.x2=snap(p.x);o.y2=snap(p.y);if(action.kind==='draw'&&o.type==='path'){const last=o.points[o.points.length-1];if(!last||Math.hypot(o.x2-last[0],o.y2-last[1])>=4)o.points.push([o.x2,o.y2])}}
+    if(action.kind==='draw'||action.kind==='resize'){o.x2=snap(p.x);o.y2=snap(p.y);if(action.kind==='draw'&&o.type==='path'){const last=o.points[o.points.length-1];if(!last||Math.hypot(o.x2-last[0],o.y2-last[1])>=3)o.points.push([o.x2,o.y2]);action.preview?.setAttribute('points',o.points.map(point=>point.join(',')).join(' '));return}}
     else{const dx=p.x-action.start.x,dy=p.y-action.start.y,b=action.original;if(o.type==='marker'||o.type==='text'){o.x=b.x+dx;o.y=b.y+dy}else if(o.points){o.points=b.points.map(v=>[v[0]+dx,v[1]+dy])}else{o.x1=b.x1+dx;o.y1=b.y1+dy;o.x2=b.x2+dx;o.y2=b.y2+dy}}
     stratRenderObjects();if(!(action.kind==='draw'&&o.type==='path'))broadcastLive();
   };
@@ -3469,6 +3475,10 @@ function initStrategyBoardV5(){
     }
     if(finished.kind==='draw'&&finished.object.type==='path'){
       finished.object.points=compactPath(finished.object.points,120);
+      finished.preview?.remove();
+      if(finished.object.points.length<2)return;
+      phase().objects.push(finished.object);
+      STRAT_SELECTED=finished.object.id;
       save();
       showToast('Tracé ajouté au dessin partagé');
     }else{
@@ -3476,7 +3486,7 @@ function initStrategyBoardV5(){
     }
     if(finished.kind==='draw'&&tool!=='pen'){setTool('select');showToast('Élément ajouté')}
   };
-  svg.onpointercancel=()=>{action=null;lassoBox.setAttribute('width','0');lassoBox.setAttribute('height','0');lassoBox.setAttribute('hidden','');lassoBox.style.display='none'};
+  svg.onpointercancel=()=>{action?.preview?.remove();action=null;lassoBox.setAttribute('width','0');lassoBox.setAttribute('height','0');lassoBox.setAttribute('hidden','');lassoBox.style.display='none'};
   svg.ondblclick=e=>{e.preventDefault();e.stopPropagation();const el=e.target.closest?.('[data-oid]');if(!el||!can())return;const object=phase().objects.find(o=>o.id===el.dataset.oid),roles={'tank':'🛡','heal':'✚','dps':'⚔'};if(object?.type==='marker'&&(/^([1-9]|10)$/.test(String(object.marker))||Object.values(roles).includes(object.marker))){const choice=(prompt('Remplacer le joueur par : Tank, Heal ou DPS','DPS')||'').trim().toLowerCase();if(!choice)return;const role=choice.startsWith('t')?'tank':choice.startsWith('h')?'heal':choice.startsWith('d')?'dps':'';if(!role)return showToast('Choisis Tank, Heal ou DPS');object.marker=roles[role];save();showToast(`Joueur remplacé par ${role.toUpperCase()}`);return}STRAT_SELECTED=el.dataset.oid;phase().objects=phase().objects.filter(o=>o.id!==STRAT_SELECTED);STRAT_SELECTION=STRAT_SELECTION.filter(id=>id!==STRAT_SELECTED);STRAT_SELECTED='';save();showToast('Objet supprimé par double-clic')};
   document.getElementById('stratAddMarker').onclick=()=>{if(!can())return;const selected=document.getElementById('stratMarker').value,text=document.getElementById('stratLabel').value.trim();phase().objects.push({id:uid(),type:'marker',marker:selected,label:text,x:700,y:400,color:document.getElementById('stratColor').value,rotation:0,scale:1});save();setTool('select')};
   document.getElementById('stratAddText').onclick=()=>{if(!can())return;const input=document.getElementById('stratFreeText'),text=input.value.trim();if(!text)return showToast('Écris d’abord le texte à ajouter');phase().objects.push({id:uid(),type:'text',text,fontSize:+document.getElementById('stratTextSize').value,x:700,y:400,color:document.getElementById('stratColor').value});input.value='';save();setTool('select')};
