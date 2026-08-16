@@ -1232,7 +1232,7 @@ window.sanctuaryDungeons=[
 ];
 console.info('MCM BUILD: V2-FIX-SANCTUARY-GLOBAL');
 const firebaseConfig={apiKey:"AIzaSyCcfWoW_0IWkAopHrlXnKUiZJViss9FSpU",authDomain:"routine-aion-2.firebaseapp.com",projectId:"routine-aion-2",storageBucket:"routine-aion-2.firebasestorage.app",messagingSenderId:"400230415217",appId:"1:400230415217:web:c75da7cea4b0305f4014d0"};
-firebase.initializeApp(firebaseConfig); const db=firebase.firestore(); const fbAuth=firebase.auth(); const docRef=db.collection('teamComps').doc('guildManager'); const legacyDocRef=db.collection('teamComps').doc('guildManager'); const generalChatRef=db.collection('chatGeneral'); const presenceRef=db.collection('mcmPresence'); const firebaseAuthReady=fbAuth.signInAnonymously().catch(console.error);
+firebase.initializeApp(firebaseConfig); const db=firebase.firestore(); const fbAuth=firebase.auth(); const docRef=db.collection('teamComps').doc('guildManager'); const legacyDocRef=db.collection('teamComps').doc('guildManager'); const generalChatRef=db.collection('chatGeneral'); const presenceRef=db.collection('teamComps'); const presenceQuery=presenceRef.where('schemaType','==','mcmPresence'); const presenceDoc=id=>presenceRef.doc(`presence_${String(id)}`); const firebaseAuthReady=fbAuth.signInAnonymously().catch(console.error);
 
 /* ===== MCM ACTIVITY TAXONOMY — defined early to avoid runtime scope/order issues ===== */
 window.MCM_SEARCH_PVE=['Expéditions','Transcendances','Sanctuary'];
@@ -1290,7 +1290,7 @@ function login(){
   location.href=`https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${redirect}&response_type=token&scope=identify%20guilds.members.read`;
 }
 function logout(){
-  if(discordUser)presenceRef.doc(String(discordUser.id)).set({online:false,lastSeen:Date.now()},{merge:true}).catch(()=>{});if(PRESENCE_TIMER){clearInterval(PRESENCE_TIMER);PRESENCE_TIMER=null}if(PRESENCE_UNSUB){PRESENCE_UNSUB();PRESENCE_UNSUB=null}if(LIVE_DATA_UNSUB){LIVE_DATA_UNSUB();LIVE_DATA_UNSUB=null}if(CHAT_UNSUB){CHAT_UNSUB();CHAT_UNSUB=null}clearRoleCache();localStorage.removeItem('mcm-discord-session');location.hash='';session=null;discordUser=null;discordMember=null;renderGate()}
+  if(discordUser)presenceDoc(discordUser.id).set({schemaType:'mcmPresence',online:false,lastSeen:Date.now()},{merge:true}).catch(()=>{});if(PRESENCE_TIMER){clearInterval(PRESENCE_TIMER);PRESENCE_TIMER=null}if(PRESENCE_UNSUB){PRESENCE_UNSUB();PRESENCE_UNSUB=null}if(LIVE_DATA_UNSUB){LIVE_DATA_UNSUB();LIVE_DATA_UNSUB=null}if(CHAT_UNSUB){CHAT_UNSUB();CHAT_UNSUB=null}clearRoleCache();localStorage.removeItem('mcm-discord-session');location.hash='';session=null;discordUser=null;discordMember=null;renderGate()}
 
 const MCM_LOADING_STEPS=[
   'Connexion à Discord',
@@ -1486,15 +1486,15 @@ async function initAuth(){
 
 function startPresenceTracking(){
   if(!discordUser||PRESENCE_UNSUB)return;
-  const mine=presenceRef.doc(String(discordUser.id));
-  const ping=()=>mine.set({discordId:String(discordUser.id),lastSeen:Date.now(),online:true},{merge:true}).catch(err=>console.warn('Présence indisponible',err));
+  const mine=presenceDoc(discordUser.id);
+  const ping=()=>mine.set({schemaType:'mcmPresence',discordId:String(discordUser.id),lastSeen:Date.now(),online:true},{merge:true}).catch(err=>console.warn('Présence indisponible',err));
   ping(); PRESENCE_TIMER=setInterval(ping,45000);
-  PRESENCE_UNSUB=presenceRef.onSnapshot(snapshot=>{
+  PRESENCE_UNSUB=presenceQuery.onSnapshot(snapshot=>{
     const limit=Date.now()-120000;
     ONLINE_DISCORD_IDS=new Set(snapshot.docs.map(d=>d.data()).filter(p=>p.online!==false&&Number(p.lastSeen||0)>=limit).map(p=>String(p.discordId||'')));
     if(ACTIVE==='dashboard'&&document.querySelector('.shell'))window.MCM_RENDER();
   },err=>console.warn('Liste de présence indisponible',err));
-  window.addEventListener('beforeunload',()=>mine.set({online:false,lastSeen:Date.now()},{merge:true}).catch(()=>{}),{once:true});
+  window.addEventListener('beforeunload',()=>mine.set({schemaType:'mcmPresence',online:false,lastSeen:Date.now()},{merge:true}).catch(()=>{}),{once:true});
 }
 function syncOwnPlayer(){if(!discordUser)return;let p=PLAYERS.find(x=>x.discordId===discordUser.id);const serverName=discordMember?.nick||discordUser.global_name||discordUser.username;const avatar=discordMember?.avatar?`https://cdn.discordapp.com/guilds/${GUILD_ID}/users/${discordUser.id}/avatars/${discordMember.avatar}.png?size=128`:discordAvatar(discordUser);if(!p){p={id:'p_'+Date.now(),pseudo:serverName,classId:'',secondaryClassId:'',isNewPlayer:true,discordId:discordUser.id,discordUsername:discordUser.username,discordAvatar:avatar,serverName};PLAYERS.push(p);saveData();setTimeout(()=>openPlayerModal(p.id),300)}else{p.discordUsername=discordUser.username;p.discordAvatar=avatar;p.serverName=serverName;saveData()}startPresenceTracking();fetchDiscordMembersList();startChatListener()}
 function renderGate(msg=''){app.innerHTML=`<div class="gate"><div class="gate-card"><img src="./mcm-logo.png" alt="MCM"><h1>MMO CONNECT MANAGER</h1><p>${msg||'Connecte-toi avec Discord pour accéder à la gestion des personnages. L’accès nécessite le rôle Aion 2 du serveur.'}</p><button class="discord-btn" id="loginBtn">Se connecter avec Discord</button></div></div>`;document.getElementById('loginBtn').addEventListener('click',login)}
