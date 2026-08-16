@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-16T13:44:26.144Z",
+  "updatedAt": "2026-08-16T14:54:11.538Z",
   "members": [
     {
       "id": "119867255088611332",
@@ -203,6 +203,13 @@
       "globalName": "Aegrim",
       "nick": null,
       "avatar": "https://cdn.discordapp.com/avatars/1265360697307562216/a_8ead69cb2c14fd5d99125ebe36be96d6.gif?size=64"
+    },
+    {
+      "id": "1538551665739956366",
+      "username": "testaegrim",
+      "globalName": "test",
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/embed/avatars/4.png"
     }
   ]
 }
