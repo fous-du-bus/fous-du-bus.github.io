@@ -2926,24 +2926,6 @@ function dashboardSearchAction(g){
   return `<button class="dashboard-join-btn" data-dash-join-search="${g.id}" data-dash-slot="${slot}">S’inscrire · ${esc(def?.label||'Slot')}</button>`;
 }
 
-function dashboardFixedAction(g){
-  const me=myPlayer();
-  if(!me)return '';
-  normalizeFixedGroup(g);
-
-  if(playerInFixedGroup(g,me.id)){
-    return `<button class="dashboard-join-btn leave" data-dash-leave-fixed="${g.id}">Se retirer</button>`;
-  }
-
-  const slot=dashboardPreferredSlot(g,me,true);
-  if(!slot){
-    return `<button class="dashboard-join-btn" disabled>Complet / incompatible</button>`;
-  }
-
-  const def=fixedSlotDefs().find(d=>d.key===slot);
-  return `<button class="dashboard-join-btn" data-dash-join-fixed="${g.id}" data-dash-slot="${slot}">S’inscrire · ${esc(def?.label||'Slot')}</button>`;
-}
-
 function sanctuaryPairGroups(g){
   if(!g||g.activity!=='Sanctuary'||!g.sanctuaryPairId)return [];
   return SEARCH_GROUPS.filter(x=>x.sanctuaryPairId===g.sanctuaryPairId).sort((a,b)=>(a.subgroup||'').localeCompare(b.subgroup||''));
@@ -3350,40 +3332,6 @@ const STRAT_BOSS_PRESETS=[
   ]}
 ];
 
-function stratBuildBossPreset(kind,title){
-  let n=0;const objects=[],id=()=>`o${Date.now()}p${n++}`;
-  const text=(value,x,y,size=30,color='#111827')=>objects.push({id:id(),type:'text',text:value,x,y,fontSize:size,color,rotation:0});
-  const marker=(label,x,y,color='#3b82f6',symbol=label)=>objects.push({id:id(),type:'marker',marker:symbol,label:'',x,y,color,rotation:0,scale:.82});
-  const line=(x1,y1,x2,y2,color='#ef4444',width=8,type='line')=>objects.push({id:id(),type,color,width,x1,y1,x2,y2,filled:false});
-  const circle=(x,y,r,color='#a855f7',filled=true,type='circle')=>objects.push({id:id(),type,color,width:5,filled,x1:x,y1:y,x2:x+r,y2:y});
-  const rect=(x1,y1,x2,y2,color='#ef4444',filled=true)=>objects.push({id:id(),type:'rectangle',color,width:5,filled,x1,y1,x2,y2});
-  const ring=(x,y,r,color='#ef4444',width=24,innerRatio=.7)=>objects.push({id:id(),type:'ring',color,width,innerRatio,filled:false,x1:x,y1:y,x2:x+r,y2:y});
-  const sector=(x,y,x2,y2,color='#22c55e',spread=55)=>objects.push({id:id(),type:'sector',color,width:5,spread,filled:true,x1:x,y1:y,x2,y2});
-  text(title,700,45,34);marker('BOSS',700,400,'#ef4444','boss');
-  let players=[[330,180],[520,130],[880,130],[1070,180],[1070,620],[880,670],[520,670],[330,620]];
-  if(kind==='stack')players=[[620,590],[670,620],[720,590],[770,620],[650,680],[700,700],[750,680],[800,700]];
-  if(kind==='split'||kind==='sides'||kind==='colors')players=[[320,220],[440,320],[320,500],[440,600],[960,220],[1080,320],[960,500],[1080,600]];
-  players.forEach((p,i)=>marker(String(i+1),p[0],p[1],i<4?'#3b82f6':'#f59e0b',String(i+1)));
-  if(kind==='cross'){line(390,90,1010,710);line(1010,90,390,710);line(700,80,700,720,'#dc2626',5);line(380,400,1020,400,'#dc2626',5)}
-  if(kind==='transfer'){circle(330,180,72,'#a855f7',false);line(360,195,490,150,'#a855f7',8,'arrow');text('Transférer',420,215,24,'#7e22ce')}
-  if(kind==='cone')sector(700,400,1130,400,'#22c55e',58);
-  if(kind==='quadrants'){line(700,80,700,720);line(250,400,1150,400);rect(715,415,1120,690,'#22c55e',true)}
-  if(kind==='adds'){[[430,260],[970,260],[430,540],[970,540]].forEach(p=>{circle(p[0],p[1],48);line(700,400,p[0],p[1],'#a855f7',4,'arrow')})}
-  if(kind==='walls'){rect(170,110,340,690);rect(1060,110,1230,690);line(350,400,560,400,'#ef4444',8,'arrow');line(1050,400,840,400,'#ef4444',8,'arrow')}
-  if(kind==='orbs'||kind==='purpleOrbs'){circle(180,400,75,'#a855f7');circle(1220,400,75,kind==='orbs'?'#22c55e':'#a855f7');line(270,400,560,400,'#a855f7',5,'arrow');line(1130,400,840,400,kind==='orbs'?'#22c55e':'#a855f7',5,'arrow')}
-  if(kind==='rings'){ring(700,400,185,'#ef4444',28);ring(700,400,315,'#f59e0b',22);ring(700,400,420,'#22c55e',16)}
-  if(kind==='grid'){for(let x=350;x<=1050;x+=175)line(x,100,x,700,'#64748b',3);for(let y=100;y<=700;y+=150)line(350,y,1050,y,'#64748b',3)}
-  if(kind==='edge'){ring(700,400,520,'#a855f7',55);sector(700,400,1100,250,'#22c55e',42)}
-  if(kind==='colors'||kind==='sides'){rect(150,90,680,710,'#3b82f6',true);rect(720,90,1250,710,kind==='colors'?'#f59e0b':'#ef4444',true);line(700,80,700,720,'#111827',8)}
-  if(kind==='split'){line(700,80,700,720,'#111827',8);text('Groupe A',350,90,27,'#1d4ed8');text('Groupe B',1050,90,27,'#b45309')}
-  if(kind==='stack'){circle(700,640,130,'#22c55e',true,'safe');line(700,520,700,575,'#22c55e',6,'arrow')}
-  if(kind==='fragments')[[380,200],[1020,200],[380,600],[1020,600]].forEach(p=>circle(p[0],p[1],55,'#a855f7'));
-  if(kind==='fourholes')[[260,150],[1140,150],[260,650],[1140,650]].forEach(p=>{circle(p[0],p[1],85,'#111827');line(650,380,p[0],p[1],'#ef4444',4,'arrow')});
-  if(kind==='block'){circle(700,620,125,'#22c55e',true,'safe');rect(560,540,840,710,'#22c55e',false)}
-  if(kind==='spread')players.forEach(p=>circle(p[0],p[1],88,'#ef4444',false,'danger'));
-  return objects;
-}
-
 function stratPaintIcon(name){
   const paths={select:'<path d="M4 4h6M4 4v6M20 4h-6M20 4v6M4 20h6M4 20v-6M20 20h-6M20 20v-6"/>',lasso:'<path d="M20 11c0 4-4 7-9 7s-8-2-8-6 4-7 9-7 8 2 8 6c0 3-3 5-6 5-2 0-3 1-3 2s1 2 3 2"/>',pen:'<path d="M4 20l4-1 11-11-3-3L5 16l-1 4zM14 7l3 3"/>',line:'<path d="M4 20 20 4"/>',rectangle:'<rect x="3" y="5" width="18" height="14" rx="1"/>',arrow:'<path d="M5 19L19 5M11 5h8v8"/>',danger:'<path d="M12 3 2 21h20L12 3zM12 9v5M12 18h.01"/>',safe:'<path d="M12 3l8 3v6c0 5-3 8-8 10-5-2-8-5-8-10V6l8-3z"/>',undo:'<path d="M9 7 4 12l5 5M5 12h8a6 6 0 0 1 6 6"/>',redo:'<path d="m15 7 5 5-5 5M19 12h-8a6 6 0 0 0-6 6"/>',reset:'<path d="M20 11a8 8 0 1 0-2 6M20 4v7h-7"/>',trash:'<path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6"/>',save:'<path d="M4 3h14l3 3v15H4zM8 3v6h8V3M8 21v-7h8v7"/>',back:'<path d="m11 5-7 7 7 7M4 12h16"/>',upload:'<path d="M12 16V4M7 9l5-5 5 5M4 15v5h16v-5"/>',circle:'<circle cx="12" cy="12" r="8"/>',triangle:'<path d="M12 3 22 21H2L12 3z"/>',star:'<path d="m12 2 3 6 7 .8-5 4.7 1.5 7-6.5-3.5L5.5 20.5 7 13.5 2 8.8 9 8l3-6z"/>',cross:'<path d="M12 4v16M4 12h16"/>'};
   if(name==='paint')return '<svg class="strat-paint-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 4 10 10-5 5a3 3 0 0 1-4 0l-2-2a3 3 0 0 1 0-4l6-6"/><path d="M7 12h8l4 4M19 16c2 2 2 4 0 5-2-1-2-3 0-5z"/></svg>';
@@ -3625,8 +3573,6 @@ function bind(){
 
   document.querySelectorAll('[data-dash-join-search]').forEach(b=>b.addEventListener('click',()=>joinSearchSlot(b.dataset.dashJoinSearch,b.dataset.dashSlot)));
   document.querySelectorAll('[data-dash-leave-search]').forEach(b=>b.addEventListener('click',()=>leaveSearchGroup(b.dataset.dashLeaveSearch)));
-  document.querySelectorAll('[data-dash-join-fixed]').forEach(b=>b.addEventListener('click',()=>joinFixedSlot(b.dataset.dashJoinFixed,b.dataset.dashSlot)));
-  document.querySelectorAll('[data-dash-leave-fixed]').forEach(b=>b.addEventListener('click',()=>leaveFixedGroup(b.dataset.dashLeaveFixed)));
 
 }
 
