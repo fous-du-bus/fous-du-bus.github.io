@@ -214,7 +214,6 @@ body[data-view="daily"] .task-card,body[data-view="weekly"] .task-card{backgroun
 .boss-local{font-size:10px;color:var(--muted);margin-bottom:8px}
 .boss-map-link{display:inline-block;font-size:10.5px;color:var(--blue);text-decoration:none}
 .boss-map-link:hover{color:var(--cyan)}
-.boss-card{display:grid;grid-template-columns:76px minmax(0,1fr);gap:14px;align-items:center;min-height:108px;padding:14px}.boss-avatar{width:72px;height:72px;border-radius:50%;object-fit:cover;object-position:center;border:2px solid rgba(120,166,232,.62);background:#071326;box-shadow:0 0 0 4px rgba(42,103,181,.11),0 8px 20px rgba(0,0,0,.3);position:relative;z-index:1}.boss-card.interval .boss-avatar{border-color:rgba(19,215,255,.72);box-shadow:0 0 0 4px rgba(19,215,255,.1),0 8px 20px rgba(0,0,0,.3)}.boss-card.weekday .boss-avatar{border-color:rgba(245,184,75,.72);box-shadow:0 0 0 4px rgba(245,184,75,.09),0 8px 20px rgba(0,0,0,.3)}.boss-card-content{min-width:0;position:relative;z-index:1}@media(max-width:560px){.boss-card{grid-template-columns:60px minmax(0,1fr);gap:11px}.boss-avatar{width:56px;height:56px}}
 </style>
 </head>
 <body>
@@ -225,12 +224,12 @@ body[data-view="daily"] .task-card,body[data-view="weekly"] .task-card{backgroun
 </div>
 <div class="app-shell">
 <aside class="mcm-sidebar">
-  <a class="sidebar-brand" href="./"><img src="./logo-lfdb.webp" alt="Les Fous du Bus"><strong>Les Fous du Bus</strong></a>
+  <a class="sidebar-brand" href="./index.html"><img src="./logo-lfdb.webp" alt="Les Fous du Bus"><strong>Les Fous du Bus</strong></a>
   <div class="sidebar-profile discord-profile-card" id="discordProfile"><div class="discord-offline-state"><b>Compte Discord</b><span>● Non connecté</span></div></div>
   <div class="side-section">Tableau de bord</div>
-  <nav class="side-nav"><a href="./"><span class="side-ico">▦</span>Ma routine</a><a href="./equipes.html"><span class="side-ico">♙</span>Gestion des groupes</a></nav>
+  <nav class="side-nav"><a href="./index.html"><span class="side-ico">▦</span>Ma routine</a><a href="./equipes.html"><span class="side-ico">♙</span>Gestion des groupes</a><a href="./evenements.html"><span class="side-ico">▣</span>Événements</a></nav>
   <div class="side-section">Outils</div>
-  <nav class="side-nav"><a class="active" href="./abyssboss.html"><span class="side-ico">☠</span>Abyss Boss</a><a href="https://coubo.fr/" target="_blank"><span class="side-ico">↗</span>Guide</a></nav>
+  <nav class="side-nav"><a class="active" href="./abyss-boss.html"><span class="side-ico">☠</span>Abyss Boss</a><a href="https://coubo.fr/" target="_blank"><span class="side-ico">↗</span>Guide</a></nav>
   <button class="sidebar-discord-action connect" id="discordActionBtn" type="button">↪ Se connecter avec Discord</button><div class="sidebar-copy">© 2026 Les Fous du Bus</div>
 </aside>
 <div class="app-main"><main class="page">
@@ -382,17 +381,17 @@ async function bootstrapRoutineGate(){
 function startRoutineApp(){renderBossTimers();initDiscordProfile();setInterval(renderBossTimers,30000)}
 const BOSS_DATA=[
   {zone:"Chaotic Lower Reshanta",bosses:[
-    {name:"Watcher Kaira",image:"./watcher-kaira.webp",type:"interval",interval:60,map:"https://aion2hub.com/maps?map=Abyss_Reshanta_A&marker=2a92dd46-1fdc-8862-a624-ab8861fa7942"},
-    {name:"Executor Argo",image:"./executor-argo.webp",type:"weekday",days:[3,6],hour:22,minute:30,map:"https://aion2hub.com/maps?map=Abyss_Reshanta_A&marker=3ca777fc-3520-915b-9756-7a102a7170c9"},
-    {name:"Executor Kaira",image:"./executor-kaira.webp",type:"weekday",days:[3,6],hour:22,minute:30,map:"https://aion2hub.com/maps?map=Abyss_Reshanta_A&marker=70e2c709-4c6e-c3c0-aa90-c33737270e90"},
-    {name:"Executor Tamasa",image:"./executor-tamasa.webp",type:"weekday",days:[3,6],hour:22,minute:30,map:"https://aion2hub.com/maps?map=Abyss_Reshanta_A&marker=4315f7bd-1d13-94fb-3f39-751c61708d5e"},
-    {name:"Abyss Siege Boss",image:"./abyss%20siege%20boss.webp",type:"weekday",days:[0,5],hour:22,minute:0,map:""}
+    {name:"Watcher Kaira",type:"interval",interval:60,map:"https://aion2hub.com/maps?map=Abyss_Reshanta_A&marker=2a92dd46-1fdc-8862-a624-ab8861fa7942"},
+    {name:"Executor Argo",type:"weekday",days:[3,6],hour:22,minute:30,map:"https://aion2hub.com/maps?map=Abyss_Reshanta_A&marker=3ca777fc-3520-915b-9756-7a102a7170c9"},
+    {name:"Executor Kaira",type:"weekday",days:[3,6],hour:22,minute:30,map:"https://aion2hub.com/maps?map=Abyss_Reshanta_A&marker=70e2c709-4c6e-c3c0-aa90-c33737270e90"},
+    {name:"Executor Tamasa",type:"weekday",days:[3,6],hour:22,minute:30,map:"https://aion2hub.com/maps?map=Abyss_Reshanta_A&marker=4315f7bd-1d13-94fb-3f39-751c61708d5e"},
+    {name:"Abyss Siege Boss",type:"weekday",days:[0,5],hour:22,minute:0,map:""}
   ]},
   {zone:"Chaotic Middle Reshanta",bosses:[
-    {name:"Enraged Guardian Lord Nahma",image:"./enraged-guardian-lord-nahma.webp",type:"weekday",days:[0,5],hour:22,minute:0,map:"https://aion2hub.com/maps?map=Abyss_Reshanta_B&marker=d91fc6b9-121e-8cfb-a619-927e69cda83a"},
-    {name:"Executioner Dramos",image:"./executioner-dramos.webp",type:"weekday",days:[3,6],hour:22,minute:30,map:"https://aion2hub.com/maps?map=Abyss_Reshanta_B&marker=b0856686-0c72-0d8d-a111-e0b10a88f87f"},
-    {name:"Ravager Marakha",image:"./ravager-marakha.webp",type:"weekday",days:[3,6],hour:22,minute:30,map:"https://aion2hub.com/maps?map=Abyss_Reshanta_B&marker=9f169a0f-15e3-33b4-dcaf-da99803bb9af"},
-    {name:"Turncoat Ducal",image:"./truncoat-ducal.webp",type:"weekday",days:[3,6],hour:22,minute:30,map:"https://aion2hub.com/maps?map=Abyss_Reshanta_B&marker=62bad111-9100-d79d-e41b-baf7c3a0ca73"}
+    {name:"Enraged Guardian Lord Nahma",type:"weekday",days:[0,5],hour:22,minute:0,map:"https://aion2hub.com/maps?map=Abyss_Reshanta_B&marker=d91fc6b9-121e-8cfb-a619-927e69cda83a"},
+    {name:"Executioner Dramos",type:"weekday",days:[3,6],hour:22,minute:30,map:"https://aion2hub.com/maps?map=Abyss_Reshanta_B&marker=b0856686-0c72-0d8d-a111-e0b10a88f87f"},
+    {name:"Ravager Marakha",type:"weekday",days:[3,6],hour:22,minute:30,map:"https://aion2hub.com/maps?map=Abyss_Reshanta_B&marker=9f169a0f-15e3-33b4-dcaf-da99803bb9af"},
+    {name:"Turncoat Ducal",type:"weekday",days:[3,6],hour:22,minute:30,map:"https://aion2hub.com/maps?map=Abyss_Reshanta_B&marker=62bad111-9100-d79d-e41b-baf7c3a0ca73"}
   ]}
 ];
 const TAIWAN_OFFSET_H=8;
@@ -415,11 +414,11 @@ function formatBossCountdown(ms){
 function renderBossTimers(){
   $('#bossZones').innerHTML=BOSS_DATA.map(z=>`<h3 class="boss-zone-title">${esc(z.zone)}</h3><div class="boss-grid">${z.bosses.map(b=>{
     if(b.type==='interval'){
-      return `<div class="boss-card interval"><img class="boss-avatar" src="${b.image}" alt="${esc(b.name)}"><div class="boss-card-content"><div class="boss-card-head"><b>${esc(b.name)}</b><span class="boss-tag interval">INTERVALLE</span></div><div class="boss-sub">Réapparaît toutes les ${b.interval} min</div>${b.map?`<a class="boss-map-link" href="${b.map}" target="_blank" rel="noopener">📍 Voir sur la carte →</a>`:''}</div></div>`;
+      return `<div class="boss-card interval"><div class="boss-card-head"><b>${esc(b.name)}</b><span class="boss-tag interval">INTERVALLE</span></div><div class="boss-sub">Réapparaît toutes les ${b.interval} min</div>${b.map?`<a class="boss-map-link" href="${b.map}" target="_blank" rel="noopener">📍 Voir sur la carte →</a>`:''}</div>`;
     }
     const ms=nextBossSpawnMs(b.days,b.hour,b.minute),target=new Date(Date.now()+ms);
     const localStr=target.toLocaleString('fr-FR',{weekday:'short',hour:'2-digit',minute:'2-digit'});
-    return `<div class="boss-card weekday"><img class="boss-avatar" src="${b.image}" alt="${esc(b.name)}"><div class="boss-card-content"><div class="boss-card-head"><b>${esc(b.name)}</b><span class="boss-tag weekday">JOUR FIXE</span></div><div class="boss-sub">${b.days.map(d=>['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][d]).join(' & ')} · ${String(b.hour).padStart(2,'0')}:${String(b.minute).padStart(2,'0')} serveur</div><div class="boss-countdown">${formatBossCountdown(ms)}</div><div class="boss-local">${localStr} ton heure</div>${b.map?`<a class="boss-map-link" href="${b.map}" target="_blank" rel="noopener">📍 Voir sur la carte →</a>`:''}</div></div>`;
+    return `<div class="boss-card weekday"><div class="boss-card-head"><b>${esc(b.name)}</b><span class="boss-tag weekday">JOUR FIXE</span></div><div class="boss-sub">${b.days.map(d=>['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][d]).join(' & ')} · ${String(b.hour).padStart(2,'0')}:${String(b.minute).padStart(2,'0')} serveur</div><div class="boss-countdown">${formatBossCountdown(ms)}</div><div class="boss-local">${localStr} ton heure</div>${b.map?`<a class="boss-map-link" href="${b.map}" target="_blank" rel="noopener">📍 Voir sur la carte →</a>`:''}</div>`;
   }).join('')}</div>`).join('');
 }
 function toast(t){$('#toast').textContent=t;$('#toast').classList.add('show');setTimeout(()=>$('#toast').classList.remove('show'),1500)}
