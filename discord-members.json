@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-18T11:58:55.463Z",
+  "updatedAt": "2026-08-20T15:03:49.983Z",
   "members": [
     {
       "id": "119867255088611332",
@@ -7,6 +7,13 @@
       "globalName": "Junkyy",
       "nick": null,
       "avatar": "https://cdn.discordapp.com/avatars/119867255088611332/e9d9c213a05c50cdfcaf011dd7eac249.png?size=64"
+    },
+    {
+      "id": "137588413866967040",
+      "username": "milkou",
+      "globalName": "Milkou",
+      "nick": null,
+      "avatar": "https://cdn.discordapp.com/avatars/137588413866967040/343ccd7ff6df24f56a99c1932dd6de61.png?size=64"
     },
     {
       "id": "150681824371146753",
@@ -203,13 +210,6 @@
       "globalName": "Aegrim",
       "nick": null,
       "avatar": "https://cdn.discordapp.com/avatars/1265360697307562216/a_8ead69cb2c14fd5d99125ebe36be96d6.gif?size=64"
-    },
-    {
-      "id": "1538551665739956366",
-      "username": "testaegrim",
-      "globalName": "test",
-      "nick": null,
-      "avatar": "https://cdn.discordapp.com/embed/avatars/4.png"
     }
   ]
 }
